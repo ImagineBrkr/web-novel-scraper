@@ -1,0 +1,7 @@
+**.jpg
+!cover.jpg
+**.html
+**/tmp
+**/output
+**.epub
+**/__pycache__
