@@ -129,42 +129,38 @@
     },
     {
         "host": "novelbin.me",
+        "has_pagination": false,
         "title": {
             "element": "h2 span",
             "id": null,
-            "class": null
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": false
         },
         "content": {
             "element": "div#chr-content",
             "id": null,
             "class": null,
+            "selector": null,
+            "attributes": null,
             "array": true
         },
         "index": {
-            "link": "ul.list-chapter li a",
-            "pagination": false,
-            "next_page": "",
-            "reverse": false
-        }
-    },
-    {
-        "host": "novelbin.me",
-        "title": {
             "element": null,
             "id": null,
-            "class": "chapter-title"
-        },
-        "content": {
-            "element": "p",
-            "id": null,
-            "class": "",
+            "class": null,
+            "selector": "ul.list-chapter li a",
+            "attributes": null,
             "array": true
         },
-        "index": {
-            "link": "ul.list-chapter li a",
-            "pagination": false,
-            "next_page": "",
-            "reverse": false
+        "next_page": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
         }
     },
     {

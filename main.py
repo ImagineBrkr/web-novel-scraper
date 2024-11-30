@@ -7,6 +7,8 @@ import re
 from bs4 import BeautifulSoup
 from ebooklib import epub
 import custom_logger
+from output_file import OutputFiles
+from novel_scrapper import *
 
 # logging.basicConfig(level=logging.DEBUG, format = '%(name)s - %(levelname)s - %(message)s')
 URL = 'https://novelusb.com/novel-book/keyboard-immortal-novel-novel/chapter-2'
@@ -19,6 +21,13 @@ N_CHAPS = 100
 
 custom_logger.set_process("Web scrapping")
 # LOGGER = custom_logger.create_logger("WEB SCRAPING")
+
+def load_novel(novel_title: str):
+    output_file = OutputFiles(novel_title)
+    novel_json = output_file.load_novel_json()
+    print(novel_json)
+    novel = Novel.from_json(novel_json)
+    return novel
 
 
 with open('decode_guide.json', 'r') as f:
