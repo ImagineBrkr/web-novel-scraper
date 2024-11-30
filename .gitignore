@@ -1,0 +1,12 @@
+**.jpg
+**.png
+!cover.jpg
+**.html
+**/tmp
+**/output
+**.epub
+**/__pycache__
+test.py
+**/.env
+**.txt
+!requirements.txt

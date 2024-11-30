@@ -1,0 +1,190 @@
+[
+    {
+        "host": "default",
+        "has_pagination": false,
+        "title": {
+            "element": "h4",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        },
+        "content": {
+            "element": "p",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        },
+        "index": {
+            "element": "p",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        },
+        "next_page": {
+            "element": "p",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        }
+    },
+    {
+        "host": "novelusb.com",
+        "has_pagination": false,
+        "title": {
+            "element": "h4",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": false
+        },
+        "content": {
+            "element": "p",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        },
+        "index": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": "ul.list-chapter li a[title]",
+            "attributes": null,
+            "array": true
+        },
+        "next_page": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        }
+    },
+    {
+        "host": "novellive.net",
+        "has_pagination": true,
+        "title": {
+            "element": "h4",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": false
+        },
+        "content": {
+            "element": "p",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        },
+        "index": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": "div.m-newest2 ul li a",
+            "attributes": null,
+            "array": true
+        },
+        "next_page": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": "div.page > a.index-container-btn[href*='novellive']:nth-last-of-type(2)",
+            "attributes": null,
+            "array": true
+        }
+    },
+    {
+        "host": "novelcool.com",
+        "title": {
+            "element": null,
+            "id": null,
+            "class": "chapter-title"
+        },
+        "content": {
+            "element": "p",
+            "id": null,
+            "class": "",
+            "array": true
+        },
+        "index": {
+            "link": "div.chp-item a",
+            "pagination": false,
+            "next_page": "",
+            "reverse": true
+        }
+    },
+    {
+        "host": "novelbin.me",
+        "title": {
+            "element": "h2 span",
+            "id": null,
+            "class": null
+        },
+        "content": {
+            "element": "div#chr-content",
+            "id": null,
+            "class": null,
+            "array": true
+        },
+        "index": {
+            "link": "ul.list-chapter li a",
+            "pagination": false,
+            "next_page": "",
+            "reverse": false
+        }
+    },
+    {
+        "host": "novelbin.me",
+        "title": {
+            "element": null,
+            "id": null,
+            "class": "chapter-title"
+        },
+        "content": {
+            "element": "p",
+            "id": null,
+            "class": "",
+            "array": true
+        },
+        "index": {
+            "link": "ul.list-chapter li a",
+            "pagination": false,
+            "next_page": "",
+            "reverse": false
+        }
+    },
+    {
+        "host": "genesistls.com",
+        "title": {
+            "element": null,
+            "id": null,
+            "class": "cat-series"
+        },
+        "content": {
+            "element": "p span",
+            "id": null,
+            "class": "",
+            "array": true
+        },
+        "index": {
+            "link": "ul li[data-ID] a",
+            "pagination": false,
+            "next_page": "",
+            "reverse": false
+        }
+    }
+]
