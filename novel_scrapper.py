@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import json
 
 from dataclasses_json import dataclass_json
+from ebooklib import epub
 
 import custom_logger
 from decode import Decoder
@@ -21,14 +22,16 @@ class Metadata:
     author : str = "Anonymous"
     start_year: int = None
     end_year: int = None
-    language: str = "en"
+    language: str = "en",
+    description: str = None,
+    cover_image_path: str = None
 
 @dataclass_json
 @dataclass
 class Chapter:
-    chapter_title: str
     chapter_link: str
     chapter_html_filename: str
+    chapter_title: str = None
 
     def __str__(self):
         return f'Title: {self.chapter_title}, link: {self.chapter_link}'
@@ -82,10 +85,6 @@ class Novel:
 
     def __init__(self,
                  novel_title: str = None,
-                 author: str = "Anonymous",
-                 start_year: int = None,
-                 end_year: int = None,
-                 language: str = "en",
                  toc_main_link: str = None,
                  toc_links_list: list[str] = None,
                  metadata: Metadata = None,
@@ -94,11 +93,7 @@ class Novel:
         if metadata is not None:
             self.metadata = metadata
         elif novel_title is not None:
-            self.metadata = Metadata(novel_title,
-                                    author=author,
-                                    start_year=start_year,
-                                    end_year=end_year,
-                                    language=language)
+            self.metadata = Metadata(novel_title)
         else:
             raise ValueError("You need to set 'novel_title' or 'metadata'.")
 
@@ -112,13 +107,27 @@ class Novel:
         self.save_novel_to_json()
         self.decoder = Decoder(utils.obtain_host(self.toc_main_link))
         
+    def set_metadata(self, author: str = None,
+                 start_year: int = None,
+                 end_year: int = None,
+                 language: str = "en",
+                 description: str = None):
+        self.metadata.author = author
+        self.metadata.start_year = start_year
+        self.metadata.end_year = end_year
+        self.metadata.language = language
+        self.metadata.description = description
+        self.save_novel_to_json()
+    
+    def set_cover_image(self, cover_image_path: str):
+        new_cover_image_path = self.output_files.save_cover_img(cover_image_path)
+        if new_cover_image_path:
+            self.metadata.cover_image_path = new_cover_image_path
+            self.save_novel_to_json()
+            logger.info(f'New cover image on file {self.metadata.cover_image_path}')
+        
     def save_novel_to_json(self):
         self.output_files.save_novel_json(self.to_dict())
-
-    def add_chapter_toc(self,
-                    chapter_link: str,
-                    chapter_idx: int = None):
-        print('test')
 
     def set_toc_main_link(self, toc_main_link: str):
         self.toc_main_link = toc_main_link
@@ -201,50 +210,97 @@ class Novel:
                     self.save_novel_to_json()
         else:
             logger.warning('No links found on toc_links_list')
-    
+
     def find_chapter_index_by_link(self, chapter_link: str):
         for index, chapter in enumerate(self.chapters):
             if chapter.chapter_link == chapter_link:
                 return index
         return None
-    # def to_dict(self):
-    #     return {
-    #         'metadata': asdict(self.metadata),
-    #         # 'chapters': [asdict(chapter) for chapter in self.chapters],
-    #         'toc_main_link': self.toc_main_link,
-    #         'toc_links_list': self.toc_links_list,
-    #         'toc': self.toc,
-    #     }
+
+    def create_epub_book(self, book_title: str = None):
+        book = epub.EpubBook()
+        if not book_title:
+            book_title = self.metadata.novel_title
+        book.set_title(book_title)
+        # book.set_language(self.metadata.language)
+        # book.add_metadata('DC', 'description', self.metadata.description)
+        book.add_metadata('DC', 'subject', 'Novela Web')
+        book.add_metadata('DC', 'subject', 'Scrapped')
+
+        if self.metadata.author:
+            book.add_author(self.metadata.author)
+        # book.add_metadata(None, 'start_year', self.metadata.start_year)
+        # book.add_metadata(None, 'end_year', self.metadata.end_year)
+
+        # Testing with Calibre
+        # if collection:
+        #     book.add_metadata('OPF', 'meta', collection['num'], {'refines': 'id-3', 'property': 'group-position'})
+        #     book.add_metadata('OPF', 'meta', 'series', {'refines': 'id-3', 'property': 'collection-type'})
+        #     book.add_metadata('OPF', 'meta', 'test', {'id': 'id-3', 'property': 'belongs-to-collection'})
+
+        # if self.metadata.cover_image_path:
+        #     cover_image_content = self.output_files.load_cover_img(self.metadata.cover_image_path)
+        #     if cover_image_content:
+        #         book.set_cover('cover.jpg', cover_image_content)
+        #         book.spine += ['cover']
+        book.spine.append('nav')
+        return book
+
+    def get_chapter_content(self, chapter: Chapter = None, idx: int = None):
+        if idx:
+            try:
+                chapter = self.chapters[idx]
+            except IndexError:
+                logger.error(f'Chapter index {idx} not found')
+                return
+        if chapter:
+            chapter_html, _ = utils.get_url_or_temp_file(self.output_files,
+                                                        chapter.chapter_link,
+                                                        chapter.chapter_html_filename)
+            paragraphs = self.decoder.decode_html(chapter_html, 'content')
+            title = chapter.chapter_title
+            if not title:
+                title = f'{self.metadata.novel_title} Chapter {self.find_chapter_index_by_link(chapter.chapter_link) + 1}'
+            chapter_content = f'<h4>{title}</h4>'
+            if paragraphs:
+                logger.info(f'{len(paragraphs)} paragraphs found in chapter link {chapter.chapter_link}')
+                for paragraph in paragraphs:
+                    chapter_content += str(paragraph)
+                return title, chapter_content
+            logger.warning(f'No chapter content found for chapter link {chapter.chapter_link} on file {chapter.chapter_html_filename}')
+
+        logger.warning('No chapter given')
+
+    def save_chapters_to_epub(self, chapters_start: int, chapters_num: int = 100, chapters_end: int = None):
+        if chapters_start >= len(self.chapters):
+            logger.warning(f'start_chapter out of range')
+            return
+
+        if not chapters_end:
+            chapters_end = chapters_start + chapters_num
         
-    # def to_json(self):
-    #     return json.dumps(self.to_dict(), ensure_ascii=False, indent=4)
-    
-    # def create_volume(self,
-    #                   volume_idx: int = None,
-    #                   volume_title: str = None,
-    #                   image_path: str = None):
-    #     if self.single_volume and volume_idx > 1:
-    #         logger.error(f'Tried to create more than one volume for {self.metadata.novel_title}')
-    #         return
+        book_title = f'{self.metadata.novel_title} Chapters {chapters_start + 1} - {chapters_end}'
+        book = self.create_epub_book(book_title)
 
-    #     if not volume_idx:
-    #         # If no index, use latest
-    #         volume_idx = len(self.volumes)
-    #     autogenerated_title = False
-    #     if not volume_title:
-    #         # Autogenerate Volume title:
-    #         autogenerated_title = True
-    #         if self.single_volume:
-    #             volume_title = self.metadata.novel_title
-    #         else:
-    #             aux_idx = 1
-    #             for volume in self.volumes[:volume_idx]:
-    #                 if volume.autogenerated_title:
-    #                     aux_idx += 1
-    #             volume_title = f'{self.metadata.novel_title} {create_volume_id(aux_idx)}'
+        for chapter in self.chapters[chapters_start:chapters_end]:
+            title, chapter_content = self.get_chapter_content(chapter)
+            if not chapter_content:
+                logger.warning(f'Error reading chapter')
+                continue
 
-    #     volume = Volume(self.metadata, volume_title, image_path, self.single_volume, autogenerated_title)
-    #     self.insert_volume(volume, volume_idx)
+            file_name = utils.generate_epub_file_name_from_title(title)
 
-    # def insert_volume(self, new_volume: Volume, volume_idx: int):
-    #     self.volumes.insert(volume_idx, new_volume)
+            chapter_epub = epub.EpubHtml(title=title, file_name=file_name)
+            chapter_epub.set_content(chapter_content)
+            book.add_item(chapter_epub)
+            link = epub.Link(file_name, title, file_name.rstrip('.xhtml'))
+            toc = book.toc
+            toc.append(link)
+            book.toc = toc
+            book.spine.append(chapter_epub)
+
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        output_epub_filepath = f'{self.output_files.get_output_dir()}/{book_title}.epub'
+        epub.write_epub(output_epub_filepath, book)
+        logger.info(f'Saved epub to file {output_epub_filepath}')

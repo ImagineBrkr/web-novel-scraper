@@ -3,6 +3,7 @@ import custom_request
 import hashlib
 from urllib.parse import urlparse
 import re
+import unicodedata
 
 def generate_file_name_from_url(url: str) -> str:
     # Parsea URL
@@ -21,6 +22,19 @@ def generate_file_name_from_url(url: str) -> str:
     # Hash if neccesary
     url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()[:8]
     filename = f"{safe_base_name}_{url_hash}.html"
+    return filename
+
+def generate_epub_file_name_from_title(title: str) -> str:
+    normalized_title = unicodedata.normalize('NFKD', title).encode('ASCII', 'ignore').decode('ASCII')
+    normalized_title = normalized_title.lower()
+    normalized_title = re.sub(r'[\s\-]+', '_', normalized_title)
+    sanitized_title = re.sub(r'[^a-zA-Z0-9_]', '', normalized_title)
+    max_length = 50
+    if len(sanitized_title) > max_length:
+        sanitized_title = sanitized_title[:max_length]
+    if not sanitized_title:
+        sanitized_title = 'chapter'
+    filename = f"{sanitized_title}.xhtml"
     return filename
 
 def obtain_host(url: str):

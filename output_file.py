@@ -1,7 +1,9 @@
 import os
 import json
 from pathlib import Path
+import shutil
 import custom_logger
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,10 +29,11 @@ class OutputFiles:
             self.novel_location = novel_location
         self.novel_dir = f'{self.novel_location}/{self.main_dir}'
         self.tmp_dir = f'{self.novel_dir}/tmp'
+        self.output_dir = f'{self.novel_dir}/output'
         self.main_json_filename = f'{self.novel_dir}/main.json'
         os.makedirs(self.novel_dir, exist_ok=True)
         os.makedirs(self.tmp_dir, exist_ok=True)
-
+        os.makedirs(self.output_dir, exist_ok=True)
 
     def save_to_temp_file(self, path: str, content):
         full_path = Path(self.tmp_dir) / path
@@ -78,3 +81,27 @@ class OutputFiles:
         except Exception as e:
             logger.error(f'Error loading main json file: {e}')
         return None
+    
+    def save_cover_img(self, img_path: str):
+        filename = os.path.basename(img_path)
+        destination_path = os.path.join(self.novel_dir, filename)
+        try:
+            # Copy the cover image
+            shutil.copy(img_path, destination_path)
+            return filename
+        except Exception as e:
+            logger.error(f'Error copying the cover image: {e}')
+            return None
+        
+    def load_cover_img(self, img_path: str):
+        cover_img_path = Path(self.novel_dir) / img_path
+        try:
+            with open(cover_img_path, 'rb') as file:
+                content = file.read()
+                return content
+        except Exception as e:
+            logger.error(f'Error loading cover image: {e}')
+            return None
+
+    def get_output_dir(self):
+        return self.output_dir
