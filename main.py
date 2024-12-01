@@ -25,9 +25,10 @@ custom_logger.set_process("Web scrapping")
 def load_novel(novel_title: str):
     output_file = OutputFiles(novel_title)
     novel_json = output_file.load_novel_json()
-    print(novel_json)
-    novel = Novel.from_json(novel_json)
-    return novel
+    if novel_json:
+        novel = Novel.from_json(novel_json)
+        return novel
+    logger.error(f'No novel found for novel title: {novel_title}')
 
 
 with open('decode_guide.json', 'r') as f:

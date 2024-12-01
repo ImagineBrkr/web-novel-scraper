@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import custom_logger
 from dotenv import load_dotenv
@@ -60,10 +61,10 @@ class OutputFiles:
         except Exception as e:
             logger.error(f'Error cleaning temp file: {e}')
             
-    def save_novel_json(self, main_json: str):
+    def save_novel_json(self, main_data: dict):
         try:
             with open(self.main_json_filename, 'w', encoding='UTF-16') as file:
-                file.write(main_json)
+                json.dump(main_data, file, ensure_ascii=False, indent=4)
         except Exception as e:
             logger.error(f'Error saving main json file: {e}')
             

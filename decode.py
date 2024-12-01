@@ -74,6 +74,19 @@ class Decoder:
                     selector += f'[{attr}="{value}"]' if value else f'[{attr}]'
 
         elements = soup.select(selector) if selector else []
+        extract = decoder.get('extract')
+        if extract:
+            if extract["type"] == "attr":
+                attr_key = extract["key"]
+                elements_aux = elements
+                elements = []
+                for element in elements_aux:
+                    try:
+                        attr = element[attr_key]
+                        if attr:
+                            elements.append(attr)
+                    except KeyError:
+                        pass
 
         return elements if decoder['array'] else elements[0] if elements else None
 

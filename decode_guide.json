@@ -131,12 +131,16 @@
         "host": "novelbin.me",
         "has_pagination": false,
         "title": {
-            "element": "h2 span",
+            "element": "h2 a.chr-title",
             "id": null,
             "class": null,
             "selector": null,
             "attributes": null,
-            "array": false
+            "array": false,
+            "extract": {
+                "type": "attr",
+                "key": "title"
+            }
         },
         "content": {
             "element": "div#chr-content",
