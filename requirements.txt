@@ -2,3 +2,4 @@ python-dotenv
 requests
 bs4
 ebooklib
+click==7.0
