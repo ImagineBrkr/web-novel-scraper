@@ -1,0 +1,7 @@
+{
+    "version": {
+        "test": "test"
+    },
+    "NOVEL_LOCATION": ".",
+    "FLARESOLVER_URL": "http://localhost:8191/v1",
+}
