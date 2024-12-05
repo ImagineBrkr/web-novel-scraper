@@ -51,7 +51,8 @@ class Novel:
     chapters: list[Chapter] = field(default_factory=list)
     toc_main_link: str = None
     toc_links_list: list[str] = field(default_factory=list)
-    save_title_to_content: bool = True # Some novels already have the title in the content.
+    # Some novels already have the title in the content.
+    save_title_to_content: bool = True
 
     def __init__(self,
                  novel_title: str = None,
@@ -100,6 +101,14 @@ class Novel:
             self.save_novel_to_json()
             return
         logger.warning(f'Tag "{tag}" already exists on novel {
+                       self.metadata.novel_title}')
+
+    def remove_tag(self, tag: str) -> None:
+        if tag in self.metadata.tags:
+            self.metadata.tags.remove(tag)
+            self.save_novel_to_json()
+            return
+        logger.warning(f'Tag "{tag}" doesn\'t exist on novel {
                        self.metadata.novel_title}')
 
     def set_cover_image(self, cover_image_path: str) -> None:
@@ -163,7 +172,7 @@ class Novel:
         if link_idx:
             chapter_idx = link_idx
         else:
-            #Check if the chapter exists
+            # Check if the chapter exists
             chapter_idx = self.find_chapter_index_by_link(chapter.chapter_link)
             if chapter_idx is None:
                 # If no existing chapter we append it
@@ -185,7 +194,8 @@ class Novel:
                                                                          update_html)
         # We create a new chapter using the link and add it to the list of Chapters
         if not chapter_html or not chapter_html_filename:
-            logger.warning(f'Failed to create chapter on link: "{chapter_link}" on path "{chapter_html_filename}"')
+            logger.warning(f'Failed to create chapter on link: "{
+                           chapter_link}" on path "{chapter_html_filename}"')
             return
 
         chapter = Chapter(chapter_link=chapter_link,
@@ -194,11 +204,11 @@ class Novel:
 
         # We get the title and content, if there's no title, we autogenerate one.
         chapter_title, chapter_content = self.get_chapter_content(
-                chapter=chapter, chapter_html=chapter_html)
+            chapter=chapter, chapter_html=chapter_html)
 
         chapter = Chapter(chapter_title=chapter_title,
-                              chapter_link=chapter_link,
-                              chapter_html_filename=chapter_html_filename)
+                          chapter_link=chapter_link,
+                          chapter_html_filename=chapter_html_filename)
         self.add_or_update_chapter(chapter)
         logger.info(f'Chapter scrapped from link: {chapter_link}')
         return chapter, chapter_title, chapter_content
@@ -333,7 +343,8 @@ class Novel:
         book = self.create_epub_book(book_title, calibre_collection)
 
         for chapter in self.chapters[idx_start:idx_end]:
-            _, title, chapter_content = self.scrap_chapter(chapter_link=chapter.chapter_link)
+            _, title, chapter_content = self.scrap_chapter(
+                chapter_link=chapter.chapter_link)
             if not chapter_content:
                 logger.warning(f'Error reading chapter')
                 continue
@@ -365,3 +376,12 @@ class Novel:
                                        collection_idx=idx)
             start = start + chaps_by_vol
             idx = idx + 1
+
+    def clean_chapters_html_files(self):
+        for chapter in self.chapters:
+            if chapter.chapter_html_filename:
+                chapter_html, _ = utils.get_url_or_temp_file(
+                    self.output_files, chapter.chapter_link, chapter.chapter_html_filename)
+                chapter_html = self.decoder.clean_html(chapter_html)
+                self.output_files.save_to_temp_file(
+                    chapter.chapter_html_filename, chapter_html)

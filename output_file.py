@@ -14,6 +14,7 @@ NOVEL_LOCATION = os.getenv('NOVEL_LOCATION', F'{CURRENT_DIR}')
 
 logger = custom_logger.create_logger('GET OUTPUT OR TEMP FILE')
 
+
 class OutputFiles:
     main_dir: str
     novel_location: str = NOVEL_LOCATION
@@ -43,14 +44,13 @@ class OutputFiles:
                 file.write(content)
         except Exception as e:
             logger.error(f'Error saving text file: {e}')
-    
 
     def load_from_temp_file(self, path: str):
         full_path = Path(self.tmp_dir) / path
         try:
             if full_path.exists():
                 with open(full_path, 'r', encoding='UTF-16') as file:
-                    logger.info(f'Content loaded from file: {full_path}')
+                    logger.debug(f'Content loaded from file: {full_path}')
                     return file.read()
         except Exception as e:
             logger.error(f'Error loading temp file: {e}')
@@ -63,14 +63,14 @@ class OutputFiles:
                 full_path.unlink(missing_ok=True)
         except Exception as e:
             logger.error(f'Error cleaning temp file: {e}')
-            
+
     def save_novel_json(self, main_data: dict):
         try:
             with open(self.main_json_filename, 'w', encoding='UTF-16') as file:
                 json.dump(main_data, file, ensure_ascii=False, indent=4)
         except Exception as e:
             logger.error(f'Error saving main json file: {e}')
-            
+
     def load_novel_json(self):
         full_path = Path(self.main_json_filename)
         try:
@@ -81,7 +81,7 @@ class OutputFiles:
         except Exception as e:
             logger.error(f'Error loading main json file: {e}')
         return None
-    
+
     def save_cover_img(self, img_path: str):
         filename = os.path.basename(img_path)
         destination_path = os.path.join(self.novel_dir, filename)
@@ -92,7 +92,7 @@ class OutputFiles:
         except Exception as e:
             logger.error(f'Error copying the cover image: {e}')
             return None
-        
+
     def load_cover_img(self, img_path: str):
         cover_img_path = Path(self.novel_dir) / img_path
         try:

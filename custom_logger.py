@@ -2,6 +2,7 @@ import logging
 
 process = "main"
 
+
 class CustomFormatter(logging.Formatter):
 
     grey = "\x1b[38;20m"
@@ -10,7 +11,8 @@ class CustomFormatter(logging.Formatter):
     bold_red = "\x1b[31;1m"
     green = "\x1b[32;20m"
     reset = "\x1b[0m"
-    format_str = f"%(asctime)s - %(levelname)s {reset}- %(operation)s - %(message)s"
+    format_str = f"%(asctime)s - %(levelname)s {
+        reset}- %(operation)s - %(message)s"
 
     FORMATS = {
         logging.DEBUG: grey + format_str + reset,
@@ -25,13 +27,15 @@ class CustomFormatter(logging.Formatter):
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
+
 def create_logger(operation):
     logger = logging.getLogger(process)
     logger.setLevel(logging.INFO)
 
     if not logger.handlers:
         ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)  # Set this to the minimum logging level that you want
+        # Set this to the minimum logging level that you want
+        ch.setLevel(logging.INFO)
 
         # Create formatter
         formatter = CustomFormatter()
@@ -46,6 +50,7 @@ def create_logger(operation):
     logger = logging.LoggerAdapter(logger, extra)
 
     return logger
+
 
 def set_process(new_process):
     global process

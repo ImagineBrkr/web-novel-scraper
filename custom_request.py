@@ -10,6 +10,7 @@ FLARE_HEADERS = {'Content-Type': 'application/json'}
 
 logger = custom_logger.create_logger('GET HTML CONTENT')
 
+
 def get_request(url: str, timeout: int = 20):
     try:
         response = requests.get(url, timeout=timeout)
@@ -19,17 +20,20 @@ def get_request(url: str, timeout: int = 20):
     except requests.exceptions.InvalidSchema:
         logger.error(f'Check protocol of "{url}"')
 
+
 def get_request_flaresolver(url: str, timeout: int = 20, flaresolver_url: str = FLARESOLVER_URL):
     logger.debug(f'FLARESOLVER_URL: {flaresolver_url}')
     try:
         response = requests.post(flaresolver_url, headers=FLARE_HEADERS, json={
-                                    'cmd': 'request.get', 'url': url, 'maxTimeout': timeout*1000},
-                                    timeout=timeout)
+            'cmd': 'request.get', 'url': url, 'maxTimeout': timeout*1000},
+            timeout=timeout)
         return response
     except requests.exceptions.ConnectionError:
-        logger.error(f'Connection error, check FlareSolver host: {flaresolver_url}')
+        logger.error(f'Connection error, check FlareSolver host: {
+                     flaresolver_url}')
     except requests.exceptions.InvalidSchema:
         logger.error(f'Check FlareSolver host "{flaresolver_url}"')
+
 
 def get_html_content(url: str, attempts: int = 5, flaresolver: bool = True, flaresolver_url: str = FLARESOLVER_URL):
     for _ in range(attempts):
@@ -45,7 +49,8 @@ def get_html_content(url: str, attempts: int = 5, flaresolver: bool = True, flar
         return
     logger.debug(f'Trying with Flaresolver for {url}')
     for _ in range(attempts):
-        response = get_request_flaresolver(url, timeout=20, flaresolver_url=flaresolver_url)
+        response = get_request_flaresolver(
+            url, timeout=20, flaresolver_url=flaresolver_url)
         if not response:
             continue
         if not response.ok:

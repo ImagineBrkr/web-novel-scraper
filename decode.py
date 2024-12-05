@@ -53,6 +53,12 @@ class Decoder:
             return decode_guide['has_pagination']
 
         return self.decode_guide['has_pagination']
+    
+    def clean_html(self, html: str):
+        soup = BeautifulSoup(html, 'html.parser')
+        for unwanted_tags in soup(['script', 'style', 'header', 'footer', 'link']):
+            unwanted_tags.decompose()
+        return str(soup)
 
     def _find_elements(self, soup: BeautifulSoup, decoder: dict):
         selector = decoder.get('selector')
