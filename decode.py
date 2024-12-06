@@ -12,6 +12,8 @@ CURRENT_DIR = Path(__file__).resolve().parent
 
 DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{CURRENT_DIR}/decode_guide.json')
 
+XOR_SEPARATOR = "XOR"
+
 try:
     with open(DECODE_GUIDE_FILE, 'r', encoding='UTF-8') as f:
         DECODE_GUIDE = json.load(f)
@@ -78,8 +80,18 @@ class Decoder:
             if attributes:
                 for attr, value in attributes.items():
                     selector += f'[{attr}="{value}"]' if value else f'[{attr}]'
+            selectors = [selector]
+        else:
+            if XOR_SEPARATOR in selector:
+                selectors = selector.split(XOR_SEPARATOR)
+            else:
+                selectors = [selector]
 
-        elements = soup.select(selector) if selector else []
+        for selector in selectors:
+            elements = soup.select(selector)
+            if elements:
+                break
+
         extract = decoder.get('extract')
         if extract:
             if extract["type"] == "attr":
@@ -93,11 +105,13 @@ class Decoder:
                             elements.append(attr)
                     except KeyError:
                         pass
-
+            if extract["type"] == "text":
+                elements = [element.string for element in elements]
         return elements if decoder['array'] else elements[0] if elements else None
 
     def _get_element_by_key(self, json_data, key, value):
         for item in json_data:
             if item[key] == value:
                 return item
+        logger.warning('Host not found, using default decoder.')
         return json_data[0]

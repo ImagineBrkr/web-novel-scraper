@@ -79,7 +79,7 @@ def scrap_novel(title, update_chapters, update_html):
         click.echo(message='Novel with that title not exists', err=True)
         return
     if not novel.toc_links_list:
-        novel.update_chapter_list()
+        novel.get_links_from_toc()
     novel.save_novel_to_epub()
 
 
@@ -151,11 +151,21 @@ def update_toc(title, toc_link):
     else:
         novel.update_toc_links_list()
 
+@cli.command()
+@click.option('-t', '--title', type=str, required=True, help='Novel title')
+@click.option('--toc-html', type=click.File(errors="ignore"), required=True, help='Novel TOC custom HTML')
+def add_toc(title, toc_html):
+    novel = load_novel(title)
+    if not novel:
+        click.echo(message='Novel with that title not exists', err=True)
+        return
+    html_content = toc_html.read()
+    novel.add_custom_toc(html_content)
 
 @cli.command()
 @click.option('-t', '--title', type=str, required=True, help='Novel title')
-@click.option('--toc-html', type=click.File(), required=True, help='Novel TOC custom HTML')
-def set_custom_toc_html(title, toc_html):
+@click.option('--toc-html', type=click.File(errors="replace"), required=True, help='Novel TOC custom HTML')
+def set_custom_toc_html(title, toc_html: click.File):
     novel = load_novel(title)
     if not novel:
         click.echo(message='Novel with that title not exists', err=True)

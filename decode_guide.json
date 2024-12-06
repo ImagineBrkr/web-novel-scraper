@@ -108,23 +108,43 @@
         }
     },
     {
-        "host": "novelcool.com",
+        "host": "royalroad.com",
+        "has_pagination": false,
         "title": {
             "element": null,
             "id": null,
-            "class": "chapter-title"
+            "class": null,
+            "selector": "h1.break-word",
+            "attributes": null,
+            "array": false,
+            "extract": {
+                "type": "text",
+                "key": "text"
+            }
         },
         "content": {
-            "element": "p",
+            "element": null,
             "id": null,
-            "class": "",
+            "class": null,
+            "selector": "p:not(div.author-note p):not(div.page-prefooter p):not(div.profile-info p) XOR div.chapter-content",
+            "attributes": null,
             "array": true
         },
         "index": {
-            "link": "div.chp-item a",
-            "pagination": false,
-            "next_page": "",
-            "reverse": true
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": "tr.chapter-row td a",
+            "attributes": null,
+            "array": true
+        },
+        "next_page": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
         }
     },
     {
@@ -165,26 +185,6 @@
             "selector": null,
             "attributes": null,
             "array": true
-        }
-    },
-    {
-        "host": "genesistls.com",
-        "title": {
-            "element": null,
-            "id": null,
-            "class": "cat-series"
-        },
-        "content": {
-            "element": "p span",
-            "id": null,
-            "class": "",
-            "array": true
-        },
-        "index": {
-            "link": "ul li[data-ID] a",
-            "pagination": false,
-            "next_page": "",
-            "reverse": false
         }
     }
 ]

@@ -125,20 +125,33 @@ class Novel:
 
     def set_toc_main_link(self, toc_main_link: str) -> None:
         self.toc_main_link = toc_main_link
+        self.output_files.clear_toc()
         self.decoder = Decoder(utils.obtain_host(self.toc_main_link))
         self.update_toc_links_list(update_toc=True)
+
+    def get_links_from_toc(self) -> None:
+        links = []
+        tocs = self.output_files.get_all_toc()
+        for toc_content in tocs:
+            toc_links = self.decoder.decode_html(toc_content, 'index')
+            toc_links = [link['href'] for link in toc_links]
+            if toc_links:
+                links = [*links, *toc_links]
+        links = [f'https://www.{self.decoder.host}{link}' for link in links if self.decoder.host not in link]
+        self.toc_links_list = links
+        self.create_chapters_from_toc()
+        self.save_novel_to_json()
 
     def update_toc_links_list(self, update_toc: bool = False) -> None:
         toc_content, _ = utils.get_url_or_temp_file(self.output_files,
                                                     self.toc_main_link,
-                                                    'toc_0.html',
                                                     reload=update_toc)
 
         if not toc_content:
             logger.warning(f'No content found on link {self.toc_main_link}')
             return
+        self.output_files.add_toc(toc_content)
 
-        toc_links = [self.toc_main_link]
         if self.decoder.has_pagination():
             next_link_tag = self.decoder.decode_html(toc_content, 'next_page')
             aux = 1
@@ -148,25 +161,14 @@ class Novel:
 
                 toc_new_content, _ = utils.get_url_or_temp_file(self.output_files,
                                                                 next_link,
-                                                                f'toc_{
-                                                                    aux}.html',
                                                                 reload=update_toc)
                 if toc_new_content:
-                    toc_links.append(next_link)
                     next_link_tag = self.decoder.decode_html(
                         toc_new_content, 'next_page')
+                    self.output_files.add_toc(toc_new_content)
                 aux += 1
-        links = []
-        for aux, link in enumerate(toc_links):
-            toc_content, _ = utils.get_url_or_temp_file(
-                self.output_files, link, f'toc_{aux}.html')
-            toc_links = self.decoder.decode_html(toc_content, 'index')
-            toc_links = [link['href'] for link in toc_links]
-            if toc_links:
-                links = [*links, *toc_links]
-        self.toc_links_list = links
-        self.create_chapters_from_toc()
-        self.save_novel_to_json()
+        self.get_links_from_toc()
+
 
     def add_or_update_chapter(self, chapter: Chapter, link_idx: int = None) -> None:
         if link_idx:
@@ -214,8 +216,9 @@ class Novel:
         return chapter, chapter_title, chapter_content
 
     def set_custom_toc(self, html: str):
-        self.output_files.save_to_temp_file('toc_0.html', html)
-        self.update_toc_links_list()
+        self.clear_toc()
+        self.output_files.add_toc(html)
+        self.get_links_from_toc()
 
     def create_chapters_from_toc(self):
         for chapter_link in self.toc_links_list:
@@ -303,6 +306,7 @@ class Novel:
             if title is None:
                 title = f'{self.metadata.novel_title} Chapter {
                     self.find_chapter_index_by_link(chapter.chapter_link) + 1}'
+            title = str(title)
 
             chapter_content = ""
             if self.save_title_to_content:
@@ -348,7 +352,6 @@ class Novel:
             if not chapter_content:
                 logger.warning(f'Error reading chapter')
                 continue
-
             file_name = utils.generate_epub_file_name_from_title(title)
 
             chapter_epub = epub.EpubHtml(title=title, file_name=file_name)
@@ -376,6 +379,13 @@ class Novel:
                                        collection_idx=idx)
             start = start + chaps_by_vol
             idx = idx + 1
+            
+    def clear_toc(self):
+        self.output_files.clear_toc()
+
+    def add_custom_toc(self, html: str):
+        self.output_files.add_toc(html)
+        self.get_links_from_toc()
 
     def clean_chapters_html_files(self):
         for chapter in self.chapters:

@@ -21,6 +21,7 @@ class OutputFiles:
     novel_dir: str
     tmp_dir: str
     main_json_filename: str
+    toc_preffix: str = "toc"
 
     def __init__(self,
                  main_dir: str,
@@ -105,3 +106,45 @@ class OutputFiles:
 
     def get_output_dir(self):
         return self.output_dir
+
+    def clear_toc(self):
+        toc_pos = 0
+        toc_exists = True
+        while toc_exists:
+            toc_filename = f"{self.toc_preffix}_{toc_pos}.html"
+            toc_path = Path(self.tmp_dir) / toc_filename
+            toc_exists = toc_path.exists()
+            if toc_exists:
+                toc_path.unlink()
+                toc_pos += 1
+                
+                
+    def add_toc(self, content: str):
+        toc_pos = 0
+        toc_exists = True
+        while toc_exists:
+            toc_filename = f"{self.toc_preffix}_{toc_pos}.html"
+            toc_path = Path(self.tmp_dir) / toc_filename
+            toc_exists = toc_path.exists()
+            if toc_exists:
+                toc_pos += 1
+        try:
+            with open(toc_path, 'w', encoding='UTF-16') as file:
+                file.write(content)
+        except Exception as e:
+            logger.error(f'Error saving text file: {e}')
+
+    def get_toc(self, pos_idx: int):
+        toc_filename = f"{self.toc_preffix}_{pos_idx}.html"
+        return self.load_from_temp_file(toc_filename)
+
+    def get_all_toc(self):
+        pos = 0
+        tocs = []
+        while True:
+            toc_content = self.get_toc(pos)
+            if toc_content:
+                tocs.append(toc_content)
+                pos += 1
+            else:
+                return tocs
