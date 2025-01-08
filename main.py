@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 
 import custom_logger
-from output_file import OutputFiles
+from file_manager import FileManager
 from novel_scrapper import *
 
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -30,7 +30,7 @@ def load_config(ctx, param, value):
 
 
 def load_novel(novel_title: str) -> Novel:
-    output_file = OutputFiles(novel_title)
+    output_file = FileManager(novel_title)
     novel_json = output_file.load_novel_json()
     if novel_json:
         novel = Novel.from_json(novel_json)
@@ -68,6 +68,23 @@ def create_novel(title, novel_link, author, start_year, end_year, language, desc
     if save_title_to_content is not None:
         novel.set_save_title_to_content(save_title_to_content)
 
+@cli.command()
+@click.option('-t', '--title', type=str, required=True, help='Novel title')
+@click.option('--author', type=str, help='Novel author')
+@click.option('--start-year', type=str, help='Novel start year')
+@click.option('--end-year', type=str, help='Novel end year')
+@click.option('--language', type=str, help='Novel language')
+@click.option('--description', type=str, help='Novel description')
+def set_metadata(title, author, start_year, end_year, language, description):
+    novel = load_novel(title)
+    if not novel:
+        click.echo(message='Novel with that title not exists', err=True)
+        return
+    novel.set_metadata(author=author,
+                       start_year=start_year,
+                       end_year=end_year,
+                       language=language,
+                       description=description)
 
 @cli.command()
 @click.option('-t', '--title', type=str, required=True, help='Novel title')

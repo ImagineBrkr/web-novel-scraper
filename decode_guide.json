@@ -186,5 +186,45 @@
             "attributes": null,
             "array": true
         }
+    },
+    {
+        "host": "novelbin.com",
+        "has_pagination": false,
+        "title": {
+            "element": "h2 a.chr-title",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": false,
+            "extract": {
+                "type": "attr",
+                "key": "title"
+            }
+        },
+        "content": {
+            "element": "div#chr-content",
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        },
+        "index": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": "ul.list-chapter li a",
+            "attributes": null,
+            "array": true
+        },
+        "next_page": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        }
     }
 ]

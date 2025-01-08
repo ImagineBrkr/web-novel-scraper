@@ -1,4 +1,4 @@
-from output_file import OutputFiles
+from file_manager import FileManager
 import custom_request
 import hashlib
 from urllib.parse import urlparse
@@ -58,7 +58,7 @@ def create_volume_id(n: int):
     return f'v{n:02}'
 
 
-def get_url_or_temp_file(output_file: OutputFiles,
+def get_url_or_temp_file(output_file: FileManager,
                          url: str,
                          temp_file_path: str = None,
                          reload: bool = False):
