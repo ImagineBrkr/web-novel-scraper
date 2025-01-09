@@ -5,9 +5,9 @@ from appdirs import AppDirs
 from pathlib import Path
 import shutil
 from dotenv import load_dotenv
+from ebooklib import epub
 
 import custom_logger
-import utils
 
 load_dotenv()
 
@@ -24,7 +24,6 @@ SCRAPPER_BASE_DATA_DIR = os.getenv(
     'SCRAPPER_BASE_DATA_DIR', dirs.user_data_dir)
 
 logger = custom_logger.create_logger('FILE MANAGER')
-
 
 class FileManager:
     novel_base_dir: Path
@@ -128,6 +127,25 @@ class FileManager:
                 pos += 1
             else:
                 return tocs
+
+    def save_book(self, book: epub.EpubBook, filename: str) -> bool:
+        book_path = self.novel_base_dir / filename
+        try:            
+            # Write epub file
+            epub.write_epub(str(book_path), book)
+            logger.info(f'Book saved successfully to {book_path}')
+            return True
+            
+        except PermissionError as e:
+            logger.error(f'Permission denied when saving book to {book_path}: {e}')
+            return False
+        except OSError as e:
+            logger.error(f'OS error when saving book to {book_path}: {e}')
+            return False
+        except Exception as e:
+            logger.error(f'Unexpected error saving book to {book_path}: {e}', 
+                        exc_info=True)
+            return False
 
 def _create_path_if_not_exists(dir_path: str) -> Path:
     try:

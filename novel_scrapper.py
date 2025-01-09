@@ -1,7 +1,5 @@
-import os
-from pathlib import Path
 from dataclasses import dataclass, field
-import json
+import sys
 
 from dataclasses_json import dataclass_json
 from ebooklib import epub
@@ -12,8 +10,10 @@ from decode import Decoder
 from file_manager import FileManager
 import utils
 
-CURRENT_DIR = Path(__file__).resolve().parent
+import custom_request
+
 logger = custom_logger.create_logger('NOVEL SCRAPPING')
+
 
 @dataclass_json
 @dataclass
@@ -24,7 +24,6 @@ class Metadata:
     end_year: Optional[str] = None
     language: Optional[str] = "en"
     description: Optional[str] = None
-    cover_image_path: Optional[str] = None
     tags: list[str] = field(default_factory=list)
 
 
@@ -47,35 +46,58 @@ class Chapter:
 class Novel:
     metadata: Metadata
     chapters: list[Chapter] = field(default_factory=list)
-    toc_main_link: str = None
-    toc_links_list: list[str] = field(default_factory=list)
+    toc_main_url: str = None
+    chapters_url_list: list[str] = field(default_factory=list)
+    host: str = None
     # Some novels already have the title in the content.
     save_title_to_content: bool = True
 
     def __init__(self,
                  novel_title: str = None,
-                 toc_main_link: str = None,
-                 toc_links_list: list[str] = None,
+                 toc_main_url: str = None,
+                 toc_html: str = None,
+                 chapters_url_list: list[str] = None,
                  metadata: Metadata = None,
                  chapters: list[Chapter] = None,
-                 save_title_to_content: bool = False):
+                 save_title_to_content: bool = False,
+                 novel_base_dir: str = None,
+                 host: str = None):
+
+        if toc_main_url and toc_html:
+            logger.error('There can only be one or toc_main_url or toc_html')
+            sys.exit(1)
 
         if metadata is not None:
             self.metadata = metadata
         elif novel_title is not None:
             self.metadata = Metadata(novel_title)
         else:
-            raise ValueError("You need to set 'novel_title' or 'metadata'.")
+            logger.error('You need to set "novel_title" or "metadata".')
+            sys.exit(1)
+
+        self.file_manager = FileManager(novel_title=self.metadata.novel_title,
+                                        novel_base_dir=novel_base_dir)
+
+        if toc_html:
+            self.file_manager.add_toc(toc_html)
+
+        self.toc_main_url = toc_main_url
+        self.chapters_url_list = chapters_url_list if chapters_url_list else []
 
         self.chapters = chapters if chapters else []
-        self.toc_main_link = toc_main_link
-        self.toc_links_list = toc_links_list if toc_links_list else []
 
-        self.toc = [{}]
-        self.file_manager = FileManager(self.metadata.novel_title)
-        self.save_novel_to_json()
-        self.decoder = Decoder(utils.obtain_host(self.toc_main_link))
         self.save_title_to_content = save_title_to_content
+        if not host and not toc_main_url:
+            logger.error('You need to set "host" or "toc_main_url".')
+            sys.exit(1)
+
+        self.host = host if host else utils.obtain_host(self.toc_main_url)
+        self.decoder = Decoder(self.host)
+
+        self.save_novel_to_json()
+
+    ## NOVEL PARAMETERS MANAGEMENT
+
 
     def set_save_title_to_content(self, save_title_to_content: bool):
         self.save_title_to_content = save_title_to_content
@@ -110,61 +132,71 @@ class Novel:
                        self.metadata.novel_title}')
 
     def set_cover_image(self, cover_image_path: str) -> None:
-        new_cover_image_path = self.file_manager.save_cover_img(
-            cover_image_path)
-        if new_cover_image_path:
-            self.metadata.cover_image_path = new_cover_image_path
-            self.save_novel_to_json()
-            logger.info(f'New cover image on file {
-                        self.metadata.cover_image_path}')
+        self.file_manager.save_novel_cover(cover_image_path)
+        self.save_novel_to_json()
+        logger.info('New cover image saved')
+
+    def set_host(self, host: str) -> None:
+        self.host = host
+        self.decoder = Decoder(self.host)
+        self.save_novel_to_json()
 
     def save_novel_to_json(self) -> None:
         self.file_manager.save_novel_json(self.to_dict())
 
-    def set_toc_main_link(self, toc_main_link: str) -> None:
-        self.toc_main_link = toc_main_link
-        self.file_manager.clear_toc()
-        self.decoder = Decoder(utils.obtain_host(self.toc_main_link))
-        self.update_toc_links_list(update_toc=True)
 
-    def get_links_from_toc(self) -> None:
-        links = []
-        tocs = self.file_manager.get_all_toc()
-        for toc_content in tocs:
-            toc_links = self.decoder.decode_html(toc_content, 'index')
-            toc_links = [link['href'] for link in toc_links]
-            if toc_links:
-                links = [*links, *toc_links]
-        self.toc_links_list = links
-        self.create_chapters_from_toc()
+    ## TABLE OF CONTENTS MANAGEMENT
+
+
+    def set_toc_main_url(self, toc_main_url: str, host: str = None, update_host: bool = False) -> None:
+        self.toc_main_url = toc_main_url
+        self.file_manager.clear_toc()
+        if host:
+            self.host = host
+            self.decoder = Decoder(self.host)
+        elif update_host:
+            self.decoder = Decoder(utils.obtain_host(self.toc_main_url))
+
+    def add_toc_html(self, html: str, host: str = None) -> None:
+        self.clear_toc()
+        if host:
+            self.host = host
+            self.decoder = Decoder(self.host)
+        self.file_manager.add_toc(html)
+        # Delete toc_main_url since they are exclusive
+        self.toc_main_url = None
         self.save_novel_to_json()
 
-    def update_toc_links_list(self, update_toc: bool = False) -> None:
-        toc_content, _ = utils.get_url_or_temp_file(self.file_manager,
-                                                    self.toc_main_link,
-                                                    reload=update_toc)
+    def clear_toc(self):
+        self.file_manager.clear_toc()
 
-        if not toc_content:
-            logger.warning(f'No content found on link {self.toc_main_link}')
-            return
-        self.file_manager.add_toc(toc_content)
+    def reload_toc(self, hard_reload: bool = False) -> None:
+        # Hard reload will request again the toc files from the toc_main_url
+        # Only works with toc_main_url
+        if hard_reload and self.toc_main_url:
+            self.file_manager.clear_toc()
+            all_tocs_content = []
+            toc_content = self._add_toc(self.toc_main_url)
+            all_tocs_content.append(toc_content)
+            if self.decoder.has_pagination():
+                next_page = self._get_next_page_from_toc_content(toc_content)
+                while next_page:
+                    toc_content = self._add_toc(next_page)
+                    next_page = self._get_next_page_from_toc_content(toc_content)
+                    all_tocs_content.append(toc_content)
+        else:
+            all_tocs_content = self.file_manager.get_all_toc()
 
-        if self.decoder.has_pagination():
-            next_link_tag = self.decoder.decode_html(toc_content, 'next_page')
-            aux = 1
+        # Now we get the links from the toc content
+        for toc_content in all_tocs_content:
+            self.chapters_url_list = [*self.chapters_url_list,
+                                      *self._get_chapter_urls_from_toc_content(toc_content)]
 
-            while next_link_tag:
-                next_link = next_link_tag[0]['href']
+        self.save_novel_to_json()
+        self.create_chapters_from_toc()
 
-                toc_new_content, _ = utils.get_url_or_temp_file(self.file_manager,
-                                                                next_link,
-                                                                reload=update_toc)
-                if toc_new_content:
-                    next_link_tag = self.decoder.decode_html(
-                        toc_new_content, 'next_page')
-                    self.file_manager.add_toc(toc_new_content)
-                aux += 1
-        self.get_links_from_toc()
+
+    ## CHAPTERS MANAGEMENT
 
 
     def add_or_update_chapter(self, chapter: Chapter, link_idx: int = None) -> None:
@@ -184,13 +216,12 @@ class Novel:
 
     def order_chapters_by_link_list(self) -> None:
         self.chapters.sort(
-            key=lambda x: self.toc_links_list.index(x.chapter_link))
+            key=lambda x: self.chapters_url_list.index(x.chapter_link))
 
-    def scrap_chapter(self, chapter_link: str, file_path: str = None, update_html: bool = False) -> Chapter:
-        chapter_html, chapter_html_filename = utils.get_url_or_temp_file(self.file_manager,
-                                                                         chapter_link,
-                                                                         file_path,
-                                                                         update_html)
+    def scrap_chapter(self, chapter_link: str, chapter_filename: str = None, update_html: bool = False) -> Chapter:
+        chapter_html, chapter_html_filename = self._get_chapter(chapter_link,
+                                                                chapter_filename,
+                                                                update_html)
         # We create a new chapter using the link and add it to the list of Chapters
         if not chapter_html or not chapter_html_filename:
             logger.warning(f'Failed to create chapter on link: "{
@@ -212,13 +243,8 @@ class Novel:
         logger.info(f'Chapter scrapped from link: {chapter_link}')
         return chapter, chapter_title, chapter_content
 
-    def set_custom_toc(self, html: str):
-        self.clear_toc()
-        self.file_manager.add_toc(html)
-        self.get_links_from_toc()
-
     def create_chapters_from_toc(self):
-        for chapter_link in self.toc_links_list:
+        for chapter_link in self.chapters_url_list:
             chapter_idx = self.find_chapter_index_by_link(chapter_link)
             if not chapter_idx:
                 chapter = Chapter(chapter_link=chapter_link)
@@ -226,8 +252,8 @@ class Novel:
         self.order_chapters_by_link_list()
 
     def scrap_all_chapters(self, update_chapters: bool = False, update_html: bool = False) -> None:
-        if self.toc_links_list:
-            for chapter_link in self.toc_links_list:
+        if self.chapters_url_list:
+            for chapter_link in self.chapters_url_list:
                 # Search if the chapter exists
                 chapter_idx = self.find_chapter_index_by_link(chapter_link)
                 if not chapter_idx:
@@ -237,7 +263,7 @@ class Novel:
                     self.scrap_chapter(chapter_link,
                                        update_html=update_html)
         else:
-            logger.warning('No links found on toc_links_list')
+            logger.warning('No links found on chapters_url_list')
 
     def find_chapter_index_by_link(self, chapter_link: str) -> str:
         for index, chapter in enumerate(self.chapters):
@@ -274,12 +300,10 @@ class Novel:
             book.add_metadata('OPF', 'meta', '', {
                               'name': 'calibre:series_index', 'content': calibre_collection["idx"]})
 
-        if self.metadata.cover_image_path:
-            cover_image_content = self.file_manager.load_cover_img(
-                self.metadata.cover_image_path)
-            if cover_image_content:
-                book.set_cover('cover.jpg', cover_image_content)
-                book.spine += ['cover']
+        cover_image_content = self.file_manager.load_novel_cover()
+        if cover_image_content:
+            book.set_cover('cover.jpg', cover_image_content)
+            book.spine += ['cover']
 
         book.spine.append('nav')
         return book
@@ -293,9 +317,8 @@ class Novel:
                 return
         if chapter:
             if not chapter_html:
-                chapter_html, _ = utils.get_url_or_temp_file(self.file_manager,
-                                                             chapter.chapter_link,
-                                                             chapter.chapter_html_filename)
+                chapter_html, _ = self._get_chapter(chapter.chapter_link,
+                                                    chapter.chapter_html_filename)
             paragraphs = self.decoder.decode_html(chapter_html, 'content')
             title = chapter.chapter_title
             if title is None:
@@ -326,7 +349,7 @@ class Novel:
                               collection_idx: int = None):
         idx_start = chapters_start - 1
         if idx_start >= len(self.chapters):
-            logger.warning(f'start_chapter out of range')
+            logger.warning('start_chapter out of range')
             return
 
         if not chapters_end:
@@ -347,7 +370,7 @@ class Novel:
             _, title, chapter_content = self.scrap_chapter(
                 chapter_link=chapter.chapter_link)
             if not chapter_content:
-                logger.warning(f'Error reading chapter')
+                logger.warning('Error reading chapter')
                 continue
             file_name = utils.generate_epub_file_name_from_title(title)
 
@@ -362,10 +385,7 @@ class Novel:
 
         book.add_item(epub.EpubNcx())
         book.add_item(epub.EpubNav())
-        output_epub_filepath = f'{
-            self.file_manager.get_output_dir()}/{book_title}.epub'
-        epub.write_epub(output_epub_filepath, book)
-        logger.info(f'Saved epub to file {output_epub_filepath}')
+        self.file_manager.save_book(book, f'{book_title}.epub')
 
     def save_novel_to_epub(self, chaps_by_vol: int = 100) -> None:
         start = 1
@@ -376,19 +396,62 @@ class Novel:
                                        collection_idx=idx)
             start = start + chaps_by_vol
             idx = idx + 1
-            
-    def clear_toc(self):
-        self.file_manager.clear_toc()
-
-    def add_custom_toc(self, html: str):
-        self.file_manager.add_toc(html)
-        self.get_links_from_toc()
 
     def clean_chapters_html_files(self):
         for chapter in self.chapters:
             if chapter.chapter_html_filename:
-                chapter_html, _ = utils.get_url_or_temp_file(
+                chapter_html, _ = self._get_chapter(
                     self.file_manager, chapter.chapter_link, chapter.chapter_html_filename)
                 chapter_html = self.decoder.clean_html(chapter_html)
-                self.file_manager.save_to_temp_file(
+                self.file_manager.save_chapter_html(
                     chapter.chapter_html_filename, chapter_html)
+
+    def _get_chapter(self,
+                     url: str,
+                     chapter_filename: str = None,
+                     reload: bool = False):
+        if not chapter_filename:
+            chapter_filename = utils.generate_file_name_from_url(url)
+
+        if not reload:
+            content = self.file_manager.load_chapter_html(chapter_filename)
+            if content:
+                return content, chapter_filename
+
+        content = custom_request.get_html_content(url)
+        if not content:
+            return
+
+        if chapter_filename:
+            self.file_manager.save_chapter_html(chapter_filename, content)
+        return content, chapter_filename
+
+    def _add_toc(self,
+                 url: str,
+                 toc_filename: str = None,
+                 reload: bool = False):
+        if not reload:
+            content = self.file_manager.get_toc(toc_filename)
+            if content:
+                return content
+
+        content = custom_request.get_html_content(url)
+        if not content:
+            logger.warning(f'No content found on link {url}')
+            sys.exit(1)
+
+        self.file_manager.add_toc(content)
+        return content
+
+    def _get_chapter_urls_from_toc_content(self, toc_content: str) -> list[str]:
+        toc_elements = self.decoder.decode_html(toc_content, 'index')
+        toc_urls = [toc_element['href'] for toc_element in toc_elements]
+        if toc_urls:
+            return toc_urls
+        logger.warning('No chapter links found on toc content')
+        sys.exit(1)
+
+    def _get_next_page_from_toc_content(self, toc_content:str) -> str:
+        next_page = self.decoder.decode_html(toc_content, 'next_page')
+        if next_page:
+            return next_page[0]['href']

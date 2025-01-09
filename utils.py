@@ -58,22 +58,3 @@ def create_volume_id(n: int):
     return f'v{n:02}'
 
 
-def get_url_or_temp_file(output_file: FileManager,
-                         url: str,
-                         temp_file_path: str = None,
-                         reload: bool = False):
-    if not temp_file_path:
-        temp_file_path = generate_file_name_from_url(url)
-
-    if not reload:
-        content = output_file.load_from_temp_file(temp_file_path)
-        if content:
-            return content, temp_file_path
-
-    content = custom_request.get_html_content(url)
-    if not content:
-        return
-
-    if temp_file_path:
-        output_file.save_to_temp_file(temp_file_path, content)
-    return content, temp_file_path

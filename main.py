@@ -222,4 +222,4 @@ if __name__ == '__main__':
     settings = load_settings()
     if not settings:
         settings = CONTEXT_SETTINGS
-    cli(default_map=settings)
+    cli()
