@@ -42,10 +42,11 @@ def generate_epub_file_name_from_title(title: str) -> str:
 
 
 def obtain_host(url: str):
-    try:
-        host = url.split(':')[1]
-    except Exception:
-        pass
+    host = url.split(':')[1]
+    # try:
+    #     host = url.split(':')[1]
+    # except Exception as e:
+    #     pass
     while host.startswith('/'):
         host = host[1:]
 

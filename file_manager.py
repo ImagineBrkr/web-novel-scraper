@@ -1,7 +1,7 @@
 import os
 import json
 
-from appdirs import AppDirs
+import platformdirs
 from pathlib import Path
 import shutil
 from dotenv import load_dotenv
@@ -14,14 +14,13 @@ load_dotenv()
 app_author = "ImagineBrkr"
 app_name = "web-novel-scrapper"
 
-dirs = AppDirs(app_name, app_author)
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
 SCRAPPER_BASE_CONFIG_DIR = os.getenv(
-    'SCRAPPER_BASE_CONFIG_DIR', dirs.user_config_dir)
+    'SCRAPPER_BASE_CONFIG_DIR', platformdirs.user_config_dir(app_name, app_author))
 SCRAPPER_BASE_DATA_DIR = os.getenv(
-    'SCRAPPER_BASE_DATA_DIR', dirs.user_data_dir)
+    'SCRAPPER_BASE_DATA_DIR', platformdirs.user_data_dir(app_name, app_author))
 
 logger = custom_logger.create_logger('FILE MANAGER')
 
@@ -76,7 +75,7 @@ class FileManager:
             _delete_file(full_path)
 
     def save_novel_json(self, novel_data: dict):
-        _save_content_to_file(self.novel_json_filepath, novel_data, json=True)
+        _save_content_to_file(self.novel_json_filepath, novel_data, is_json=True)
 
     def load_novel_json(self):
         if self.novel_json_filepath.exists():
@@ -161,13 +160,13 @@ def _create_path_if_not_exists(dir_path: str) -> Path:
         raise
 
 
-def _save_content_to_file(filepath: Path, content: str | dict, json: bool = False) -> None:
+def _save_content_to_file(filepath: Path, content: str | dict, is_json: bool = False) -> None:
     try:
-        if json:
-            with open(filepath, 'w', encoding='utf-16') as file:
+        if is_json:
+            with open(filepath, 'w', encoding='utf-8') as file:
                 json.dump(content, file, indent=2, ensure_ascii=False)
         else:
-            with open(filepath, 'w', encoding='UTF-16') as file:
+            with open(filepath, 'w', encoding='UTF-8') as file:
                 file.write(content)
         logger.info(f'File saved successfully: {filepath}')
     except (OSError, IOError) as e:
@@ -181,7 +180,7 @@ def _read_content_from_file(filepath: Path, bytes: bool = False) -> str:
     try:
         # Read the file
         read_mode = 'rb' if bytes else 'r'
-        with open(filepath, read_mode, encoding='UTF-16') as file:
+        with open(filepath, read_mode, encoding='UTF-8') as file:
             content = file.read()
         logger.info(f'File read successfully: {filepath}')
         return content

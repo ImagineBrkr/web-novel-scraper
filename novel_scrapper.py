@@ -30,12 +30,12 @@ class Metadata:
 @dataclass_json
 @dataclass
 class Chapter:
-    chapter_link: str
+    chapter_url: str
     chapter_html_filename: str = None
     chapter_title: str = None
 
     def __str__(self):
-        return f'Title: {self.chapter_title}, link: {self.chapter_link}'
+        return f'Title: {self.chapter_title}, link: {self.chapter_url}'
 
     def __lt__(self, another):
         return self.chapter_title < another.chapter_title
@@ -94,14 +94,13 @@ class Novel:
         self.host = host if host else utils.obtain_host(self.toc_main_url)
         self.decoder = Decoder(self.host)
 
-        self.save_novel_to_json()
+        self.save_novel()
 
-    ## NOVEL PARAMETERS MANAGEMENT
-
+    # NOVEL PARAMETERS MANAGEMENT
 
     def set_save_title_to_content(self, save_title_to_content: bool):
         self.save_title_to_content = save_title_to_content
-        self.save_novel_to_json()
+        self.save_novel()
 
     def set_metadata(self, author: str = None,
                      start_year: str = None,
@@ -113,12 +112,12 @@ class Novel:
         self.metadata.end_year = end_year if end_year is not None else self.metadata.end_year
         self.metadata.language = language if language is not None else self.metadata.language
         self.metadata.description = description if description is not None else self.metadata.description
-        self.save_novel_to_json()
+        self.save_novel()
 
     def add_tag(self, tag: str) -> None:
         if tag not in self.metadata.tags:
             self.metadata.tags.append(tag)
-            self.save_novel_to_json()
+            self.save_novel()
             return
         logger.warning(f'Tag "{tag}" already exists on novel {
                        self.metadata.novel_title}')
@@ -126,27 +125,25 @@ class Novel:
     def remove_tag(self, tag: str) -> None:
         if tag in self.metadata.tags:
             self.metadata.tags.remove(tag)
-            self.save_novel_to_json()
+            self.save_novel()
             return
         logger.warning(f'Tag "{tag}" doesn\'t exist on novel {
                        self.metadata.novel_title}')
 
     def set_cover_image(self, cover_image_path: str) -> None:
         self.file_manager.save_novel_cover(cover_image_path)
-        self.save_novel_to_json()
+        self.save_novel()
         logger.info('New cover image saved')
 
     def set_host(self, host: str) -> None:
         self.host = host
         self.decoder = Decoder(self.host)
-        self.save_novel_to_json()
+        self.save_novel()
 
-    def save_novel_to_json(self) -> None:
+    def save_novel(self) -> None:
         self.file_manager.save_novel_json(self.to_dict())
 
-
-    ## TABLE OF CONTENTS MANAGEMENT
-
+    # TABLE OF CONTENTS MANAGEMENT
 
     def set_toc_main_url(self, toc_main_url: str, host: str = None, update_host: bool = False) -> None:
         self.toc_main_url = toc_main_url
@@ -165,7 +162,7 @@ class Novel:
         self.file_manager.add_toc(html)
         # Delete toc_main_url since they are exclusive
         self.toc_main_url = None
-        self.save_novel_to_json()
+        self.save_novel()
 
     def clear_toc(self):
         self.file_manager.clear_toc()
@@ -182,94 +179,73 @@ class Novel:
                 next_page = self._get_next_page_from_toc_content(toc_content)
                 while next_page:
                     toc_content = self._add_toc(next_page)
-                    next_page = self._get_next_page_from_toc_content(toc_content)
+                    next_page = self._get_next_page_from_toc_content(
+                        toc_content)
                     all_tocs_content.append(toc_content)
         else:
             all_tocs_content = self.file_manager.get_all_toc()
 
         # Now we get the links from the toc content
+        self.chapters_url_list = []
         for toc_content in all_tocs_content:
             self.chapters_url_list = [*self.chapters_url_list,
                                       *self._get_chapter_urls_from_toc_content(toc_content)]
 
-        self.save_novel_to_json()
+        self.save_novel()
         self.create_chapters_from_toc()
 
+    # CHAPTERS MANAGEMENT
 
-    ## CHAPTERS MANAGEMENT
-
-
-    def add_or_update_chapter(self, chapter: Chapter, link_idx: int = None) -> None:
-        if link_idx:
-            chapter_idx = link_idx
-        else:
-            # Check if the chapter exists
-            chapter_idx = self.find_chapter_index_by_link(chapter.chapter_link)
-            if chapter_idx is None:
-                # If no existing chapter we append it
-                self.chapters.append(chapter)
-                chapter_idx = len(self.chapters)
-            else:
-                self.chapters[chapter_idx] = chapter
-        self.save_novel_to_json()
-        return chapter_idx
-
-    def order_chapters_by_link_list(self) -> None:
-        self.chapters.sort(
-            key=lambda x: self.chapters_url_list.index(x.chapter_link))
-
-    def scrap_chapter(self, chapter_link: str, chapter_filename: str = None, update_html: bool = False) -> Chapter:
-        chapter_html, chapter_html_filename = self._get_chapter(chapter_link,
+    def scrap_chapter(self, chapter_url: str, chapter_filename: str = None, update_html: bool = False) -> Chapter:
+        chapter_html, chapter_html_filename = self._get_chapter(chapter_url,
                                                                 chapter_filename,
                                                                 update_html)
         # We create a new chapter using the link and add it to the list of Chapters
         if not chapter_html or not chapter_html_filename:
             logger.warning(f'Failed to create chapter on link: "{
-                           chapter_link}" on path "{chapter_html_filename}"')
+                           chapter_url}" on path "{chapter_html_filename}"')
             return
 
-        chapter = Chapter(chapter_link=chapter_link,
-                          chapter_html_filename=chapter_html_filename)
-        self.add_or_update_chapter(chapter=chapter)
-
         # We get the title and content, if there's no title, we autogenerate one.
-        chapter_title, chapter_content = self.get_chapter_content(
-            chapter=chapter, chapter_html=chapter_html)
+        chapter_title, chapter_content = self._decode_chapter(
+            chapter_html=chapter_html, idx_for_chapter_name=self._get_chapter_url_idx(chapter_url))
 
         chapter = Chapter(chapter_title=chapter_title,
-                          chapter_link=chapter_link,
+                          chapter_url=chapter_url,
                           chapter_html_filename=chapter_html_filename)
-        self.add_or_update_chapter(chapter)
-        logger.info(f'Chapter scrapped from link: {chapter_link}')
-        return chapter, chapter_title, chapter_content
+        self._add_or_update_chapter_data(chapter)
+        logger.info(f'Chapter scrapped from link: {chapter_url}')
+        return chapter, chapter_content
 
     def create_chapters_from_toc(self):
-        for chapter_link in self.chapters_url_list:
-            chapter_idx = self.find_chapter_index_by_link(chapter_link)
+        increment = 100
+        aux = 1
+        for chapter_url in self.chapters_url_list:
+            aux += 1
+            chapter_idx = self._find_chapter_index_by_link(chapter_url)
             if not chapter_idx:
-                chapter = Chapter(chapter_link=chapter_link)
-                self.add_or_update_chapter(chapter=chapter)
-        self.order_chapters_by_link_list()
+                chapter = Chapter(chapter_url=chapter_url)
+                self._add_or_update_chapter_data(
+                    chapter=chapter, save_in_file=False)
+            if aux == increment:
+                self.save_novel()
+                aux = 1
+        self._order_chapters_by_link_list()
+        self.save_novel()
 
     def scrap_all_chapters(self, update_chapters: bool = False, update_html: bool = False) -> None:
         if self.chapters_url_list:
-            for chapter_link in self.chapters_url_list:
+            for chapter_url in self.chapters_url_list:
                 # Search if the chapter exists
-                chapter_idx = self.find_chapter_index_by_link(chapter_link)
+                chapter_idx = self._find_chapter_index_by_link(chapter_url)
                 if not chapter_idx:
-                    self.scrap_chapter(chapter_link,
+                    self.scrap_chapter(chapter_url,
                                        update_html=update_html)
                 elif chapter_idx is not None and update_chapters:
-                    self.scrap_chapter(chapter_link,
+                    self.scrap_chapter(chapter_url,
                                        update_html=update_html)
         else:
             logger.warning('No links found on chapters_url_list')
-
-    def find_chapter_index_by_link(self, chapter_link: str) -> str:
-        for index, chapter in enumerate(self.chapters):
-            if chapter.chapter_link == chapter_link:
-                return index
-        return None
 
     def create_epub_book(self, book_title: str = None, calibre_collection: dict = None) -> epub.EpubBook:
         book = epub.EpubBook()
@@ -308,40 +284,6 @@ class Novel:
         book.spine.append('nav')
         return book
 
-    def get_chapter_content(self, chapter: Chapter = None, idx: int = None, chapter_html: str = None) -> tuple[str, str]:
-        if idx:
-            try:
-                chapter = self.chapters[idx]
-            except IndexError:
-                logger.error(f'Chapter index {idx} not found')
-                return
-        if chapter:
-            if not chapter_html:
-                chapter_html, _ = self._get_chapter(chapter.chapter_link,
-                                                    chapter.chapter_html_filename)
-            paragraphs = self.decoder.decode_html(chapter_html, 'content')
-            title = chapter.chapter_title
-            if title is None:
-                title = self.decoder.decode_html(chapter_html, 'title')
-            if title is None:
-                title = f'{self.metadata.novel_title} Chapter {
-                    self.find_chapter_index_by_link(chapter.chapter_link) + 1}'
-            title = str(title)
-
-            chapter_content = ""
-            if self.save_title_to_content:
-                chapter_content += f'<h4>{title}</h4>'
-            if paragraphs:
-                logger.info(f'{len(paragraphs)} paragraphs found in chapter link {
-                            chapter.chapter_link}')
-                for paragraph in paragraphs:
-                    chapter_content += str(paragraph)
-                return title, chapter_content
-            logger.warning(f'No chapter content found for chapter link {
-                           chapter.chapter_link} on file {chapter.chapter_html_filename}')
-
-        logger.warning('No chapter given')
-
     def save_chapters_to_epub(self,
                               chapters_start: int,
                               chapters_num: int = 100,
@@ -368,7 +310,7 @@ class Novel:
 
         for chapter in self.chapters[idx_start:idx_end]:
             _, title, chapter_content = self.scrap_chapter(
-                chapter_link=chapter.chapter_link)
+                chapter_url=chapter.chapter_url)
             if not chapter_content:
                 logger.warning('Error reading chapter')
                 continue
@@ -401,7 +343,7 @@ class Novel:
         for chapter in self.chapters:
             if chapter.chapter_html_filename:
                 chapter_html, _ = self._get_chapter(
-                    self.file_manager, chapter.chapter_link, chapter.chapter_html_filename)
+                    self.file_manager, chapter.chapter_url, chapter.chapter_html_filename)
                 chapter_html = self.decoder.clean_html(chapter_html)
                 self.file_manager.save_chapter_html(
                     chapter.chapter_html_filename, chapter_html)
@@ -451,7 +393,80 @@ class Novel:
         logger.warning('No chapter links found on toc content')
         sys.exit(1)
 
-    def _get_next_page_from_toc_content(self, toc_content:str) -> str:
+    def _get_next_page_from_toc_content(self, toc_content: str) -> str:
         next_page = self.decoder.decode_html(toc_content, 'next_page')
         if next_page:
             return next_page[0]['href']
+
+    def _add_or_update_chapter_data(self, chapter: Chapter, link_idx: int = None, save_in_file: bool = True) -> None:
+        if link_idx:
+            chapter_idx = link_idx
+        else:
+            # Check if the chapter exists
+            chapter_idx = self._find_chapter_index_by_link(chapter.chapter_url)
+            if chapter_idx is None:
+                # If no existing chapter we append it
+                self.chapters.append(chapter)
+                chapter_idx = len(self.chapters)
+            else:
+                self.chapters[chapter_idx] = chapter
+        if save_in_file:
+            self.save_novel()
+        return chapter_idx
+
+    def _order_chapters_by_link_list(self) -> None:
+        self.chapters.sort(
+            key=lambda x: self.chapters_url_list.index(x.chapter_url))
+
+    def _get_chapter_url_idx(self, chapter_url: str) -> int:
+        if chapter_url in self.chapters_url_list:
+            return self.chapters_url_list.index(chapter_url)
+
+    def _find_chapter_index_by_link(self, chapter_url: str) -> str:
+        for index, chapter in enumerate(self.chapters):
+            if chapter.chapter_url == chapter_url:
+                return index
+        return None
+
+    def _decode_chapter(self, chapter: Chapter = None, idx: int = None, chapter_html: str = None, idx_for_chapter_name: str = None) -> tuple[str, str]:
+        if idx:
+            try:
+                chapter = self.chapters[idx]
+            except IndexError:
+                logger.error(f'Chapter index {idx} not found')
+                return
+        chapter_title = None
+        if chapter:
+            chapter_html, _ = self._get_chapter(chapter.chapter_url,
+                                                chapter.chapter_html_filename)
+            chapter_title = chapter.chapter_title
+            if not chapter_html:
+                logger.error(f'No chapter content found for chapter link {
+                             chapter.chapter_url} on file {chapter.chapter_html_filename}')
+                return
+
+        if not chapter_html:
+            logger.error('No argument was passed to decode_chapter')
+            return
+
+        paragraphs = self.decoder.decode_html(chapter_html, 'content')
+
+        if not chapter_title:
+            chapter_title = self.decoder.decode_html(chapter_html, 'title')
+        if not chapter_title:
+            chapter_title = f'{self.metadata.novel_title} Chapter {
+                idx_for_chapter_name}'
+        chapter_title = str(chapter_title)
+
+        chapter_content = ""
+        if self.save_title_to_content:
+            chapter_content += f'<h4>{chapter_title}</h4>'
+        if paragraphs:
+            logger.info(f'{len(paragraphs)} paragraphs found in chapter link {
+                        chapter.chapter_url}')
+            for paragraph in paragraphs:
+                chapter_content += str(paragraph)
+            return chapter_title, chapter_content
+
+        logger.warning(f'No chapter content found for chapter link {
+            chapter.chapter_url} on file {chapter.chapter_html_filename}')
