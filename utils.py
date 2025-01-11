@@ -1,5 +1,5 @@
 from file_manager import FileManager
-import custom_request
+import request_manager
 import hashlib
 from urllib.parse import urlparse
 import re

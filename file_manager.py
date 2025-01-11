@@ -111,10 +111,19 @@ class FileManager:
                 toc_pos += 1
         _save_content_to_file(toc_path, content)
 
+    def update_toc(self, content: str, toc_idx: int):
+        toc_filename = f"{self.toc_preffix}_{toc_idx}.html"
+        toc_path = self.novel_data_dir / toc_filename
+        if toc_path.exists():
+            _save_content_to_file(toc_path, content)
+        else:
+            logger.error(f'TOC file not found: {toc_path}')
+
     def get_toc(self, pos_idx: int):
         toc_filename = f"{self.toc_preffix}_{pos_idx}.html"
         toc_path = self.novel_data_dir / toc_filename
-        return _read_content_from_file(toc_path)
+        if toc_path.exists():
+            return _read_content_from_file(toc_path)
 
     def get_all_toc(self):
         pos = 0

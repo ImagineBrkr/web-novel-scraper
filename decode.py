@@ -10,7 +10,8 @@ logger = custom_logger.create_logger('DECODE HTML')
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
-DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{CURRENT_DIR}/decode_guide.json')
+DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{
+                              CURRENT_DIR}/decode_guide.json')
 
 XOR_SEPARATOR = "XOR"
 
@@ -30,23 +31,27 @@ except Exception as e:
     logger.error(f"Error {DECODE_GUIDE_FILE}: {e}")
     raise
 
+
 class Decoder:
     host: str
     decode_guide: json
 
     def __init__(self, host: str):
         self.host = host
-        self.decode_guide = self._get_element_by_key(DECODE_GUIDE, 'host', host)
+        self.decode_guide = self._get_element_by_key(
+            DECODE_GUIDE, 'host', host)
 
     def decode_html(self, html: str, content_type: str):
         if not content_type in self.decode_guide:
-            logger.error(f'{content_type} key does not exists on decode guide {DECODE_GUIDE_FILE} for host {self.host}')
+            logger.error(f'{content_type} key does not exists on decode guide {
+                         DECODE_GUIDE_FILE} for host {self.host}')
             return
         soup = BeautifulSoup(html, 'html.parser')
         decoder = self.decode_guide[content_type]
         elements = self._find_elements(soup, decoder)
         if not elements:
-            logger.warning(f'{content_type} not found on html using {DECODE_GUIDE_FILE} for host {self.host}')
+            logger.warning(f'{content_type} not found on html using {
+                           DECODE_GUIDE_FILE} for host {self.host}')
         return elements
 
     def has_pagination(self, host: str = None):
@@ -55,12 +60,26 @@ class Decoder:
             return decode_guide['has_pagination']
 
         return self.decode_guide['has_pagination']
-    
-    def clean_html(self, html: str):
+
+    def clean_html(self, html: str, hard_clean: bool = False):
+        tags_for_soft_clean = ['script', 'style', 'link',
+                               'form', 'meta', 'hr', 'noscript', 'button']
+        tags_for_hard_clean = ['header', 'footer', 'nav', 'aside', 'iframe', 'object', 'embed', 'svg', 'canvas', 'map', 'area',
+                               'audio', 'video', 'track', 'source', 'applet', 'frame', 'frameset', 'noframes', 'noembed', 'blink', 'marquee']
+
+        tags_for_custom_clean = []
+        if 'clean' in self.decode_guide:
+            tags_for_custom_clean = self.decode_guide['clean']
+
+        tags_for_clean = tags_for_soft_clean + tags_for_custom_clean
+        if hard_clean:
+            tags_for_clean += tags_for_hard_clean
+
         soup = BeautifulSoup(html, 'html.parser')
-        for unwanted_tags in soup(['script', 'style', 'header', 'footer', 'link']):
+        for unwanted_tags in soup(tags_for_clean):
             unwanted_tags.decompose()
-        return str(soup)
+
+        return "\n".join([line.strip() for line in str(soup).splitlines() if line.strip()])
 
     def _find_elements(self, soup: BeautifulSoup, decoder: dict):
         selector = decoder.get('selector')
