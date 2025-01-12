@@ -189,7 +189,8 @@ def _read_content_from_file(filepath: Path, bytes: bool = False) -> str:
     try:
         # Read the file
         read_mode = 'rb' if bytes else 'r'
-        with open(filepath, read_mode, encoding='UTF-8') as file:
+        encoding = None if bytes else 'utf-8'
+        with open(filepath, read_mode, encoding=encoding) as file:
             content = file.read()
         logger.info(f'File read successfully: {filepath}')
         return content

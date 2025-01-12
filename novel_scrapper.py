@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, fields, field
 import sys
 
 from dataclasses_json import dataclass_json
@@ -26,6 +26,52 @@ class Metadata:
     description: Optional[str] = None
     tags: list[str] = field(default_factory=list)
 
+    def update_behavior(self, **kwargs):
+        """
+        Updates the behavior configuration dynamically.
+        Only updates the attributes provided in kwargs.
+        """
+        for key, value in kwargs.items():
+            if hasattr(self, key) and value is not None:
+                setattr(self, key, value)
+
+    def __str__(self):
+        """
+        Dynamic string representation of the configuration.
+        """
+        attributes = [f"{field.name}={
+            getattr(self, field.name)}" for field in fields(self)]
+        return f"Scrapper Behavior: \n{'\n'.join(attributes)}"
+
+
+@dataclass_json
+@dataclass
+class ScrapperBehavior:
+    # Some novels already have the title in the content.
+    save_title_to_content: bool = False
+    # Some novels have the toc link without the host
+    auto_add_host: bool = False
+    # Some hosts return 403 when scrapping, this will force the use of FlareSolver
+    # to save time
+    force_flaresolver: bool = False
+
+    def update_behavior(self, **kwargs):
+        """
+        Updates the behavior configuration dynamically.
+        Only updates the attributes provided in kwargs.
+        """
+        for key, value in kwargs.items():
+            if hasattr(self, key) and value is not None:
+                setattr(self, key, value)
+
+    def __str__(self):
+        """
+        Dynamic string representation of the configuration.
+        """
+        attributes = [f"{field.name}={
+            getattr(self, field.name)}" for field in fields(self)]
+        return f"Scrapper Behavior: \n{'\n'.join(attributes)}"
+
 
 @dataclass_json
 @dataclass
@@ -45,14 +91,11 @@ class Chapter:
 @dataclass
 class Novel:
     metadata: Metadata
+    scrapper_behavior: ScrapperBehavior = None
     chapters: list[Chapter] = field(default_factory=list)
     toc_main_url: str = None
     chapters_url_list: list[str] = field(default_factory=list)
     host: str = None
-    # Some novels already have the title in the content.
-    save_title_to_content: bool = True
-    # Some novels have the toc link without the host
-    auto_add_host: bool = False
 
     def __init__(self,
                  novel_title: str = None,
@@ -61,10 +104,9 @@ class Novel:
                  chapters_url_list: list[str] = None,
                  metadata: Metadata = None,
                  chapters: list[Chapter] = None,
-                 save_title_to_content: bool = False,
                  novel_base_dir: str = None,
-                 host: str = None,
-                 auto_add_host: bool = False):
+                 scrapper_behavior: ScrapperBehavior = None,
+                 host: str = None):
 
         if toc_main_url and toc_html:
             logger.error('There can only be one or toc_main_url or toc_html')
@@ -89,8 +131,7 @@ class Novel:
 
         self.chapters = chapters if chapters else []
 
-        self.save_title_to_content = save_title_to_content
-        self.auto_add_host = auto_add_host
+        self.scrapper_behavior = scrapper_behavior if scrapper_behavior else ScrapperBehavior()
         if not host and not toc_main_url:
             logger.error('You need to set "host" or "toc_main_url".')
             sys.exit(1)
@@ -102,24 +143,12 @@ class Novel:
 
     # NOVEL PARAMETERS MANAGEMENT
 
-    def set_save_title_to_content(self, save_title_to_content: bool):
-        self.save_title_to_content = save_title_to_content
+    def set_scrapper_behavior(self, **kwargs) -> None:
+        self.scrapper_behavior.update_behavior(**kwargs)
         self.save_novel()
 
-    def set_auto_add_host(self, auto_add_host: bool):
-        self.auto_add_host = auto_add_host
-        self.save_novel()
-
-    def set_metadata(self, author: str = None,
-                     start_year: str = None,
-                     end_year: str = None,
-                     language: str = "en",
-                     description: str = None) -> None:
-        self.metadata.author = author if author is not None else self.metadata.author
-        self.metadata.start_year = start_year if start_year is not None else self.metadata.start_year
-        self.metadata.end_year = end_year if end_year is not None else self.metadata.end_year
-        self.metadata.language = language if language is not None else self.metadata.language
-        self.metadata.description = description if description is not None else self.metadata.description
+    def set_metadata(self, **kwargs) -> None:
+        self.metadata.update_behavior(**kwargs)
         self.save_novel()
 
     def add_tag(self, tag: str) -> None:
@@ -178,7 +207,8 @@ class Novel:
     def reload_toc(self, hard_reload: bool = False) -> None:
         # Hard reload will request again the toc files from the toc_main_url
         # Only works with toc_main_url
-        if hard_reload and self.toc_main_url:
+        all_tocs_content = self.file_manager.get_all_toc()
+        if hard_reload and self.toc_main_url or not all_tocs_content:
             self.file_manager.clear_toc()
             all_tocs_content = []
             toc_content = self._add_toc(self.toc_main_url)
@@ -190,16 +220,15 @@ class Novel:
                     next_page = self._get_next_page_from_toc_content(
                         toc_content)
                     all_tocs_content.append(toc_content)
-        else:
-            all_tocs_content = self.file_manager.get_all_toc()
 
         # Now we get the links from the toc content
         self.chapters_url_list = []
         for toc_content in all_tocs_content:
             self.chapters_url_list = [*self.chapters_url_list,
                                       *self._get_chapter_urls_from_toc_content(toc_content)]
-        if self.auto_add_host:
-            self.chapters_url_list = [f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
+        if self.scrapper_behavior.auto_add_host:
+            self.chapters_url_list = [
+                f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
 
         self.save_novel()
         self._create_chapters_from_toc()
@@ -284,36 +313,61 @@ class Novel:
 
 # EPUB CREATION
 
-    def save_novel_to_epub(self, reload_toc: bool = False, chapters_by_book: int = 100) -> None:
+    def save_novel_to_epub(self,
+                           reload_toc: bool = False,
+                           start_chapter: int = 1,
+                           end_chapter: int = None,
+                           chapters_by_book: int = 100) -> None:
         if reload_toc:
             self.reload_toc()
-        start = 1
+
+        if start_chapter > len(self.chapters):
+            logger.info(f'The start chapter is bigger than the number of chapters saved ({
+                        len(self.chapters)})')
+            return
+
+        if not end_chapter:
+            end_chapter = len(self.chapters)
+        elif end_chapter > len(self.chapters):
+            end_chapter = len(self.chapters)
+            logger.info(f'The end chapter is bigger than the number of chapters, automatically setting it to {
+                        end_chapter}.')
+
         idx = 1
-        while start < len(self.chapters):
-            self._save_chapters_to_epub(chapters_start=start,
-                                       chapters_num=chapters_by_book,
-                                       collection_idx=idx)
+        start = start_chapter
+        while start < end_chapter:
+            end = start + chapters_by_book - 1
+            if end > end_chapter:
+                end = end_chapter
+            self._save_chapters_to_epub(start_chapter=start,
+                                        end_chapter=end,
+                                        collection_idx=idx)
             start = start + chapters_by_book
             idx = idx + 1
 
 
 # UTILS
 
+
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
         if clean_chapters:
             for chapter in self.chapters:
                 if chapter.chapter_html_filename:
-                    self._clean_chapter(chapter.chapter_html_filename, hard_clean)
+                    self._clean_chapter(
+                        chapter.chapter_html_filename, hard_clean)
         if clean_toc:
             self._clean_toc(hard_clean)
 
     def _clean_chapter(self, chapter_html_filename: str, hard_clean: bool) -> None:
-        chapter_html = self.file_manager.load_chapter_html(chapter_html_filename)
+        chapter_html = self.file_manager.load_chapter_html(
+            chapter_html_filename)
         if not chapter_html:
             logger.warning(f'No content found on file {chapter_html_filename}')
             return
-        chapter_html = self.decoder.clean_html(chapter_html, hard_clean=hard_clean)
-        self.file_manager.save_chapter_html(chapter_html_filename, chapter_html)
+        chapter_html = self.decoder.clean_html(
+            chapter_html, hard_clean=hard_clean)
+        self.file_manager.save_chapter_html(
+            chapter_html_filename, chapter_html)
 
     def _clean_toc(self, hard_clean: bool) -> None:
         tocs_content = self.file_manager.get_all_toc()
@@ -355,7 +409,8 @@ class Novel:
                     return content, chapter_filename
 
             # Fetch fresh content
-            content = request_manager.get_html_content(chapter_url)
+            content = request_manager.get_html_content(chapter_url,
+                                                       force_flaresolver=self.scrapper_behavior.force_flaresolver)
             if not content:
                 logger.error(f'No content found on link {chapter_url}')
                 sys.exit()
@@ -458,7 +513,8 @@ class Novel:
             return
         chapter = None
         if chapter_idx and chapter_html:
-            logger.error('You can only set either "chapter_idx" or "chapter_html"')
+            logger.error(
+                'You can only set either "chapter_idx" or "chapter_html"')
             return
 
         if chapter_idx:
@@ -487,7 +543,7 @@ class Novel:
         if not paragraphs:
             if chapter:
                 logger.warning(f'No paragraphs found in chapter link {
-                            chapter.chapter_url} on file {chapter.chapter_html_filename}')
+                    chapter.chapter_url} on file {chapter.chapter_html_filename}')
             else:
                 logger.warning('No paragraphs found in chapter')
             return
@@ -500,7 +556,7 @@ class Novel:
         chapter_title = str(chapter_title)
 
         chapter_content = ""
-        if self.save_title_to_content:
+        if self.scrapper_behavior.save_title_to_content:
             chapter_content += f'<h4>{chapter_title}</h4>'
         logger.info(f'{len(paragraphs)} paragraphs found in chapter')
         for paragraph in paragraphs:
@@ -545,27 +601,51 @@ class Novel:
         book.spine.append('nav')
         return book
 
-    def _save_chapters_to_epub(self,
-                              chapters_start: int,
-                              chapters_num: int = 100,
-                              chapters_end: int = None,
-                              collection_idx: int = None):
-        # Chapters start at 1, so we need to substract 1 for the idx
-        idx_start = chapters_start - 1
-        if idx_start >= len(self.chapters):
-            logger.warning('start_chapter out of range')
+    def _add_chapter_to_epub_book(self, chapter: Chapter, book: epub.EpubBook):
+        chapter, chapter_content = self.scrap_chapter(
+            chapter_url=chapter.chapter_url)
+        if not chapter_content:
+            logger.warning('Error reading chapter')
             return
-        # If chapters_end is not set, we set it to idx_start + chapters_num - 1
-        if not chapters_end:
-            chapters_end = chapters_start + chapters_num - 1
-            # If chapters_end is out of range, we set it to the last chapter
-            if chapters_end > len(self.chapters):
-                chapters_end = len(self.chapters)
-        idx_end = chapters_end + 1
+        self._add_or_update_chapter_data(
+            chapter=chapter, save_in_file=False)
+        file_name = utils.generate_epub_file_name_from_title(
+            chapter.chapter_title)
+
+        chapter_epub = epub.EpubHtml(
+            title=chapter.chapter_title, file_name=file_name)
+        chapter_epub.set_content(chapter_content)
+        book.add_item(chapter_epub)
+        link = epub.Link(file_name, chapter.chapter_title,
+                         file_name.rstrip('.xhtml'))
+        toc = book.toc
+        toc.append(link)
+        book.toc = toc
+        book.spine.append(chapter_epub)
+        return book
+
+    def _save_chapters_to_epub(self,
+                               start_chapter: int,
+                               end_chapter: int = None,
+                               collection_idx: int = None):
+
+        if start_chapter > len(self.chapters):
+            logger.error('start_chapter out of range')
+            return
+        # If end_chapter is not set, we set it to idx_start + chapters_num - 1
+        if not end_chapter:
+            end_chapter = len(self.chapters)
+        # If end_chapter is out of range, we set it to the last chapter
+        if end_chapter > len(self.chapters):
+            end_chapter = len(self.chapters)
+
+        # We use a slice so every chapter starting from idx_start and before idx_end
+        idx_start = start_chapter - 1
+        idx_end = end_chapter
 
         # We create the epub book
         book_title = f'{self.metadata.novel_title} Chapters {
-            chapters_start} - {chapters_end}'
+            start_chapter} - {end_chapter}'
         calibre_collection = None
         # If collection_idx is set, we create a calibre collection
         if collection_idx:
@@ -574,22 +654,8 @@ class Novel:
         book = self._create_epub_book(book_title, calibre_collection)
 
         for chapter in self.chapters[idx_start:idx_end]:
-            chapter, chapter_content = self.scrap_chapter(
-                chapter_url=chapter.chapter_url)
-            if not chapter_content:
-                logger.warning('Error reading chapter')
-                continue
-            self._add_or_update_chapter_data(chapter=chapter,save_in_file=False)
-            file_name = utils.generate_epub_file_name_from_title(chapter.chapter_title)
-
-            chapter_epub = epub.EpubHtml(title=chapter.chapter_title, file_name=file_name)
-            chapter_epub.set_content(chapter_content)
-            book.add_item(chapter_epub)
-            link = epub.Link(file_name, chapter.chapter_title, file_name.rstrip('.xhtml'))
-            toc = book.toc
-            toc.append(link)
-            book.toc = toc
-            book.spine.append(chapter_epub)
+            book = self._add_chapter_to_epub_book(chapter=chapter,
+                                                  book=book)
 
         book.add_item(epub.EpubNcx())
         book.add_item(epub.EpubNav())

@@ -226,5 +226,24 @@
             "attributes": null,
             "array": true
         }
+    },
+    {
+        "host": "hiraethtranslation.com",
+        "has_pagination": false,
+        "title": {
+            "element": "h1",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "element": "div.reading-content p",
+            "array": true
+        },
+        "index": {
+            "element": "ul.main li a",
+            "array": true,
+            "inverted": true
+        }
     }
 ]

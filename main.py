@@ -34,7 +34,7 @@ def load_config(ctx, param, value):
     return value
 
 
-def obtain_novel(novel_title: str, novel_base_dir: str = None, allow_not_exists: bool = False) -> Novel:
+def obtain_novel(novel_title: str, novel_base_dir: str = None, allow_not_exists: bool = True) -> Novel:
     file_manager = FileManager(novel_title=novel_title,
                                novel_base_dir=novel_base_dir)
     novel_json = file_manager.load_novel_json()
@@ -80,13 +80,28 @@ def read_html(html_file: click.File) -> str:
 @click.option('--cover', type=str, help='Path of the image to be used as cover')
 @click.option('--save-title-to-content', is_flag=True, show_default=True, default=False, help='Set if the title of the chapter should be added to the content')
 @click.option('--auto-add-host', is_flag=True, show_default=True, default=False, help='Set if the host should be automatically added to the chapters urls')
-def create_novel(title, novel_base_dir, toc_main_url, toc_html, host, author, start_year, end_year, language, description, tags, cover, save_title_to_content, auto_add_host):
+@click.option('--force-flaresolver', is_flag=True, show_default=True, default=False, help='Set if the requests should be forced to use FlareSolver')
+def create_novel(title,
+                 novel_base_dir,
+                 toc_main_url,
+                 toc_html,
+                 host,
+                 author,
+                 start_year,
+                 end_year,
+                 language,
+                 description,
+                 tags,
+                 cover,
+                 save_title_to_content,
+                 auto_add_host,
+                 force_flaresolver):
     """Create a new novel"""
     novel = obtain_novel(title, novel_base_dir, allow_not_exists=True)
     if novel:
         click.confirm(f'A novel with the title {
                       title} already exists, do you want to replace it?', abort=True)
-    novel.clear_toc()
+        novel._clean_toc()
     if toc_main_url and toc_html:
         click.echo(
             message='You must provide either a TOC URL or a TOC HTML file, not both', err=True)
@@ -114,15 +129,14 @@ def create_novel(title, novel_base_dir, toc_main_url, toc_html, host, author, st
                        end_year=end_year,
                        language=language,
                        description=description)
+    novel.set_scrapper_behavior(save_title_to_content=save_title_to_content,
+                                auto_add_host=auto_add_host,
+                                force_flaresolver=force_flaresolver)
     if tags:
         for tag in tags:
             novel.add_tag(tag)
     if cover:
         novel.set_cover_image(cover)
-    if save_title_to_content:
-        novel.set_save_title_to_content(save_title_to_content)
-    if auto_add_host:
-        novel.set_auto_add_host(auto_add_host)
 
 
 @cli.command()
@@ -167,10 +181,24 @@ def set_cover_image(title, cover_image):
 
 @cli.command()
 @title_option
-@click.option('--save-title-to-content', type=bool, required=True, help='Set if the title of the chapter should be added to the content')
-def set_save_title_to_content(title, save_title_to_content):
+@click.option('--save-title-to-content', type=bool, help='Toggle the title of the chapter being added to the content')
+@click.option('--auto-add-host', type=bool, help='Toggle automatic addition of the host to chapter URLs')
+@click.option('--force-flaresolver', type=bool, help='Toggle forcing the use of FlareSolver')
+def set_scrapper_behavior(title, save_title_to_content, auto_add_host, force_flaresolver):
     novel = obtain_novel(title)
-    novel.set_save_title_to_content(save_title_to_content)
+    # Pasar los flags como diccionario de argumentos
+    novel.set_scrapper_behavior(
+        save_title_to_content=save_title_to_content,
+        auto_add_host=auto_add_host,
+        force_flaresolver=force_flaresolver
+    )
+
+
+@cli.command()
+@title_option
+def show_scrapper_behavior(title):
+    novel = obtain_novel(title)
+    print(novel.scrapper_behavior)
 
 
 @cli.command()
@@ -261,10 +289,26 @@ def request_all_chapters(title, reload_toc, update_html):
 @cli.command()
 @title_option
 @click.option('--reload-toc', is_flag=True, default=False, show_default=True, help='If the TOC is reloaded before the chapters are requested')
+@click.option('--start-chapter', type=int, default=1, show_default=True, help='The start chapter for the books (position in the toc, may differ from the actual number)')
+@click.option('--end-chapter', type=int, default=None, show_default=True, help='The end chapter for the books (if not defined, every chapter will be saved)')
 @click.option('--chapters-by-book', type=int, default=100, show_default=True, help='The number of chapters each book will have')
-def save_novel_to_epub(title, reload_toc, chapters_by_book):
+def save_novel_to_epub(title, reload_toc, start_chapter, end_chapter, chapters_by_book):
+    if start_chapter <= 0:
+        raise click.BadParameter(
+            'Should be a positive number', param_hint='--start-chapter')
+    if end_chapter is not None:
+        if end_chapter < start_chapter or end_chapter <= 0:
+            raise click.BadParameter(
+                'Should be a positive number and bigger than the start chapter', param_hint='--end-chapter')
+    if chapters_by_book is not None:
+        if chapters_by_book <= 0:
+            raise click.BadParameter(
+                'Should be a positive number', param_hint='--chapters-by-book')
+
     novel = obtain_novel(title)
     novel.save_novel_to_epub(reload_toc=reload_toc,
+                             start_chapter=start_chapter,
+                             end_chapter=end_chapter,
                              chapters_by_book=chapters_by_book)
     click.echo('All books saved.')
 

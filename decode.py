@@ -126,7 +126,10 @@ class Decoder:
                         pass
             if extract["type"] == "text":
                 elements = [element.string for element in elements]
-        return elements if decoder['array'] else elements[0] if elements else None
+        inverted = decoder.get('inverted')
+        if inverted:
+            elements = elements[::-1]
+        return elements if decoder.get('array') else elements[0] if elements else None
 
     def _get_element_by_key(self, json_data, key, value):
         for item in json_data:
