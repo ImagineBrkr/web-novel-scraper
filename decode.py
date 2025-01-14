@@ -2,11 +2,11 @@ import os
 import json
 from pathlib import Path
 
-import custom_logger
+import logger_manager
 
 from bs4 import BeautifulSoup
 
-logger = custom_logger.create_logger('DECODE HTML')
+logger = logger_manager.create_logger('DECODE HTML')
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
@@ -107,8 +107,10 @@ class Decoder:
                 selectors = [selector]
 
         for selector in selectors:
+            logger.debug(f'Attempt using selector {selector}')
             elements = soup.select(selector)
             if elements:
+                logger.debug(f'{len(elements)} found using selector {selector}')
                 break
 
         extract = decoder.get('extract')

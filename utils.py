@@ -32,14 +32,19 @@ def generate_epub_file_name_from_title(title: str) -> str:
     normalized_title = normalized_title.lower()
     normalized_title = re.sub(r'[\s\-]+', '_', normalized_title)
     sanitized_title = re.sub(r'[^a-zA-Z0-9_]', '', normalized_title)
+    title_hash = hashlib.md5(sanitized_title.encode('utf-8')).hexdigest()[:8]
+
     max_length = 50
     if len(sanitized_title) > max_length:
         sanitized_title = sanitized_title[:max_length]
     if not sanitized_title:
         sanitized_title = 'chapter'
-    filename = f"{sanitized_title}.xhtml"
+
+    filename = f"{sanitized_title}_{title_hash}.xhtml"
     return filename
 
+def delete_duplicates(str_list: list[str]) -> list[str]:
+    return list(dict.fromkeys(str_list))
 
 def obtain_host(url: str):
     host = url.split(':')[1]
@@ -57,5 +62,3 @@ def obtain_host(url: str):
 
 def create_volume_id(n: int):
     return f'v{n:02}'
-
-

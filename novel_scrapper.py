@@ -5,14 +5,14 @@ from dataclasses_json import dataclass_json
 from ebooklib import epub
 from typing import Optional
 
-import custom_logger
+import logger_manager
 from decode import Decoder
 from file_manager import FileManager
 import utils
 
 import request_manager
 
-logger = custom_logger.create_logger('NOVEL SCRAPPING')
+logger = logger_manager.create_logger('NOVEL SCRAPPING')
 
 
 @dataclass_json
@@ -41,7 +41,7 @@ class Metadata:
         """
         attributes = [f"{field.name}={
             getattr(self, field.name)}" for field in fields(self)]
-        return f"Scrapper Behavior: \n{'\n'.join(attributes)}"
+        return f"Metadata: \n{'\n'.join(attributes)}"
 
 
 @dataclass_json
@@ -54,6 +54,8 @@ class ScrapperBehavior:
     # Some hosts return 403 when scrapping, this will force the use of FlareSolver
     # to save time
     force_flaresolver: bool = False
+    # When you clean the html files, you can use hard clean by default
+    hard_clean: bool = False
 
     def update_behavior(self, **kwargs):
         """
@@ -77,8 +79,8 @@ class ScrapperBehavior:
 @dataclass
 class Chapter:
     chapter_url: str
-    chapter_html_filename: str = None
-    chapter_title: str = None
+    chapter_html_filename: Optional[str] = None
+    chapter_title: Optional[str] = None
 
     def __str__(self):
         return f'Title: "{self.chapter_title}"\nURL: "{self.chapter_url}"\nFilename: "{self.chapter_html_filename}"'
@@ -93,7 +95,7 @@ class Novel:
     metadata: Metadata
     scrapper_behavior: ScrapperBehavior = None
     chapters: list[Chapter] = field(default_factory=list)
-    toc_main_url: str = None
+    toc_main_url: Optional[str] = None
     chapters_url_list: list[str] = field(default_factory=list)
     host: str = None
 
@@ -151,21 +153,23 @@ class Novel:
         self.metadata.update_behavior(**kwargs)
         self.save_novel()
 
-    def add_tag(self, tag: str) -> None:
+    def add_tag(self, tag: str) -> bool:
         if tag not in self.metadata.tags:
             self.metadata.tags.append(tag)
             self.save_novel()
-            return
+            return True
         logger.warning(f'Tag "{tag}" already exists on novel {
                        self.metadata.novel_title}')
+        return False
 
-    def remove_tag(self, tag: str) -> None:
+    def remove_tag(self, tag: str) -> bool:
         if tag in self.metadata.tags:
             self.metadata.tags.remove(tag)
             self.save_novel()
-            return
+            return True
         logger.warning(f'Tag "{tag}" doesn\'t exist on novel {
                        self.metadata.novel_title}')
+        return False
 
     def set_cover_image(self, cover_image_path: str) -> None:
         self.file_manager.save_novel_cover(cover_image_path)
@@ -192,23 +196,26 @@ class Novel:
             self.decoder = Decoder(utils.obtain_host(self.toc_main_url))
 
     def add_toc_html(self, html: str, host: str = None) -> None:
-        self.clear_toc()
+        if self.toc_main_url:
+            self.clear_toc()
+            self.toc_main_url = None
+
         if host:
             self.host = host
             self.decoder = Decoder(self.host)
         self.file_manager.add_toc(html)
         # Delete toc_main_url since they are exclusive
-        self.toc_main_url = None
         self.save_novel()
 
     def clear_toc(self):
         self.file_manager.clear_toc()
 
-    def reload_toc(self, hard_reload: bool = False) -> None:
+    def sync_toc(self, reload_files: bool = False) -> None:
         # Hard reload will request again the toc files from the toc_main_url
         # Only works with toc_main_url
         all_tocs_content = self.file_manager.get_all_toc()
-        if hard_reload and self.toc_main_url or not all_tocs_content:
+        if reload_files and self.toc_main_url or not all_tocs_content:
+            self.chapters = []
             self.file_manager.clear_toc()
             all_tocs_content = []
             toc_content = self._add_toc(self.toc_main_url)
@@ -229,9 +236,17 @@ class Novel:
         if self.scrapper_behavior.auto_add_host:
             self.chapters_url_list = [
                 f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
-
+        self.chapters_url_list = utils.delete_duplicates(self.chapters_url_list)
         self.save_novel()
         self._create_chapters_from_toc()
+
+    def show_toc(self):
+        if not self.chapters_url_list:
+            return 'No chapters in TOC, reload TOC and try again'
+        toc_str = 'Table Of Contents:'
+        for i, chapter_url in enumerate(self.chapters_url_list):
+            toc_str += f'\nChapter {i+1}: {chapter_url}'
+        return toc_str
 
     # CHAPTERS MANAGEMENT
 
@@ -270,9 +285,9 @@ class Novel:
         logger.info(f'Chapter scrapped from link: {chapter_url}')
         return chapter, chapter_content
 
-    def scrap_all_chapters(self, reload_toc: bool = False, update_chapters: bool = False, update_html: bool = False) -> None:
-        if reload_toc:
-            self.reload_toc()
+    def scrap_all_chapters(self, sync_toc: bool = False, update_chapters: bool = False, update_html: bool = False) -> None:
+        if sync_toc:
+            self.sync_toc()
         # We scrap all chapters from our chapter list
         if self.chapters_url_list:
             for i, chapter in enumerate(len(self.chapters)):
@@ -294,9 +309,9 @@ class Novel:
         else:
             logger.warning('No chapters found')
 
-    def request_all_chapters(self, reload_toc: bool = False, update_html: bool = False) -> None:
-        if reload_toc:
-            self.reload_toc()
+    def request_all_chapters(self, sync_toc: bool = False, update_html: bool = False, clean_chapters: bool = False) -> None:
+        if sync_toc:
+            self.sync_toc()
         if self.chapters_url_list:
             # We request the HTML files of all the chapters
             for i, chapter in enumerate(self.chapters):
@@ -308,18 +323,20 @@ class Novel:
                 chapter.chapter_html_filename = chapter_html_filename
                 self._add_or_update_chapter_data(chapter=chapter, link_idx=i,
                                                  save_in_file=True)
+                if clean_chapters:
+                    self._clean_chapter(chapter_html_filename)
         else:
             logger.warning('No chapters found')
 
 # EPUB CREATION
 
     def save_novel_to_epub(self,
-                           reload_toc: bool = False,
+                           sync_toc: bool = False,
                            start_chapter: int = 1,
                            end_chapter: int = None,
                            chapters_by_book: int = 100) -> None:
-        if reload_toc:
-            self.reload_toc()
+        if sync_toc:
+            self.sync_toc()
 
         if start_chapter > len(self.chapters):
             logger.info(f'The start chapter is bigger than the number of chapters saved ({
@@ -335,10 +352,8 @@ class Novel:
 
         idx = 1
         start = start_chapter
-        while start < end_chapter:
-            end = start + chapters_by_book - 1
-            if end > end_chapter:
-                end = end_chapter
+        while start <= end_chapter:
+            end = min(start + chapters_by_book - 1, end_chapter)
             self._save_chapters_to_epub(start_chapter=start,
                                         end_chapter=end,
                                         collection_idx=idx)
@@ -350,6 +365,7 @@ class Novel:
 
 
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
+        hard_clean = hard_clean or self.scrapper_behavior.hard_clean
         if clean_chapters:
             for chapter in self.chapters:
                 if chapter.chapter_html_filename:
@@ -358,7 +374,8 @@ class Novel:
         if clean_toc:
             self._clean_toc(hard_clean)
 
-    def _clean_chapter(self, chapter_html_filename: str, hard_clean: bool) -> None:
+    def _clean_chapter(self, chapter_html_filename: str, hard_clean: bool = False) -> None:
+        hard_clean = hard_clean or self.scrapper_behavior.hard_clean
         chapter_html = self.file_manager.load_chapter_html(
             chapter_html_filename)
         if not chapter_html:
@@ -369,7 +386,8 @@ class Novel:
         self.file_manager.save_chapter_html(
             chapter_html_filename, chapter_html)
 
-    def _clean_toc(self, hard_clean: bool) -> None:
+    def _clean_toc(self, hard_clean: bool = False) -> None:
+        hard_clean = hard_clean or self.scrapper_behavior.hard_clean
         tocs_content = self.file_manager.get_all_toc()
         for i, toc in enumerate(tocs_content):
             toc = self.decoder.clean_html(toc, hard_clean=hard_clean)
@@ -491,7 +509,11 @@ class Novel:
                 return index
         return None
 
+    def _delete_chapters_not_in_toc(self) -> None:
+        self.chapters = [chapter for chapter in self.chapters if chapter.chapter_url in self.chapters_url_list]
+
     def _create_chapters_from_toc(self):
+        self._delete_chapters_not_in_toc()
         increment = 100
         aux = 1
         for chapter_url in self.chapters_url_list:
@@ -642,7 +664,6 @@ class Novel:
         # We use a slice so every chapter starting from idx_start and before idx_end
         idx_start = start_chapter - 1
         idx_end = end_chapter
-
         # We create the epub book
         book_title = f'{self.metadata.novel_title} Chapters {
             start_chapter} - {end_chapter}'

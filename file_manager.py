@@ -7,7 +7,7 @@ import shutil
 from dotenv import load_dotenv
 from ebooklib import epub
 
-import custom_logger
+import logger_manager
 
 load_dotenv()
 
@@ -22,7 +22,7 @@ SCRAPPER_BASE_CONFIG_DIR = os.getenv(
 SCRAPPER_BASE_DATA_DIR = os.getenv(
     'SCRAPPER_BASE_DATA_DIR', platformdirs.user_data_dir(app_name, app_author))
 
-logger = custom_logger.create_logger('FILE MANAGER')
+logger = logger_manager.create_logger('FILE MANAGER')
 
 class FileManager:
     novel_base_dir: Path
@@ -99,6 +99,7 @@ class FileManager:
             toc_exists = toc_path.exists()
             if toc_exists:
                 _delete_file(toc_path)
+            toc_pos += 1
 
     def add_toc(self, content: str):
         toc_pos = 0
