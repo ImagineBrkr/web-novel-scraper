@@ -36,42 +36,6 @@
         }
     },
     {
-        "host": "novelusb.com",
-        "has_pagination": false,
-        "title": {
-            "element": "h4",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": false
-        },
-        "content": {
-            "element": "p",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        },
-        "index": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "ul.list-chapter li a[title]",
-            "attributes": null,
-            "array": true
-        },
-        "next_page": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        }
-    },
-    {
         "host": "novellive.net",
         "has_pagination": true,
         "title": {

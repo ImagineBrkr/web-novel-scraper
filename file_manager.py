@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 import platformdirs
 from pathlib import Path
@@ -84,13 +85,16 @@ class FileManager:
     def save_novel_cover(self, source_cover_path: str):
         source_cover_path = Path(source_cover_path)
         if source_cover_path.exists():
-            _copy_file(source_cover_path, self.novel_cover_filepath)
+            logger.info(f'New cover image save from path {source_cover_path}')
+            return _copy_file(source_cover_path, self.novel_cover_filepath)
+        logger.error(f'Source cover path {source_cover_path} not found, cover not saved.')
+        return False
 
     def load_novel_cover(self):
         if self.novel_cover_filepath.exists():
             return _read_content_from_file(self.novel_cover_filepath, bytes=True)
 
-    def clear_toc(self):
+    def delete_toc(self):
         toc_pos = 0
         toc_exists = True
         while toc_exists:
@@ -164,7 +168,7 @@ def _create_path_if_not_exists(dir_path: str) -> Path:
     except OSError as e:
         logger.error(f"Error with directory creation: {e}")
         # Change this to raise for debugging
-        exit(1)
+        sys.exit(1)
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         raise
@@ -223,11 +227,12 @@ def _delete_file(filepath: Path) -> None:
                      filepath}": {e}', exc_info=True)
 
 
-def _copy_file(source: Path, destination: Path) -> None:
+def _copy_file(source: Path, destination: Path) -> bool:
     try:
         # Copy the file
         shutil.copy(source, destination)
         logger.info(f'File copied successfully from {source} to {destination}')
+        return True
 
     except FileNotFoundError:
         logger.error(f'Source file not found: {source}')
@@ -238,3 +243,4 @@ def _copy_file(source: Path, destination: Path) -> None:
     except Exception as e:
         logger.error(f'Unexpected error copying file from {source} to {destination}: {e}',
                      exc_info=True)
+    return False

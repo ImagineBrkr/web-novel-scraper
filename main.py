@@ -23,9 +23,9 @@ def validate_date(ctx, param, value):
                 datetime.strptime(value, '%Y-%m-%d')
             else:
                 raise ValueError
-        except ValueError:
+        except ValueError as exc:
             raise click.BadParameter(
-                'Date should be a valid date and must be in the format YYYY-MM-DD, YYYY-MM or YYYY')
+                'Date should be a valid date and must be in the format YYYY-MM-DD, YYYY-MM or YYYY') from exc
     return value
 
 
@@ -56,15 +56,16 @@ metadata_end_date_option = click.option(
 # TOC options
 toc_main_url_option = click.option(
     '--toc-main-url', type=str, help='Main link of the TOC, required if not loading from file')
-sync_toc_option = click.option('--sync-toc', is_flag=True, default=False, show_default=True, help='If the TOC is reloaded before the chapters are requested')
+sync_toc_option = click.option('--sync-toc', is_flag=True, default=False, show_default=True,
+                               help='If the TOC is reloaded before the chapters are requested')
+
 
 def create_toc_html_option(required: bool = False):
     return click.option(
         '--toc-html',
         type=click.File(encoding='utf-8'),
         required=required,
-        help='Novel TOC HTML loaded from file' +
-        (' (required if not loading from URL)' if required else '')
+        help=('Novel TOC HTML loaded from file (required if not loading from URL)' if required else 'Novel TOC HTML loaded from file')
     )
 
 
@@ -80,16 +81,7 @@ force_flaresolver_option = click.option('--force-flaresolver', is_flag=True, sho
                                         default=False, help='Set if the requests should be forced to use FlareSolver')
 
 
-def load_config(ctx, param, value):
-    if value and os.path.exists(value):
-        with open(value, 'r') as f:
-            config = json.load(f)
-        ctx.default_map = ctx.default_map or {}
-        ctx.default_map.update(config)
-    return value
-
-
-def obtain_novel(novel_title: str, novel_base_dir: str = None, allow_not_exists: bool = True) -> Novel:
+def obtain_novel(novel_title: str, novel_base_dir: str = None, allow_not_exists: bool = False) -> Novel:
     file_manager = FileManager(novel_title=novel_title,
                                novel_base_dir=novel_base_dir)
     novel_json = file_manager.load_novel_json()
@@ -149,7 +141,7 @@ def create_novel(title,
     if novel:
         click.confirm(f'A novel with the title {
                       title} already exists, do you want to replace it?', abort=True)
-        novel._clean_toc()
+        novel.delete_toc()
     if toc_main_url and toc_html:
         click.echo(
             message='You must provide either a TOC URL or a TOC HTML file, not both', err=True)
@@ -184,14 +176,17 @@ def create_novel(title,
         for tag in tags:
             novel.add_tag(tag)
     if cover:
-        novel.set_cover_image(cover)
+        if not novel.set_cover_image(cover):
+            click.echo('Error saving the novel cover image', err=True)
     click.echo('Novel saved succesfully')
+
 
 @cli.command()
 @title_option
 def show_novel_info(title):
     novel = obtain_novel(title)
     click.echo(novel)
+
 
 @cli.command()
 @title_option
@@ -254,8 +249,10 @@ def show_tags(title):
 @click.option('--cover-image', type=str, required=True, help='Filepath of the cover image')
 def set_cover_image(title, cover_image):
     novel = obtain_novel(title)
-    novel.set_cover_image(cover_image)
-    click.echo('New cover image set succesfully')
+    if not novel.set_cover_image(cover_image):
+        click.echo('Error saving the cover image', err=True)
+    else:
+        click.echo('New cover image set succesfully')
 
 
 @cli.command()
@@ -317,8 +314,10 @@ def add_toc_html(title, toc_html, host):
 @click.option('--reload-files', is_flag=True, required=False, default=False, show_default=True, help='Reload the toc files before sync (only works if using a toc url)')
 def sync_toc(title, reload_files):
     novel = obtain_novel(title)
-    novel.sync_toc(reload_files)
-
+    if novel.sync_toc(reload_files):
+        click.echo('Table of Contents synced with files, to see the new TOC use the command show-toc')
+    else:
+        click.echo('Error with the toc syncing, please check the toc files and decoding options', err=True)
 
 @cli.command()
 @title_option
@@ -328,7 +327,7 @@ def delete_toc(title, auto_approve):
     if not auto_approve:
         click.confirm(f'Are you sure you want to delete the toc for {
                       title}', abort=True)
-    novel.clear_toc()
+    novel.delete_toc()
 
 
 @cli.command()
@@ -352,11 +351,13 @@ def scrap_chapter(title, chapter_url, chapter_num, update_html):
     if chapter_num and chapter_url:
         click.echo('It should be either chapter url or chapter num', err=True)
     if chapter_num <= 0 or chapter_num > len(novel.chapters):
-        raise click.BadParameter(message='Chapter number should be positive and an existing chapter', param_hint='--chapter-num')
+        raise click.BadParameter(
+            message='Chapter number should be positive and an existing chapter', param_hint='--chapter-num')
     chapter, content = novel.scrap_chapter(
         chapter_url=chapter_url, chapter_idx=chapter_num - 1, update_html=update_html)
     if not chapter or not content:
         click.echo('Chapter num or url not found.', err=True)
+        return
     click.echo(chapter)
     click.echo('Content:')
     click.echo(content)
@@ -373,11 +374,13 @@ def request_all_chapters(title, sync_toc, update_html, clean_chapters):
         sync_toc=sync_toc, update_html=update_html, clean_chapters=clean_chapters)
     click.echo('All chapters requested and saved.')
 
+
 @cli.command()
 @title_option
 def show_chapters(title):
     novel = obtain_novel(title)
     click.echo(novel.show_chapters())
+
 
 @cli.command()
 @title_option
@@ -399,11 +402,13 @@ def save_novel_to_epub(title, sync_toc, start_chapter, end_chapter, chapters_by_
                 'Should be a positive number', param_hint='--chapters-by-book')
 
     novel = obtain_novel(title)
-    novel.save_novel_to_epub(sync_toc=sync_toc,
+    if novel.save_novel_to_epub(sync_toc=sync_toc,
                              start_chapter=start_chapter,
                              end_chapter=end_chapter,
-                             chapters_by_book=chapters_by_book)
-    click.echo('All books saved.')
+                             chapters_by_book=chapters_by_book):
+        click.echo('All books saved.')
+    else:
+        click.echo('Error saving EPUB')
 
 
 # UTILS
