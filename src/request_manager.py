@@ -118,18 +118,18 @@ def get_html_content(url: str,
     response = get_request_flaresolver(
         url, timeout=20, flaresolver_url=flaresolver_url, time_between_retries=time_between_retries)
     if not response:
-        logger.warning(f'Failed to get response from {url} using FlareSolver')
+        logger.critical(f'Failed to get response from {url} using FlareSolver')
         return None
     if not response.ok:
-        logger.error(f'Response with errors from {url} using FlareSolver')
+        logger.critical(f'Response with errors from {url} using FlareSolver')
         return None
 
     response_json = response.json()
     if 'solution' not in response_json:
-        logger.debug(f'No solution found in FlareSolver response for {url}')
+        logger.critical(f'No solution found in FlareSolver response for {url}')
         return None
     if 'response' not in response_json['solution']:
-        logger.debug(f'No response found in FlareSolver solution for {url}')
+        logger.critical(f'No response found in FlareSolver solution for {url}')
         return None
     logger.debug(f'Successfully retrieved HTML content from {url} using FlareSolver')
     return response_json['solution']['response']

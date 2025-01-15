@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields, field
 import sys
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import dataclass_json, config, Undefined
 from ebooklib import epub
 from typing import Optional
 
@@ -75,12 +75,24 @@ class ScrapperBehavior:
         return f"Scrapper Behavior: \n{'\n'.join(attributes)}"
 
 
-@dataclass_json
+@dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass
 class Chapter:
     chapter_url: str
     chapter_html_filename: Optional[str] = None
     chapter_title: Optional[str] = None
+
+    def __init__(self, 
+                 chapter_url: str,
+                 chapter_html: str = None,
+                 chapter_content: str = None, 
+                 chapter_html_filename: str = None,
+                 chapter_title: str = None):
+        self.chapter_url = chapter_url
+        self.chapter_html = chapter_html
+        self.chapter_content = chapter_content
+        self.chapter_html_filename = chapter_html_filename
+        self.chapter_title = chapter_title
 
     def __str__(self):
         return f'Title: "{self.chapter_title}"\nURL: "{self.chapter_url}"\nFilename: "{self.chapter_html_filename}"'
@@ -231,11 +243,12 @@ class Novel:
         # Hard reload will request again the toc files from the toc_main_url
         # Only works with toc_main_url
         all_tocs_content = self.file_manager.get_all_toc()
-        
+
         # If there is no toc_main_url and no manually added toc, there is no way to sync toc
         toc_not_exists = not all_tocs_content and self.toc_main_url is None
         if toc_not_exists:
-            logger.critical('There is no toc html and no toc url setted, unable to get toc.')
+            logger.critical(
+                'There is no toc html and no toc url setted, unable to get toc.')
             return False
 
         reload_files = reload_files and self.toc_main_url is not None
@@ -256,7 +269,8 @@ class Novel:
         # Now we get the links from the toc content
         self.chapters_url_list = []
         for toc_content in all_tocs_content:
-            chapters_url_from_toc_content = self._get_chapter_urls_from_toc_content(toc_content)
+            chapters_url_from_toc_content = self._get_chapter_urls_from_toc_content(
+                toc_content)
             if chapters_url_from_toc_content is None:
                 logger.error('Chapters url not found on toc_content')
                 return False
@@ -285,47 +299,46 @@ class Novel:
         chapter_list = "Chapters List:\n"
         for i, chapter in enumerate(self.chapters):
             chapter_list += f"Chapter {i + 1}:\n"
-            chapter_list += f"  Title: {chapter.chapter_title if chapter.chapter_title else 'Title not yet scrapped'}\n"
+            chapter_list += f"  Title: {
+                chapter.chapter_title if chapter.chapter_title else 'Title not yet scrapped'}\n"
             chapter_list += f"  URL: {chapter.chapter_url}\n"
-            chapter_list += f"  Filename: {chapter.chapter_html_filename if chapter.chapter_html_filename else 'File not yet requested'}\n"
+            chapter_list += f"  Filename: {
+                chapter.chapter_html_filename if chapter.chapter_html_filename else 'File not yet requested'}\n"
         return chapter_list
 
-    def scrap_chapter(self, chapter_url: str = None, chapter_idx: int = None, update_html: bool = False) -> tuple[Chapter, str]:
-        if chapter_idx is None and chapter_url is None:
-            logger.error('You need to set "chapter_url" or "chapter_idx"')
-            sys.exit(1)
-
-        if chapter_url is not None and chapter_idx is not None:
-            logger.error('You can only set "chapter_url" or "chapter_idx"')
-            sys.exit(1)
-        chapter_html, chapter_html_filename = None, None
-        if chapter_idx is not None:
-            chapter_html, chapter_html_filename = self._get_chapter(chapter_idx=chapter_idx,
-                                                                    reload=update_html)
-            chapter_url = self.chapters[chapter_idx].chapter_url
+    def scrap_chapter(self, chapter_url: str = None, chapter_idx: int = None, update_html: bool = False) -> Chapter:
+        if not utils.check_exclusive_params(chapter_url, chapter_idx):
+            logger.error(
+                'chapter_url and chapter_id, only one needs to be setted')
+            return
 
         if chapter_url is not None:
-            chapter_html, chapter_html_filename = self._get_chapter(chapter_url=chapter_url,
-                                                                    reload=update_html)
-            chapter_idx = self._get_chapter_url_idx(chapter_url)
+            chapter = self._get_chapter_by_url(chapter_url=chapter_url)
+            if chapter is None:
+                chapter = Chapter(chapter_url=chapter_url)
 
-        # We create a new chapter using the link and add it to the list of Chapters
-        if not chapter_html or not chapter_html_filename:
+        if chapter_idx is not None:
+            if chapter_idx < 0 or chapter_idx >= len(self.chapters):
+                logger.error(f'Could not find chapter with idx {chapter_idx}')
+                return
+            chapter = self.chapters[chapter_idx]
+
+        chapter = self._get_chapter(chapter,
+                                    reload=update_html)
+
+        if not chapter.chapter_html or not chapter.chapter_html_filename:
             logger.warning(f'Failed to create chapter on link: "{
-                           chapter_url}" on path "{chapter_html_filename}"')
+                           chapter_url}" on path "{chapter.chapter_html_filename}"')
             return
 
         # We get the title and content, if there's no title, we autogenerate one.
-        chapter_title, chapter_content = self._decode_chapter(
-            chapter_html=chapter_html, idx_for_chapter_name=chapter_idx)
-        if not chapter_content:
+        chapter = self._decode_chapter(chapter=chapter, idx_for_chapter_name=chapter_idx)
+        if not chapter.chapter_content:
             logger.error('Content not found')
+            return
 
-        chapter = Chapter(chapter_title=chapter_title,
-                          chapter_url=chapter_url,
-                          chapter_html_filename=chapter_html_filename)
         logger.info(f'Chapter scrapped from link: {chapter_url}')
-        return chapter, chapter_content
+        return chapter
 
     def scrap_all_chapters(self, sync_toc: bool = False, update_chapters: bool = False, update_html: bool = False) -> None:
         if sync_toc:
@@ -336,7 +349,7 @@ class Novel:
 
                 # If update_chapters is true, we scrap again the chapter info
                 if update_chapters:
-                    chapter, _ = self.scrap_chapter(chapter_idx=i,
+                    chapter = self.scrap_chapter(chapter_idx=i,
                                                     update_html=update_html)
                     self._add_or_update_chapter_data(
                         chapter=chapter, link_idx=i)
@@ -344,7 +357,7 @@ class Novel:
                 # If not, we only update if the chapter doesn't have a title or html
                 if chapter.chapter_html_filename and chapter.chapter_title:
                     continue
-                chapter, _ = self.scrap_chapter(chapter_idx=i,
+                chapter = self.scrap_chapter(chapter_idx=i,
                                                 update_html=update_html)
                 self._add_or_update_chapter_data(chapter=chapter,
                                                  save_in_file=True)
@@ -360,13 +373,18 @@ class Novel:
                 # If the chapter exists and update_html is false, we can skip
                 if chapter.chapter_html_filename and not update_html:
                     continue
-                _, chapter_html_filename = self._get_chapter(
-                    chapter_url=chapter.chapter_url, reload=update_html)
-                chapter.chapter_html_filename = chapter_html_filename
+                chapter = self._get_chapter(
+                    chapter=chapter, reload=update_html)
+                if not chapter.chapter_html_filename:
+                    logger.critical(f'Error requesting chapter {
+                                    i} with url {chapter.chapter_url}')
+                    return False
+
                 self._add_or_update_chapter_data(chapter=chapter, link_idx=i,
                                                  save_in_file=True)
                 if clean_chapters:
-                    self._clean_chapter(chapter_html_filename)
+                    self._clean_chapter(chapter.chapter_html_filename)
+            return True
         else:
             logger.warning('No chapters found')
 
@@ -397,10 +415,11 @@ class Novel:
         while start <= end_chapter:
             end = min(start + chapters_by_book - 1, end_chapter)
             result = self._save_chapters_to_epub(start_chapter=start,
-                                        end_chapter=end,
-                                        collection_idx=idx)
+                                                 end_chapter=end,
+                                                 collection_idx=idx)
             if not result:
-                logger.critical(f'Error with saving novel to epub, with start chapter: {start_chapter} and end chapter: {end_chapter}')
+                logger.critical(f'Error with saving novel to epub, with start chapter: {
+                                start_chapter} and end chapter: {end_chapter}')
                 return False
             start = start + chapters_by_book
             idx = idx + 1
@@ -408,6 +427,7 @@ class Novel:
 
 
 # UTILS
+
 
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
         hard_clean = hard_clean or self.scrapper_behavior.hard_clean
@@ -439,57 +459,32 @@ class Novel:
             self.file_manager.update_toc(toc, i)
 
     def _get_chapter(self,
-                     chapter_url: str = None,
-                     chapter_idx: int = None,
-                     chapter_filename: str = None,
-                     reload: bool = False) -> tuple[str, str] | None:
-        try:
-            # Validate input parameters
-            if chapter_url is None and chapter_idx is None:
-                raise ValueError(
-                    'You need to set either "url" or "chapter_idx"')
-            if chapter_idx is not None and chapter_url is not None:
-                raise ValueError(
-                    'You can only set either "url" or "chapter_idx"')
+                     chapter: Chapter,
+                     reload: bool = False) -> Chapter | None:
 
-            # Handle chapter index
-            if chapter_idx is not None:
-                if not 0 <= chapter_idx < len(self.chapters):
-                    raise IndexError(f'Chapter index {
-                                     chapter_idx} out of range')
-                chapter_url = self.chapters[chapter_idx].chapter_url
-                chapter_filename = self.chapters[chapter_idx].chapter_html_filename
+        # Generate filename if needed
+        if not chapter.chapter_html_filename:
+            chapter.chapter_html_filename = utils.generate_file_name_from_url(
+                chapter.chapter_url)
 
-            # Generate filename if needed
-            if not chapter_filename:
-                chapter_filename = utils.generate_file_name_from_url(
-                    chapter_url)
+        # Try loading from cache first
+        if not reload:
+            chapter.chapter_html = self.file_manager.load_chapter_html(
+                chapter.chapter_html_filename)
+            if chapter.chapter_html:
+                return chapter
 
-            # Try loading from cache first
-            if not reload:
-                content = self.file_manager.load_chapter_html(chapter_filename)
-                if content:
-                    return content, chapter_filename
+        # Fetch fresh content
+        chapter.chapter_html = request_manager.get_html_content(chapter.chapter_url,
+                                                                force_flaresolver=self.scrapper_behavior.force_flaresolver)
+        if not chapter.chapter_html:
+            logger.error(f'No content found on link {chapter.chapter_url}')
+            return chapter
 
-            # Fetch fresh content
-            content = request_manager.get_html_content(chapter_url,
-                                                       force_flaresolver=self.scrapper_behavior.force_flaresolver)
-            if not content:
-                logger.error(f'No content found on link {chapter_url}')
-                sys.exit()
-
-            # Save content
-            self.file_manager.save_chapter_html(chapter_filename, content)
-            return content, chapter_filename
-
-        except ValueError as e:
-            logger.error(str(e))
-        except IndexError as e:
-            logger.error(str(e))
-        except Exception as e:
-            logger.error(f'Unexpected error getting chapter: {
-                         e}', exc_info=True)
-            sys.exit()
+        # Save content
+        self.file_manager.save_chapter_html(
+            chapter.chapter_html_filename, chapter.chapter_html)
+        return chapter
 
     def _add_toc(self,
                  url: str,
@@ -547,9 +542,11 @@ class Novel:
         self.chapters.sort(
             key=lambda x: self.chapters_url_list.index(x.chapter_url))
 
-    def _get_chapter_url_idx(self, chapter_url: str) -> int:
-        if chapter_url in self.chapters_url_list:
-            return self.chapters_url_list.index(chapter_url)
+    def _get_chapter_by_url(self, chapter_url: str) -> Chapter:
+        for chapter in self.chapters:
+            if chapter_url == chapter.chapter_url:
+                return chapter
+        return None
 
     def _find_chapter_index_by_link(self, chapter_url: str) -> str:
         for index, chapter in enumerate(self.chapters):
@@ -578,62 +575,38 @@ class Novel:
         self._order_chapters_by_link_list()
         self.save_novel()
 
-    def _decode_chapter(self, chapter_idx: int = None, chapter_html: str = None, idx_for_chapter_name: str = None) -> tuple[str, str]:
-        if not chapter_html and not chapter_idx:
-            logger.error('No argument was passed to decode_chapter')
-            return None, None
-        chapter = None
-        if chapter_idx and chapter_html:
-            logger.error(
-                'You can only set either "chapter_idx" or "chapter_html"')
-            return None, None
-
-        if chapter_idx:
-            try:
-                chapter = self.chapters[chapter_idx]
-            except IndexError:
-                logger.error(f'Chapter index {chapter_idx} not found')
-                return None, None
+    def _decode_chapter(self, chapter: Chapter, idx_for_chapter_name: str = None) -> Chapter:
         chapter_title = None
 
-        if chapter:
-            chapter_html, _ = self._get_chapter(chapter.chapter_url,
-                                                chapter.chapter_html_filename)
-            chapter_title = chapter.chapter_title
-            if not chapter_html:
+        if chapter.chapter_html is None:
+            chapter = self._get_chapter(chapter)
+
+            if not chapter.chapter_html:
                 logger.error(f'No chapter content found for chapter link {
                              chapter.chapter_url} on file {chapter.chapter_html_filename}')
-                return None, None
+                return None
 
-        if not chapter_html:
-            logger.error('No argument was passed to decode_chapter')
-            return None, None
-
-        paragraphs = self.decoder.decode_html(chapter_html, 'content')
+        paragraphs = self.decoder.decode_html(chapter.chapter_html, 'content')
 
         if not paragraphs:
             if chapter:
                 logger.warning(f'No paragraphs found in chapter link {
                     chapter.chapter_url} on file {chapter.chapter_html_filename}')
-            else:
-                logger.warning('No paragraphs found in chapter')
-            return None, None
 
-        if not chapter_title:
-            chapter_title = self.decoder.decode_html(chapter_html, 'title')
+        chapter_title = self.decoder.decode_html(chapter.chapter_html, 'title')
         if not chapter_title:
             chapter_title = f'{self.metadata.novel_title} Chapter {
                 idx_for_chapter_name}'
-        chapter_title = str(chapter_title)
+        chapter.chapter_title = str(chapter_title)
 
-        chapter_content = ""
+        chapter.chapter_content = ""
         if self.scrapper_behavior.save_title_to_content:
-            chapter_content += f'<h4>{chapter_title}</h4>'
+            chapter.chapter_content += f'<h4>{chapter_title}</h4>'
         logger.info(f'{len(paragraphs)} paragraphs found in chapter')
         for paragraph in paragraphs:
-            chapter_content += str(paragraph)
+            chapter.chapter_content += str(paragraph)
 
-        return chapter_title, chapter_content
+        return chapter
 
     def _create_epub_book(self, book_title: str = None, calibre_collection: dict = None) -> epub.EpubBook:
         book = epub.EpubBook()
@@ -682,9 +655,9 @@ class Novel:
         return book
 
     def _add_chapter_to_epub_book(self, chapter: Chapter, book: epub.EpubBook):
-        chapter, chapter_content = self.scrap_chapter(
+        chapter = self.scrap_chapter(
             chapter_url=chapter.chapter_url)
-        if not chapter_content:
+        if chapter is None:
             logger.warning('Error reading chapter')
             return
         self._add_or_update_chapter_data(
@@ -694,7 +667,7 @@ class Novel:
 
         chapter_epub = epub.EpubHtml(
             title=chapter.chapter_title, file_name=file_name)
-        chapter_epub.set_content(chapter_content)
+        chapter_epub.set_content(chapter.chapter_content)
         book.add_item(chapter_epub)
         link = epub.Link(file_name, chapter.chapter_title,
                          file_name.rstrip('.xhtml'))
@@ -736,7 +709,8 @@ class Novel:
             book = self._add_chapter_to_epub_book(chapter=chapter,
                                                   book=book)
             if book is None:
-                logger.critical(f'Error saving epub {book_title}, could not decode chapter {chapter} using host {self.host}')
+                logger.critical(f'Error saving epub {book_title}, could not decode chapter {
+                                chapter} using host {self.host}')
                 return False
 
         book.add_item(epub.EpubNcx())

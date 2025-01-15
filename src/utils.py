@@ -59,6 +59,8 @@ def obtain_host(url: str):
 
     return host
 
+def check_exclusive_params(param1: any, param2: any) -> bool:
+    return (param1 is None) != (param2 is None)
 
 def create_volume_id(n: int):
     return f'v{n:02}'

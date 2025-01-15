@@ -90,9 +90,9 @@ def obtain_novel(novel_title: str, novel_base_dir: str = None, allow_not_exists:
         try:
             novel = Novel.from_json(novel_json)
             return novel
-        except KeyError:
-            click.echo(
-                'JSON file seems to be manipulated, please check it.', err=True)
+        # except KeyError:
+        #     click.echo(
+        #         'JSON file seems to be manipulated, please check it.', err=True)
         except json.decoder.JSONDecodeError:
             click.echo(
                 'JSON file seems to be corrupted, please check it.', err=True)
@@ -347,14 +347,14 @@ def scrap_chapter(title, chapter_url, chapter_num, update_html):
     if chapter_num <= 0 or chapter_num > len(novel.chapters):
         raise click.BadParameter(
             'Chapter number should be positive and an existing chapter.', param_hint='--chapter-num')
-    chapter, content = novel.scrap_chapter(
+    chapter = novel.scrap_chapter(
         chapter_url=chapter_url, chapter_idx=chapter_num - 1, update_html=update_html)
-    if not chapter or not content:
+    if not chapter:
         click.echo('Chapter number or URL not found.', err=True)
         return
     click.echo(chapter)
     click.echo('Content:')
-    click.echo(content)
+    click.echo(chapter.chapter_content)
 
 
 @cli.command()
