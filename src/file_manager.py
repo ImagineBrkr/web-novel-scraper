@@ -41,20 +41,26 @@ class FileManager:
     def __init__(self,
                  novel_title: str,
                  novel_base_dir: str = None,
-                 novel_config_dir: str = None):
+                 novel_config_dir: str = None,
+                 read_only: bool = False):
         novel_base_dir = novel_base_dir if novel_base_dir else f'{
             SCRAPPER_BASE_DATA_DIR}/{novel_title}'
         novel_config_dir = novel_config_dir if novel_config_dir else f'{
             SCRAPPER_BASE_CONFIG_DIR}/{novel_title}'
+        if read_only:
+            self.novel_base_dir = _check_path(novel_base_dir)
+            self.novel_data_dir = _check_path(f'{novel_base_dir}/data')
+            self.novel_chapters_dir = _check_path(f'{self.novel_data_dir}/chapters')
+            self.novel_config_dir = _check_path(str(novel_config_dir))
+        else:
+            self.novel_base_dir = _create_path_if_not_exists(novel_base_dir)
+            self.novel_data_dir = _create_path_if_not_exists(
+                f'{novel_base_dir}/data')
 
-        self.novel_base_dir = _create_path_if_not_exists(novel_base_dir)
-        self.novel_data_dir = _create_path_if_not_exists(
-            f'{novel_base_dir}/data')
+            self.novel_chapters_dir = _create_path_if_not_exists(
+                f'{self.novel_data_dir}/chapters')
 
-        self.novel_chapters_dir = _create_path_if_not_exists(
-            f'{novel_base_dir}/data/chapters')
-
-        self.novel_config_dir = _create_path_if_not_exists(novel_config_dir)
+            self.novel_config_dir = _create_path_if_not_exists(novel_config_dir)
 
         self.novel_json_filepath = self.novel_data_dir / self.novel_json_filename
         self.novel_cover_filepath = self.novel_data_dir / self.novel_cover_filename
@@ -160,9 +166,20 @@ class FileManager:
                         exc_info=True)
             return False
 
-def _create_path_if_not_exists(dir_path: str) -> Path:
+def _check_path(dir_path: str) -> Path:
     try:
         dir_path = Path(dir_path)
+        return dir_path
+    except TypeError as e:
+        logger.error(f"Invalid path type: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error converting path: {e}", exc_info=True)
+        raise
+
+def _create_path_if_not_exists(dir_path: str) -> Path:
+    try:
+        dir_path = _check_path(dir_path)
         dir_path.mkdir(parents=True, exist_ok=True)
         return dir_path
     except OSError as e:
