@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 import sys
+from datetime import datetime
 
 import click
 
@@ -9,6 +10,23 @@ from file_manager import FileManager
 from novel_scrapper import Novel
 
 CURRENT_DIR = Path(__file__).resolve().parent
+
+
+def validate_date(ctx, param, value):
+    if value:
+        try:
+            if len(value) == 4:
+                datetime.strptime(value, '%Y')
+            elif len(value) == 7:
+                datetime.strptime(value, '%Y-%m')
+            elif len(value) == 10:
+                datetime.strptime(value, '%Y-%m-%d')
+            else:
+                raise ValueError
+        except ValueError:
+            raise click.BadParameter(
+                'Date should be a valid date and must be in the format YYYY-MM-DD, YYYY-MM or YYYY')
+    return value
 
 
 @click.group()
@@ -24,9 +42,42 @@ novel_base_dir_option = click.option(
     '-nb', '--novel-base-dir', type=str, help='Alternative base directory for the novel files')
 
 # Metadata:
-metadata_author_option = click.option('--author', type=str, help='Name of the novel author')
-metadata_language_option = click.option('--language', type=str, help='Novel language')
-metadata_description_option = click.option('--description', type=str, help='Novel description')
+metadata_author_option = click.option(
+    '--author', type=str, help='Name of the novel author')
+metadata_language_option = click.option(
+    '--language', type=str, help='Novel language')
+metadata_description_option = click.option(
+    '--description', type=str, help='Novel description')
+metadata_start_date_option = click.option(
+    '--start-date', callback=validate_date, type=str, help='Novel start date, should be in the format YYYY-MM-DD, YYYY-MM or YYYY')
+metadata_end_date_option = click.option(
+    '--end-date', callback=validate_date, type=str, help='Novel end date, should be in the format YYYY-MM-DD, YYYY-MM or YYYY')
+
+# TOC options
+toc_main_url_option = click.option(
+    '--toc-main-url', type=str, help='Main link of the TOC, required if not loading from file')
+sync_toc_option = click.option('--sync-toc', is_flag=True, default=False, show_default=True, help='If the TOC is reloaded before the chapters are requested')
+
+def create_toc_html_option(required: bool = False):
+    return click.option(
+        '--toc-html',
+        type=click.File(encoding='utf-8'),
+        required=required,
+        help='Novel TOC HTML loaded from file' +
+        (' (required if not loading from URL)' if required else '')
+    )
+
+
+host_option = click.option(
+    '--host', type=str, help='Host that will be used for decoding, optional if toc-main-url is provided')
+
+# Scrapper behavior options
+save_title_to_content_option = click.option('--save-title-to-content', is_flag=True, show_default=True,
+                                            default=False, help='Set if the title of the chapter should be added to the content')
+auto_add_host_option = click.option('--auto-add-host', is_flag=True, show_default=True,
+                                    default=False, help='Set if the host should be automatically added to the chapters urls')
+force_flaresolver_option = click.option('--force-flaresolver', is_flag=True, show_default=True,
+                                        default=False, help='Set if the requests should be forced to use FlareSolver')
 
 
 def load_config(ctx, param, value):
@@ -65,27 +116,27 @@ def obtain_novel(novel_title: str, novel_base_dir: str = None, allow_not_exists:
 @cli.command()
 @title_option
 @novel_base_dir_option
-@click.option('--toc-main-url', type=str, help='Main link of the TOC, required if not loading from file')
-@click.option('--toc-html', type=click.File(encoding='utf-8'), help='Novel TOC HTML loaded from file, required if not loading from URL')
-@click.option('--host', type=str, help='Host that will be used for decoding, optional if toc-main-url is provided')
+@toc_main_url_option
+@create_toc_html_option()
+@host_option
 @metadata_author_option
-@click.option('--start-year', type=str, help='Novel start year')
-@click.option('--end-year', type=str, help='Novel end year')
+@metadata_start_date_option
+@metadata_end_date_option
 @metadata_language_option
 @metadata_description_option
 @click.option('--tag', 'tags', type=str, help='Novel tag', multiple=True)
 @click.option('--cover', type=str, help='Path of the image to be used as cover')
-@click.option('--save-title-to-content', is_flag=True, show_default=True, default=False, help='Set if the title of the chapter should be added to the content')
-@click.option('--auto-add-host', is_flag=True, show_default=True, default=False, help='Set if the host should be automatically added to the chapters urls')
-@click.option('--force-flaresolver', is_flag=True, show_default=True, default=False, help='Set if the requests should be forced to use FlareSolver')
+@save_title_to_content_option
+@auto_add_host_option
+@force_flaresolver_option
 def create_novel(title,
                  novel_base_dir,
                  toc_main_url,
                  toc_html,
                  host,
                  author,
-                 start_year,
-                 end_year,
+                 start_date,
+                 end_date,
                  language,
                  description,
                  tags,
@@ -122,8 +173,8 @@ def create_novel(title,
                   host=host,
                   novel_base_dir=novel_base_dir)
     novel.set_metadata(author=author,
-                       start_year=start_year,
-                       end_year=end_year,
+                       start_date=start_date,
+                       end_date=end_date,
                        language=language,
                        description=description)
     novel.set_scrapper_behavior(save_title_to_content=save_title_to_content,
@@ -136,29 +187,36 @@ def create_novel(title,
         novel.set_cover_image(cover)
     click.echo('Novel saved succesfully')
 
+@cli.command()
+@title_option
+def show_novel_info(title):
+    novel = obtain_novel(title)
+    click.echo(novel)
 
 @cli.command()
 @title_option
-@click.option('--author', type=str, help='Novel author')
-@click.option('--start-year', type=str, help='Novel start year')
-@click.option('--end-year', type=str, help='Novel end year')
-@click.option('--language', type=str, help='Novel language')
-@click.option('--description', type=str, help='Novel description')
-def set_metadata(title, author, start_year, end_year, language, description):
+@metadata_author_option
+@metadata_start_date_option
+@metadata_end_date_option
+@metadata_language_option
+@metadata_description_option
+def set_metadata(title, author, start_date, end_date, language, description):
     novel = obtain_novel(title)
     novel.set_metadata(author=author,
-                       start_year=start_year,
-                       end_year=end_year,
+                       start_date=start_date,
+                       end_date=end_date,
                        language=language,
                        description=description)
     click.echo('Novel metadata saved succesfully')
     click.echo(novel.metadata)
+
 
 @cli.command()
 @title_option
 def show_metadata(title):
     novel = obtain_novel(title)
     click.echo(novel.metadata)
+
 
 @cli.command()
 @title_option
@@ -169,7 +227,8 @@ def add_tag(title, tag):
         click.echo('Tag added succesfully')
     else:
         click.echo('Tag already exists', err=True)
-    click.echo(f'Tags: {', '.join(novel.metadata.tags)}')
+    click.echo(f'Tags: {", ".join(novel.metadata.tags)}')
+
 
 @cli.command()
 @title_option
@@ -180,13 +239,15 @@ def remove_tag(title, tag):
         click.echo('Tag removed succesfully')
     else:
         click.echo('Tag does not exist', err=True)
-    click.echo(f'Tags: {', '.join(novel.metadata.tags)}')
+    click.echo(f'Tags: {", ".join(novel.metadata.tags)}')
+
 
 @cli.command()
 @title_option
 def show_tags(title):
     novel = obtain_novel(title)
-    click.echo(f'Tags: {', '.join(novel.metadata.tags)}')
+    click.echo(f'Tags: {", ".join(novel.metadata.tags)}')
+
 
 @cli.command()
 @title_option
@@ -214,6 +275,7 @@ def set_scrapper_behavior(title, save_title_to_content, auto_add_host, force_fla
     )
     click.echo('New Scrapper Behavior added succesfully')
 
+
 @cli.command()
 @title_option
 def show_scrapper_behavior(title):
@@ -223,7 +285,7 @@ def show_scrapper_behavior(title):
 
 @cli.command()
 @title_option
-@click.option('--host', type=str, required=True, help='Host to be used for decoding')
+@host_option
 def set_host(title, host):
     novel = obtain_novel(title)
     novel.set_host(host)
@@ -242,8 +304,8 @@ def set_toc_main_url(title, toc_main_url):
 
 @cli.command()
 @title_option
-@click.option('--toc-html', type=click.File(encoding='utf-8'), required=True, help='New TOC HTML file (if a toc_main_url is set, it will be deleted)')
-@click.option('--host', type=str, required=False, help='Host to be used for decoding')
+@create_toc_html_option(required=True)
+@host_option
 def add_toc_html(title, toc_html, host):
     novel = obtain_novel(title)
     html_content = toc_html.read()
@@ -252,7 +314,7 @@ def add_toc_html(title, toc_html, host):
 
 @cli.command()
 @title_option
-@click.option('--reload-files', is_flag=True, required=False, default=False, show_default=True, help='Host to be used for decoding')
+@click.option('--reload-files', is_flag=True, required=False, default=False, show_default=True, help='Reload the toc files before sync (only works if using a toc url)')
 def sync_toc(title, reload_files):
     novel = obtain_novel(title)
     novel.sync_toc(reload_files)
@@ -268,6 +330,7 @@ def delete_toc(title, auto_approve):
                       title}', abort=True)
     novel.clear_toc()
 
+
 @cli.command()
 @title_option
 def show_toc(title):
@@ -279,12 +342,21 @@ def show_toc(title):
 
 @cli.command()
 @title_option
-@click.option('--chapter-url', type=str, required=True, help='Chapter URL to be scrapped')
+@click.option('--chapter-url', type=str, required=False, help='Chapter URL to be scrapped')
+@click.option('--chapter-num', type=int, required=False, help='Chapter number to be scrapped')
 @click.option('--update-html', is_flag=True, default=False, show_default=True, help='If the chapter html is saved, it will be updated')
-def scrap_chapter(title, chapter_url, update_html):
+def scrap_chapter(title, chapter_url, chapter_num, update_html):
     novel = obtain_novel(title)
+    if not chapter_url and not chapter_num:
+        click.echo('Chapter url or chapter num should be setted', err=True)
+    if chapter_num and chapter_url:
+        click.echo('It should be either chapter url or chapter num', err=True)
+    if chapter_num <= 0 or chapter_num > len(novel.chapters):
+        raise click.BadParameter(message='Chapter number should be positive and an existing chapter', param_hint='--chapter-num')
     chapter, content = novel.scrap_chapter(
-        chapter_url=chapter_url, update_html=update_html)
+        chapter_url=chapter_url, chapter_idx=chapter_num - 1, update_html=update_html)
+    if not chapter or not content:
+        click.echo('Chapter num or url not found.', err=True)
     click.echo(chapter)
     click.echo('Content:')
     click.echo(content)
@@ -292,23 +364,28 @@ def scrap_chapter(title, chapter_url, update_html):
 
 @cli.command()
 @title_option
-@click.option('--reload-toc', is_flag=True, default=False, show_default=True, help='If the TOC is reloaded before the chapters are requested')
+@sync_toc_option
 @click.option('--update-html', is_flag=True, default=False, show_default=True, help='If the chapter html is saved, it will be updated')
 @click.option('--clean-chapters', is_flag=True, default=False, show_default=True, help='If the chapter html should be cleaned upon saving')
-def request_all_chapters(title, reload_toc, update_html, clean_chapters):
+def request_all_chapters(title, sync_toc, update_html, clean_chapters):
     novel = obtain_novel(title)
     novel.request_all_chapters(
-        reload_toc=reload_toc, update_html=update_html, clean_chapters=clean_chapters)
+        sync_toc=sync_toc, update_html=update_html, clean_chapters=clean_chapters)
     click.echo('All chapters requested and saved.')
-
 
 @cli.command()
 @title_option
-@click.option('--reload-toc', is_flag=True, default=False, show_default=True, help='If the TOC is reloaded before the chapters are requested')
+def show_chapters(title):
+    novel = obtain_novel(title)
+    click.echo(novel.show_chapters())
+
+@cli.command()
+@title_option
+@sync_toc_option
 @click.option('--start-chapter', type=int, default=1, show_default=True, help='The start chapter for the books (position in the toc, may differ from the actual number)')
 @click.option('--end-chapter', type=int, default=None, show_default=True, help='The end chapter for the books (if not defined, every chapter will be saved)')
 @click.option('--chapters-by-book', type=int, default=100, show_default=True, help='The number of chapters each book will have')
-def save_novel_to_epub(title, reload_toc, start_chapter, end_chapter, chapters_by_book):
+def save_novel_to_epub(title, sync_toc, start_chapter, end_chapter, chapters_by_book):
     if start_chapter <= 0:
         raise click.BadParameter(
             'Should be a positive number', param_hint='--start-chapter')
@@ -322,7 +399,7 @@ def save_novel_to_epub(title, reload_toc, start_chapter, end_chapter, chapters_b
                 'Should be a positive number', param_hint='--chapters-by-book')
 
     novel = obtain_novel(title)
-    novel.save_novel_to_epub(reload_toc=reload_toc,
+    novel.save_novel_to_epub(sync_toc=sync_toc,
                              start_chapter=start_chapter,
                              end_chapter=end_chapter,
                              chapters_by_book=chapters_by_book)
@@ -347,10 +424,9 @@ def clean_files(title, clean_chapters, clean_toc, hard_clean):
 
 
 @cli.command()
-@click.option('--test', default="test2")
-def version(test):
+def version():
     """Show program version"""
-    click.echo(f'Versión {test}')
+    click.echo('Versión 0.0.1')
 
 
 if __name__ == '__main__':

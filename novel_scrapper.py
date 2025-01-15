@@ -20,8 +20,8 @@ logger = logger_manager.create_logger('NOVEL SCRAPPING')
 class Metadata:
     novel_title: str
     author: Optional[str] = None
-    start_year: Optional[str] = None
-    end_year: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     language: Optional[str] = "en"
     description: Optional[str] = None
     tags: list[str] = field(default_factory=list)
@@ -143,6 +143,22 @@ class Novel:
 
         self.save_novel()
 
+    def __str__(self):
+        """
+        Dynamic string representation of the novel.
+        """
+        toc_info = self.toc_main_url if self.toc_main_url else "TOC added manually"
+        attributes = [
+            f"Title: {self.metadata.novel_title}",
+            f"Author: {self.metadata.author}",
+            f"Language: {self.metadata.language}",
+            f"Description: {self.metadata.description}",
+            f"Tags: {', '.join(self.metadata.tags)}",
+            f"TOC Info: {toc_info}",
+            f"Host: {self.host}"
+        ]
+        return f"Novel Info: \n{'\n'.join(attributes)}"
+
     # NOVEL PARAMETERS MANAGEMENT
 
     def set_scrapper_behavior(self, **kwargs) -> None:
@@ -236,7 +252,8 @@ class Novel:
         if self.scrapper_behavior.auto_add_host:
             self.chapters_url_list = [
                 f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
-        self.chapters_url_list = utils.delete_duplicates(self.chapters_url_list)
+        self.chapters_url_list = utils.delete_duplicates(
+            self.chapters_url_list)
         self.save_novel()
         self._create_chapters_from_toc()
 
@@ -250,21 +267,30 @@ class Novel:
 
     # CHAPTERS MANAGEMENT
 
+    def show_chapters(self) -> str:
+        chapter_list = "Chapters List:\n"
+        for i, chapter in enumerate(self.chapters):
+            chapter_list += f"Chapter {i + 1}:\n"
+            chapter_list += f"  Title: {chapter.chapter_title if chapter.chapter_title else 'Title not yet scrapped'}\n"
+            chapter_list += f"  URL: {chapter.chapter_url}\n"
+            chapter_list += f"  Filename: {chapter.chapter_html_filename if chapter.chapter_html_filename else 'File not yet requested'}\n"
+        return chapter_list
+
     def scrap_chapter(self, chapter_url: str = None, chapter_idx: int = None, update_html: bool = False) -> tuple[Chapter, str]:
-        if not chapter_idx and not chapter_url:
+        if chapter_idx is None and chapter_url is None:
             logger.error('You need to set "chapter_url" or "chapter_idx"')
             sys.exit(1)
 
-        if chapter_url and chapter_idx:
+        if chapter_url is not None and chapter_idx is not None:
             logger.error('You can only set "chapter_url" or "chapter_idx"')
             sys.exit(1)
         chapter_html, chapter_html_filename = None, None
-        if chapter_idx:
+        if chapter_idx is not None:
             chapter_html, chapter_html_filename = self._get_chapter(chapter_idx=chapter_idx,
                                                                     reload=update_html)
             chapter_url = self.chapters[chapter_idx].chapter_url
 
-        if chapter_url:
+        if chapter_url is not None:
             chapter_html, chapter_html_filename = self._get_chapter(chapter_url=chapter_url,
                                                                     reload=update_html)
             chapter_idx = self._get_chapter_url_idx(chapter_url)
@@ -363,7 +389,6 @@ class Novel:
 
 # UTILS
 
-
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
         hard_clean = hard_clean or self.scrapper_behavior.hard_clean
         if clean_chapters:
@@ -400,10 +425,10 @@ class Novel:
                      reload: bool = False) -> tuple[str, str] | None:
         try:
             # Validate input parameters
-            if not chapter_url and not chapter_idx:
+            if chapter_url is None and chapter_idx is None:
                 raise ValueError(
                     'You need to set either "url" or "chapter_idx"')
-            if chapter_idx and chapter_url:
+            if chapter_idx is not None and chapter_url is not None:
                 raise ValueError(
                     'You can only set either "url" or "chapter_idx"')
 
@@ -510,7 +535,8 @@ class Novel:
         return None
 
     def _delete_chapters_not_in_toc(self) -> None:
-        self.chapters = [chapter for chapter in self.chapters if chapter.chapter_url in self.chapters_url_list]
+        self.chapters = [
+            chapter for chapter in self.chapters if chapter.chapter_url in self.chapters_url_list]
 
     def _create_chapters_from_toc(self):
         self._delete_chapters_not_in_toc()
@@ -601,12 +627,21 @@ class Novel:
 
         if self.metadata.author:
             book.add_author(self.metadata.author)
-        if self.metadata.start_year:
-            book.add_metadata('OPF', 'meta', self.metadata.start_year,
-                              {'name': 'start-year', 'content': self.metadata.start_year})
-        if self.metadata.end_year:
-            book.add_metadata('OPF', 'meta', self.metadata.end_year,
-                              {'name': 'start-year', 'content': self.metadata.end_year})
+
+        date_metadata = ''
+        if self.metadata.start_date:
+            date_metadata += self.metadata.start_date
+        # Calibre specification doesn't use end_date.
+        # For now we use a custom metadata
+        # https://idpf.org/epub/31/spec/epub-packages.html#sec-opf-dcdate
+        # if self.metadata.end_date:
+        #     date_metadata += f'/{self.metadata.end_date}'
+        if self.metadata.end_date:
+            book.add_metadata('OPF', 'meta', self.metadata.end_date, {
+                              'name': 'end_date', 'content': self.metadata.end_date})
+        if date_metadata:
+            logger.debug(f'Using date_metadata {date_metadata}')
+            book.add_metadata('DC', 'date', date_metadata)
 
         # Collections with calibre
         if calibre_collection:
