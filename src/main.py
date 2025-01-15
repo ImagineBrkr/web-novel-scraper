@@ -196,27 +196,25 @@ def show_metadata(title):
 
 @cli.command()
 @title_option
-@click.option('--tag', type=str, required=True, help='New tag.')
-def add_tag(title, tag):
-    """Add a tag to a novel."""
+@click.option('--tag', 'tags', type=str, help='Tag to be added', multiple=True)
+def add_tags(title, tags):
+    """Add tags to a novel."""
     novel = obtain_novel(title)
-    if novel.add_tag(tag):
-        click.echo('Tag added successfully.')
-    else:
-        click.echo('Tag already exists.', err=True)
+    for tag in tags:
+        if not novel.add_tag(tag):
+            click.echo(f'Tag {tag} already exists', err=True)
     click.echo(f'Tags: {", ".join(novel.metadata.tags)}')
 
 
 @cli.command()
 @title_option
-@click.option('--tag', type=str, required=True, help='Tag to be removed.')
-def remove_tag(title, tag):
-    """Remove a tag from a novel."""
+@click.option('--tag', 'tags', type=str, help='Tag to be removed.', multiple=True)
+def remove_tags(title, tags):
+    """Remove tags from a novel."""
     novel = obtain_novel(title)
-    if novel.remove_tag(tag):
-        click.echo('Tag removed successfully.')
-    else:
-        click.echo('Tag does not exist.', err=True)
+    for tag in tags:
+        if not novel.remove_tag(tag):
+            click.echo(f'Tag {tag} does not exist.', err=True)
     click.echo(f'Tags: {", ".join(novel.metadata.tags)}')
 
 
