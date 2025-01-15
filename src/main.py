@@ -8,6 +8,7 @@ import click
 
 from file_manager import FileManager
 from novel_scrapper import Novel
+from version import __VERSION__
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
@@ -416,7 +417,7 @@ def clean_files(title, novel_base_dir, clean_chapters, clean_toc, hard_clean):
 @cli.command()
 def version():
     """Show program version."""
-    click.echo('Version 0.0.1')
+    click.echo(f'Version {__VERSION__}')
 
 if __name__ == '__main__':
     cli()
