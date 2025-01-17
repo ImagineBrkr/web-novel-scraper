@@ -1,6 +1,6 @@
 import requests
 import os
-import logger_manager
+from . import logger_manager
 from dotenv import load_dotenv
 import json
 import time

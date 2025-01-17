@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "web-novel-scrapper"
+dynamic = ["version"]
+description = "Python tool that allows you to scrape web novels from various sources and save them to more readable formats like EPUB."
+authors = [
+    { name="ImagineBrkr", email="salvattore_25@hotmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = [
+    "Web Novel",
+    "Web Novel Scrapper",
+    "Scrapper",
+    "Web Novel Downloader",
+    "Novel Downloader",
+]
+dependencies = [
+    "python-dotenv",
+    "requests",
+    "bs4>=0.0.2",
+    "ebooklib>=0.18,<1",
+    "click>=7.0,<8",
+    "platformdirs",
+    "dataclasses_json>=0.6.7,<1"
+]
+
+
+[project.scripts]
+web-novel-scrapper = "web_novel_scrapper.__main__:cli"
+
+[project.urls]
+Homepage = "https://github.com/ImagineBrkr/web-novel-scrapper"
+Repository = "https://github.com/ImagineBrkr/web-novel-scrapper.git"
+
+[tool.hatch.version]
+path = "web_novel_scrapper/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["web_novel_scrapper"]

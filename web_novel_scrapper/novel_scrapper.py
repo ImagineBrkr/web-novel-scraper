@@ -5,12 +5,12 @@ from dataclasses_json import dataclass_json, config, Undefined
 from ebooklib import epub
 from typing import Optional
 
-import logger_manager
-from decode import Decoder
-from file_manager import FileManager
-import utils
+from . import logger_manager
+from .decode import Decoder
+from .file_manager import FileManager
+from . import utils
 
-import request_manager
+from . import request_manager
 
 logger = logger_manager.create_logger('NOVEL SCRAPPING')
 

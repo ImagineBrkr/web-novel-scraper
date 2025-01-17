@@ -1,4 +1,3 @@
-import os
 import json
 from pathlib import Path
 import sys
@@ -6,9 +5,9 @@ from datetime import datetime
 
 import click
 
-from file_manager import FileManager
-from novel_scrapper import Novel
-from version import __VERSION__
+from .file_manager import FileManager
+from .novel_scrapper import Novel
+from .version import __version__
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
@@ -417,7 +416,7 @@ def clean_files(title, novel_base_dir, clean_chapters, clean_toc, hard_clean):
 @cli.command()
 def version():
     """Show program version."""
-    click.echo(f'Version {__VERSION__}')
+    click.echo(f'Version {__version__}')
 
 if __name__ == '__main__':
     cli()

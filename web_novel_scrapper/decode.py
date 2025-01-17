@@ -2,16 +2,16 @@ import os
 import json
 from pathlib import Path
 
-import logger_manager
+from . import logger_manager
 
 from bs4 import BeautifulSoup
 
 logger = logger_manager.create_logger('DECODE HTML')
 
-CURRENT_DIR = Path(__file__).resolve().parent.parent
+CURRENT_DIR = Path(__file__).resolve().parent
 
 DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{
-                              CURRENT_DIR}/decode_guide.json')
+                              CURRENT_DIR}/decode_guide/decode_guide.json')
 
 XOR_SEPARATOR = "XOR"
 

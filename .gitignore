@@ -1,6 +1,5 @@
 **.jpg
 **.png
-!cover.jpg
 **.html
 **/tmp
 **/output
@@ -11,3 +10,4 @@ test.py
 **.txt
 !requirements.txt
 **/novelas
+web_novel_scrapper/web_novel_scrapper**

@@ -8,7 +8,7 @@ import shutil
 from dotenv import load_dotenv
 from ebooklib import epub
 
-import logger_manager
+from . import logger_manager
 
 load_dotenv()
 
