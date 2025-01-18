@@ -1,0 +1,88 @@
+name: Test, Build and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: "Version increment type (PATCH, MINOR, MAJOR)"
+        required: false
+        default: "PATCH"
+        type: choice
+        options:
+        - "PATCH"
+        - "MINOR"
+        - "MAJOR"
+      publish_to_pypi:
+        description: "Publish to PyPI (yes or no)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/test.yaml
+
+  bump-version:
+    needs: run-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Bump version
+        run: |
+          NEW_VERSION=$(python .github/scripts/update_version.py web_novel_scrapper/version.py ${{ inputs.increment }})
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          
+      - name: Commit updated version
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add web_novel_scrapper/version.py
+          git commit -m "Bump version to ${{ env.NEW_VERSION }}"
+          git push
+
+      - name: Tag the new version
+        run: |
+          git tag -a "${{ env.NEW_VERSION }}" -m "Version ${{ env.NEW_VERSION }}"
+          git push origin "${{ env.NEW_VERSION }}"
+
+  build:
+    needs: bump-version
+    uses: ./.github/workflows/build.yaml
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+
+  pypi-publish:
+    needs: build
+    if: ${{ inputs.publish_to_pypi }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/web-novel-scrapper
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

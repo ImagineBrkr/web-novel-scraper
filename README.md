@@ -7,11 +7,17 @@
 - [Commands](#commands)
 - [Basic Examples](#basic-examples)
 
+
 ## Introduction
 This tool allows you to scrape web novels from various sources. I made it because my hands hurt from scrolling too much.
 
 ## Installation
-To install the Web Novel Scraping CLI, follow these steps:
+To install the Web Novel Scraping CLI, you can use pip:
+
+```bash
+    pip install web-novel-scrapper
+```
+Or you can manually install it:
 
 1. Clone the repository:
     ```bash
@@ -21,13 +27,13 @@ To install the Web Novel Scraping CLI, follow these steps:
     ```bash
     cd web-novel-scrapper
     ```
-3. Install the required dependencies:
+3. Install the project:
     ```bash
-    pip install -r requirements.txt
+    python -m pip install .
     ```
 4. Run the CLI tool:
     ```bash
-    python src/main.py
+    web-novel-scrapper
     ```
 
 ## Basic Concepts

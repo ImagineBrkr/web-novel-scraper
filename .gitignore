@@ -11,3 +11,4 @@ test.py
 !requirements.txt
 **/novelas
 web_novel_scrapper/web_novel_scrapper**
+dist
