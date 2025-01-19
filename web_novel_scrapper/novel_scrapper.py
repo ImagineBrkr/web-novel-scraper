@@ -439,6 +439,9 @@ class Novel:
         if clean_toc:
             self._clean_toc(hard_clean)
 
+    def show_novel_dir(self) -> str:
+        return self.file_manager.novel_base_dir
+
     def _clean_chapter(self, chapter_html_filename: str, hard_clean: bool = False) -> None:
         hard_clean = hard_clean or self.scrapper_behavior.hard_clean
         chapter_html = self.file_manager.load_chapter_html(

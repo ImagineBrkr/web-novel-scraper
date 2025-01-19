@@ -23,7 +23,7 @@ dependencies = [
     "requests",
     "bs4>=0.0.2",
     "ebooklib>=0.18,<1",
-    "click>=7.0,<8",
+    "click>=8.0,<9",
     "platformdirs",
     "dataclasses_json>=0.6.7,<1"
 ]
@@ -34,6 +34,7 @@ web-novel-scrapper = "web_novel_scrapper.__main__:cli"
 
 [project.urls]
 Homepage = "https://github.com/ImagineBrkr/web-novel-scrapper"
+Documentation = "https://web-novel-scrapper.readthedocs.io"
 Repository = "https://github.com/ImagineBrkr/web-novel-scrapper.git"
 
 [tool.hatch.version]

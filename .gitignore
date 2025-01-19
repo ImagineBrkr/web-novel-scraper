@@ -12,3 +12,4 @@ test.py
 **/novelas
 web_novel_scrapper/web_novel_scrapper**
 dist
+docs/build
