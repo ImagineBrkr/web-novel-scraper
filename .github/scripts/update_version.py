@@ -57,7 +57,7 @@ def update_version(file_path, increment):
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python update_version.py <file_path> <increment>")
-        print("Example: python update_version.py web_novel_scrapper/version.py patch")
+        print("Example: python update_version.py web_novel_scraper/version.py patch")
         sys.exit(1)
 
     file_path = sys.argv[1]

@@ -5,12 +5,12 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-# We import from the root directory the web_novel_scrapper module
+# We import from the root directory the web_novel_scraper module
 import sys
 sys.path.append('../..')
-from web_novel_scrapper.version import __version__
+from web_novel_scraper.version import __version__
 
-project = 'Web Novel Scrapper'
+project = 'Web Novel Scraper'
 copyright = '2025, ImagineBrkr'
 author = 'ImagineBrkr'
 
