@@ -42,14 +42,14 @@ jobs:
 
       - name: Bump version
         run: |
-          NEW_VERSION=$(python .github/scripts/update_version.py web_novel_scrapper/version.py ${{ inputs.increment }})
+          NEW_VERSION=$(python .github/scripts/update_version.py web_novel_scraper/version.py ${{ inputs.increment }})
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           
       - name: Commit updated version
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add web_novel_scrapper/version.py
+          git add web_novel_scraper/version.py
           git commit -m "Bump version to ${{ env.NEW_VERSION }}"
           git push
 
@@ -74,7 +74,7 @@ jobs:
       id-token: write
     environment:
       name: pypi
-      url: https://pypi.org/p/web-novel-scrapper
+      url: https://pypi.org/p/web-novel-scraper
     steps:
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4

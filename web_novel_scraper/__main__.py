@@ -6,7 +6,7 @@ from datetime import datetime
 import click
 
 from .file_manager import FileManager
-from .novel_scrapper import Novel
+from .novel_scraper import Novel
 from .version import __version__
 
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -52,7 +52,7 @@ def validate_date(ctx, param, value):
 
 # COMMON ARGUMENTS
 title_option = click.option(
-    '-t', '--title', type=str, required=True, help='Title of the novel.')
+    '-t', '--title', type=str, required=True, help='Title of the novel, this server as the identifier.')
 novel_base_dir_option = click.option(
     '-nb', '--novel-base-dir', type=str, help='Alternative base directory for the novel files.')
 
@@ -83,13 +83,13 @@ def create_toc_html_option(required: bool = False):
         '--toc-html',
         type=click.File(encoding='utf-8'),
         required=required,
-        help=('Novel TOC HTML loaded from file (required if not loading from URL)' if required else 'Novel TOC HTML loaded from file.')
+        help=('Novel TOC HTML loaded from file.' if required else 'Novel TOC HTML loaded from file (required if not loading from URL)')
     )
 
 host_option = click.option(
     '--host', type=str, help='Host used for decoding, optional if toc-main-url is provided.')
 
-# Scrapper behavior options
+# Scraper behavior options
 save_title_to_content_option = click.option('--save-title-to-content', is_flag=True, show_default=True,
                                             default=False, help='Add the chapter title to the content.')
 auto_add_host_option = click.option('--auto-add-host', is_flag=True, show_default=True,
@@ -110,13 +110,13 @@ force_flaresolver_option = click.option('--force-flaresolver', is_flag=True, sho
 @metadata_end_date_option
 @metadata_language_option
 @metadata_description_option
-@click.option('--tag', 'tags', type=str, help='Novel tag.', multiple=True)
+@click.option('--tag', 'tags', type=str, help='Novel tag, you can add multiple of them.', multiple=True)
 @click.option('--cover', type=str, help='Path of the image to be used as cover.')
 @save_title_to_content_option
 @auto_add_host_option
 @force_flaresolver_option
 def create_novel(title, novel_base_dir, toc_main_url, toc_html, host, author, start_date, end_date, language, description, tags, cover, save_title_to_content, auto_add_host, force_flaresolver):
-    """Create a new novel."""
+    """Creates a new novel and saves it."""
     novel = obtain_novel(title, novel_base_dir, allow_not_exists=True)
     if novel:
         click.confirm(f'A novel with the title {title} already exists, do you want to replace it?', abort=True)
@@ -143,7 +143,7 @@ def create_novel(title, novel_base_dir, toc_main_url, toc_html, host, author, st
                   toc_html=toc_html_content, host=host, novel_base_dir=novel_base_dir)
     novel.set_metadata(author=author, start_date=start_date,
                        end_date=end_date, language=language, description=description)
-    novel.set_scrapper_behavior(save_title_to_content=save_title_to_content,
+    novel.set_scraper_behavior(save_title_to_content=save_title_to_content,
                                 auto_add_host=auto_add_host, force_flaresolver=force_flaresolver)
     if tags:
         for tag in tags:
@@ -232,28 +232,28 @@ def set_cover_image(title, novel_base_dir, cover_image):
 @cli.command()
 @title_option
 @novel_base_dir_option
-@click.option('--save-title-to-content', type=bool, help='Toggle the title of the chapter being added to the content.')
-@click.option('--auto-add-host', type=bool, help='Toggle automatic addition of the host to chapter URLs.')
-@click.option('--force-flaresolver', type=bool, help='Toggle forcing the use of FlareSolver.')
-@click.option('--hard-clean', type=bool, help='Toggle using a hard clean when cleaning HTML files.')
-def set_scrapper_behavior(title, novel_base_dir, save_title_to_content, auto_add_host, force_flaresolver, hard_clean):
-    """Set scrapper behavior for a novel."""
+@click.option('--save-title-to-content', type=bool, help='Toggle the title of the chapter being added to the content (use true or false).')
+@click.option('--auto-add-host', type=bool, help='Toggle automatic addition of the host to chapter URLs (use true or false).')
+@click.option('--force-flaresolver', type=bool, help='Toggle forcing the use of FlareSolver (use true or false).')
+@click.option('--hard-clean', type=bool, help='Toggle using a hard clean when cleaning HTML files (use true or false).')
+def set_scraper_behavior(title, novel_base_dir, save_title_to_content, auto_add_host, force_flaresolver, hard_clean):
+    """Set scraper behavior for a novel."""
     novel = obtain_novel(title, novel_base_dir)
-    novel.set_scrapper_behavior(
+    novel.set_scraper_behavior(
         save_title_to_content=save_title_to_content,
         auto_add_host=auto_add_host,
         force_flaresolver=force_flaresolver,
         hard_clean=hard_clean
     )
-    click.echo('New scrapper behavior added successfully.')
+    click.echo('New scraper behavior added successfully.')
 
 @cli.command()
 @title_option
 @novel_base_dir_option
-def show_scrapper_behavior(title, novel_base_dir):
-    """Show scrapper behavior of a novel."""
+def show_scraper_behavior(title, novel_base_dir):
+    """Show scraper behavior of a novel."""
     novel = obtain_novel(title, novel_base_dir)
-    click.echo(novel.scrapper_behavior)
+    click.echo(novel.scraper_behavior)
 
 @cli.command()
 @title_option
@@ -412,6 +412,14 @@ def clean_files(title, novel_base_dir, clean_chapters, clean_toc, hard_clean):
     novel = obtain_novel(title, novel_base_dir)
     novel.clean_files(clean_chapters=clean_chapters,
                       clean_toc=clean_toc, hard_clean=hard_clean)
+
+@cli.command()
+@title_option
+@novel_base_dir_option
+def show_novel_dir(title, novel_base_dir):
+    """Show the directory where the novel is saved."""
+    novel = obtain_novel(title, novel_base_dir)
+    click.echo(novel.show_novel_dir())
 
 @cli.command()
 def version():

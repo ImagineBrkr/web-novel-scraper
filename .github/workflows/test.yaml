@@ -18,4 +18,4 @@ jobs:
       - name: Build release distributions
         run: |
           python -m pip install .
-          web-novel-scrapper --help
+          web-novel-scraper --help

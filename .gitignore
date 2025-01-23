@@ -10,5 +10,6 @@ test.py
 **.txt
 !requirements.txt
 **/novelas
-web_novel_scrapper/web_novel_scrapper**
+web_novel_scraper/web_novel_scraper**
 dist
+docs/build

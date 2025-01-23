@@ -13,15 +13,15 @@ from . import logger_manager
 load_dotenv()
 
 app_author = "ImagineBrkr"
-app_name = "web-novel-scrapper"
+app_name = "web-novel-scraper"
 
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
-SCRAPPER_BASE_CONFIG_DIR = os.getenv(
-    'SCRAPPER_BASE_CONFIG_DIR', platformdirs.user_config_dir(app_name, app_author))
-SCRAPPER_BASE_DATA_DIR = os.getenv(
-    'SCRAPPER_BASE_DATA_DIR', platformdirs.user_data_dir(app_name, app_author))
+SCRAPER_BASE_CONFIG_DIR = os.getenv(
+    'SCRAPER_BASE_CONFIG_DIR', platformdirs.user_config_dir(app_name, app_author))
+SCRAPER_BASE_DATA_DIR = os.getenv(
+    'SCRAPER_BASE_DATA_DIR', platformdirs.user_data_dir(app_name, app_author))
 
 logger = logger_manager.create_logger('FILE MANAGER')
 
@@ -45,9 +45,9 @@ class FileManager:
                  read_only: bool = False):
         logger.debug(f'Initializing FileManager for novel: {novel_title}, read_only: {read_only}')
         novel_base_dir = novel_base_dir if novel_base_dir else f'{
-            SCRAPPER_BASE_DATA_DIR}/{novel_title}'
+            SCRAPER_BASE_DATA_DIR}/{novel_title}'
         novel_config_dir = novel_config_dir if novel_config_dir else f'{
-            SCRAPPER_BASE_CONFIG_DIR}/{novel_title}'
+            SCRAPER_BASE_CONFIG_DIR}/{novel_title}'
         
         logger.debug(f'Using base dir: {novel_base_dir}, config dir: {novel_config_dir}')
         

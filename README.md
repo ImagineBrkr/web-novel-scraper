@@ -1,4 +1,4 @@
-# Web Novel Scrapper CLI
+# Web Novel scraper CLI
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -15,17 +15,17 @@ This tool allows you to scrape web novels from various sources. I made it becaus
 To install the Web Novel Scraping CLI, you can use pip:
 
 ```bash
-    pip install web-novel-scrapper
+    pip install web-novel-scraper
 ```
 Or you can manually install it:
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/ImagineBrkr/web-novel-scrapper.git
+    git clone https://github.com/ImagineBrkr/web-novel-scraper.git
     ```
 2. Navigate to the project directory:
     ```bash
-    cd web-novel-scrapper
+    cd web-novel-scraper
     ```
 3. Install the project:
     ```bash
@@ -33,7 +33,7 @@ Or you can manually install it:
     ```
 4. Run the CLI tool:
     ```bash
-    web-novel-scrapper
+    web-novel-scraper
     ```
 
 ## Basic Concepts
@@ -139,12 +139,12 @@ Commands:
   set-cover-image         Set the cover image for a novel.
   set-host                Set the host for a novel.
   set-metadata            Set metadata for a novel.
-  set-scrapper-behavior   Set scrapper behavior for a novel.
+  set-scraper-behavior   Set scraper behavior for a novel.
   set-toc-main-url        Set the main URL for the TOC of a novel.
   show-chapters           Show chapters of a novel.
   show-metadata           Show metadata of a novel.
   show-novel-info         Show information about a novel.
-  show-scrapper-behavior  Show scrapper behavior of a novel.
+  show-scraper-behavior  Show scraper behavior of a novel.
   show-tags               Show tags of a novel.
   show-toc                Show the TOC of a novel.
   sync-toc                Sync the TOC of a novel.
@@ -170,7 +170,7 @@ You can create the chapters from this TOC, or synchronize if they were already c
 ```bash
 python src/main.py sync-toc --title 'Novel 1'
 ```
-The default directory will be %APPDATA%/ImagineBrkr/web-novel-scrapper for Windows, all the files will be saved there, but you can change it.
+The default directory will be %APPDATA%/ImagineBrkr/web-novel-scraper for Windows, all the files will be saved there, but you can change it.
 
 ### Example 2: Requesting files
 We can now download all the chapters
@@ -191,22 +191,22 @@ For more detailed usage and options, use --help for each command.
 
 The Web Novel Scraping CLI uses the following environment variables for configuration:
 
-- `SCRAPPER_LOGGING_LEVEL`: Sets the logging level for the application. By default no logs are written, it accepts the following log levels: (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+- `SCRAPER_LOGGING_LEVEL`: Sets the logging level for the application. By default no logs are written, it accepts the following log levels: (DEBUG, INFO, WARNING, ERROR, CRITICAL).
     ```bash
-    export SCRAPPER_LOGGING_LEVEL=INFO
+    export SCRAPER_LOGGING_LEVEL=INFO
     ```
 
-- `SCRAPPER_LOGGING_FILE`: Specifies the file where logs will be written. Default is written to the terminal.
+- `SCRAPER_LOGGING_FILE`: Specifies the file where logs will be written. Default is written to the terminal.
     ```bash
-    export SCRAPPER_LOGGING_FILE=/path/to/logfile.log
+    export SCRAPER_LOGGING_FILE=/path/to/logfile.log
     ```
 
-- `SCRAPPER_BASE_DATA_DIR`: Defines the base directory for storing novel data. Default is the user data directory.
+- `SCRAPER_BASE_DATA_DIR`: Defines the base directory for storing novel data. Default is the user data directory.
     ```bash
-    export SCRAPPER_BASE_DATA_DIR=/path/to/data/dir
+    export SCRAPER_BASE_DATA_DIR=/path/to/data/dir
     ```
 
-- `SCRAPPER_FLARESOLVER_URL`: URL for the FlareSolverr service. Default is `http://localhost:8191/v1`.
+- `SCRAPER_FLARESOLVER_URL`: URL for the FlareSolverr service. Default is `http://localhost:8191/v1`.
     ```bash
-    export SCRAPPER_FLARESOLVER_URL=http://localhost:8191/v1
+    export SCRAPER_FLARESOLVER_URL=http://localhost:8191/v1
     ```

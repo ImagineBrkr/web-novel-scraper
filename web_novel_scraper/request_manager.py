@@ -7,7 +7,7 @@ import time
 
 load_dotenv()
 
-FLARESOLVER_URL = os.getenv('SCRAPPER_FLARESOLVER_URL', 'http://localhost:8191/v1')
+FLARESOLVER_URL = os.getenv('SCRAPER_FLARESOLVER_URL', 'http://localhost:8191/v1')
 FLARE_HEADERS = {'Content-Type': 'application/json'}
 FORCE_FLARESOLVER = os.getenv('FORCE_FLARESOLVER', '0') == '1'
 

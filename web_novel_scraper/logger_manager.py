@@ -11,8 +11,8 @@ logging_levels = {
     "CRITICAL": logging.CRITICAL,
     "DEFAULT": logging.CRITICAL + 1
 }
-LOGGING_LEVEL = os.getenv('SCRAPPER_LOGGING_LEVEL', 'DEFAULT').upper()
-LOGGING_FILE = os.getenv('SCRAPPER_LOGGING_FILE', None)
+LOGGING_LEVEL = os.getenv('SCRAPER_LOGGING_LEVEL', 'DEFAULT').upper()
+LOGGING_FILE = os.getenv('SCRAPER_LOGGING_FILE', None)
 
 if LOGGING_LEVEL in logging_levels:
     LOGGING_LEVEL = logging_levels[LOGGING_LEVEL]

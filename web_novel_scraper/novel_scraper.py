@@ -46,7 +46,7 @@ class Metadata:
 
 @dataclass_json
 @dataclass
-class ScrapperBehavior:
+class ScraperBehavior:
     # Some novels already have the title in the content.
     save_title_to_content: bool = False
     # Some novels have the toc link without the host
@@ -72,7 +72,7 @@ class ScrapperBehavior:
         """
         attributes = [f"{field.name}={
             getattr(self, field.name)}" for field in fields(self)]
-        return f"Scrapper Behavior: \n{'\n'.join(attributes)}"
+        return f"Scraper Behavior: \n{'\n'.join(attributes)}"
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -105,7 +105,7 @@ class Chapter:
 @dataclass
 class Novel:
     metadata: Metadata
-    scrapper_behavior: ScrapperBehavior = None
+    scraper_behavior: ScraperBehavior = None
     chapters: list[Chapter] = field(default_factory=list)
     toc_main_url: Optional[str] = None
     chapters_url_list: list[str] = field(default_factory=list)
@@ -119,7 +119,7 @@ class Novel:
                  metadata: Metadata = None,
                  chapters: list[Chapter] = None,
                  novel_base_dir: str = None,
-                 scrapper_behavior: ScrapperBehavior = None,
+                 scraper_behavior: ScraperBehavior = None,
                  host: str = None):
 
         if toc_main_url and toc_html:
@@ -145,7 +145,7 @@ class Novel:
 
         self.chapters = chapters if chapters else []
 
-        self.scrapper_behavior = scrapper_behavior if scrapper_behavior else ScrapperBehavior()
+        self.scraper_behavior = scraper_behavior if scraper_behavior else ScraperBehavior()
         if not host and not toc_main_url:
             logger.error('You need to set "host" or "toc_main_url".')
             sys.exit(1)
@@ -173,8 +173,8 @@ class Novel:
 
     # NOVEL PARAMETERS MANAGEMENT
 
-    def set_scrapper_behavior(self, **kwargs) -> None:
-        self.scrapper_behavior.update_behavior(**kwargs)
+    def set_scraper_behavior(self, **kwargs) -> None:
+        self.scraper_behavior.update_behavior(**kwargs)
         self.save_novel()
 
     def set_metadata(self, **kwargs) -> None:
@@ -276,7 +276,7 @@ class Novel:
                 return False
             self.chapters_url_list = [*self.chapters_url_list,
                                       *chapters_url_from_toc_content]
-        if self.scrapper_behavior.auto_add_host:
+        if self.scraper_behavior.auto_add_host:
             self.chapters_url_list = [
                 f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
         self.chapters_url_list = utils.delete_duplicates(
@@ -430,7 +430,7 @@ class Novel:
 
 
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
-        hard_clean = hard_clean or self.scrapper_behavior.hard_clean
+        hard_clean = hard_clean or self.scraper_behavior.hard_clean
         if clean_chapters:
             for chapter in self.chapters:
                 if chapter.chapter_html_filename:
@@ -439,8 +439,11 @@ class Novel:
         if clean_toc:
             self._clean_toc(hard_clean)
 
+    def show_novel_dir(self) -> str:
+        return self.file_manager.novel_base_dir
+
     def _clean_chapter(self, chapter_html_filename: str, hard_clean: bool = False) -> None:
-        hard_clean = hard_clean or self.scrapper_behavior.hard_clean
+        hard_clean = hard_clean or self.scraper_behavior.hard_clean
         chapter_html = self.file_manager.load_chapter_html(
             chapter_html_filename)
         if not chapter_html:
@@ -452,7 +455,7 @@ class Novel:
             chapter_html_filename, chapter_html)
 
     def _clean_toc(self, hard_clean: bool = False) -> None:
-        hard_clean = hard_clean or self.scrapper_behavior.hard_clean
+        hard_clean = hard_clean or self.scraper_behavior.hard_clean
         tocs_content = self.file_manager.get_all_toc()
         for i, toc in enumerate(tocs_content):
             toc = self.decoder.clean_html(toc, hard_clean=hard_clean)
@@ -476,7 +479,7 @@ class Novel:
 
         # Fetch fresh content
         chapter.chapter_html = request_manager.get_html_content(chapter.chapter_url,
-                                                                force_flaresolver=self.scrapper_behavior.force_flaresolver)
+                                                                force_flaresolver=self.scraper_behavior.force_flaresolver)
         if not chapter.chapter_html:
             logger.error(f'No content found on link {chapter.chapter_url}')
             return chapter
@@ -600,7 +603,7 @@ class Novel:
         chapter.chapter_title = str(chapter_title)
 
         chapter.chapter_content = ""
-        if self.scrapper_behavior.save_title_to_content:
+        if self.scraper_behavior.save_title_to_content:
             chapter.chapter_content += f'<h4>{chapter_title}</h4>'
         logger.info(f'{len(paragraphs)} paragraphs found in chapter')
         for paragraph in paragraphs:
