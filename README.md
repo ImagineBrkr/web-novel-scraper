@@ -119,7 +119,7 @@ In the example above:
 The following commands are available in the Web Novel Scraping CLI:
 
 ```bash
-Usage: main.py [OPTIONS] COMMAND [ARGS]...
+Usage: web-novel-scraper [OPTIONS] COMMAND [ARGS]...
 
   CLI Tool for web novel scraping.
 
@@ -156,32 +156,32 @@ Here are some basic examples:
 
 ### Example 1: Creating a Novel using a main URL
 ```bash
-python src/main.py create-novel --title 'Novel 1' --author 'ImagineBrkr' --toc-main-url 'https://page.me/Novel-1/toc' --cover 'cover.jpg'
+web-novel-scraper create-novel --title 'Novel 1' --author 'ImagineBrkr' --toc-main-url 'https://page.me/Novel-1/toc' --cover 'cover.jpg'
 ```
 Some pages have too much JavaScript, so you can just copy the HTML manually to a file and create the novel from it:
 ```bash
-python src/main.py create-novel --title 'Novel 1' --author 'ImagineBrkr' --toc-html 'toc.html' --host 'page.me' --cover 'cover.jpg'
+web-novel-scraper create-novel --title 'Novel 1' --author 'ImagineBrkr' --toc-html 'toc.html' --host 'page.me' --cover 'cover.jpg'
 ```
 If there is more than one page for the TOC, you can add them:
 ```bash
-python src/main.py add-toc-html --title 'Novel 1' --toc-html 'toc2.html'
+web-novel-scraper add-toc-html --title 'Novel 1' --toc-html 'toc2.html'
 ```
 You can create the chapters from this TOC, or synchronize if they were already created but there are new chapters.
 ```bash
-python src/main.py sync-toc --title 'Novel 1'
+web-novel-scraper sync-toc --title 'Novel 1'
 ```
 The default directory will be %APPDATA%/ImagineBrkr/web-novel-scraper for Windows, all the files will be saved there, but you can change it.
 
 ### Example 2: Requesting files
 We can now download all the chapters
 ```bash
-python src/main.py request-all-chapters --title 'Novel 1'
+web-novel-scraper request-all-chapters --title 'Novel 1'
 ```
 
 ### Example 3: Saving to EPUB
 With 
 ```bash
-python src/main.py save-novel-to-epub --title 'Novel 1'
+web-novel-scraper save-novel-to-epub --title 'Novel 1'
 ```
 
 For more detailed usage and options, use --help for each command.

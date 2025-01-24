@@ -13,7 +13,6 @@ FORCE_FLARESOLVER = os.getenv('FORCE_FLARESOLVER', '0') == '1'
 
 logger = logger_manager.create_logger('GET HTML CONTENT')
 
-
 def get_request(url: str,
                 timeout: int = 20,
                 retries: int = 3,
