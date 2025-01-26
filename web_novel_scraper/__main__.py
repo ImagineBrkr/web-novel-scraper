@@ -331,18 +331,21 @@ def show_toc(title, novel_base_dir):
 def scrap_chapter(title, novel_base_dir, chapter_url, chapter_num, update_html):
     """Scrap a chapter of a novel."""
     novel = obtain_novel(title, novel_base_dir)
-    if not chapter_url and not chapter_num:
+    if chapter_url is None and chapter_num is None:
         click.echo('Chapter URL or chapter number should be set.', err=True)
-    if chapter_num and chapter_url:
-        click.echo('It should be either chapter URL or chapter number.', err=True)
-    if chapter_num <= 0 or chapter_num > len(novel.chapters):
-        raise click.BadParameter(
-            'Chapter number should be positive and an existing chapter.', param_hint='--chapter-num')
+        return    
+    if chapter_url is not None and chapter_num is not None:
+        raise click.ClickException('It should be either chapter URL or chapter number.')
+    if chapter_num is not None:
+        if chapter_num <= 0 or chapter_num > len(novel.chapters):
+            raise click.ClickException('Chapter number should be positive and within existing chapters.')
     chapter = novel.scrap_chapter(
-        chapter_url=chapter_url, chapter_idx=chapter_num - 1, update_html=update_html)
+        chapter_url=chapter_url,
+        chapter_idx=(chapter_num - 1) if chapter_num else None,
+        update_html=update_html
+    )
     if not chapter:
-        click.echo('Chapter number or URL not found.', err=True)
-        return
+        raise click.ClickException('Chapter number or URL not found.')
     click.echo(chapter)
     click.echo('Content:')
     click.echo(chapter.chapter_content)
