@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from . import logger_manager
+from .custom_processor.custom_processor import ProcessorRegistry
 
 from bs4 import BeautifulSoup
 
@@ -46,6 +47,11 @@ class Decoder:
             logger.error(f'{content_type} key does not exists on decode guide {
                          DECODE_GUIDE_FILE} for host {self.host}')
             return
+
+        if ProcessorRegistry.has_processor(self.host, content_type):
+            processor = ProcessorRegistry.get_processor(self.host, content_type)
+            return processor.process(html)
+
         soup = BeautifulSoup(html, 'html.parser')
         decoder = self.decode_guide[content_type]
         elements = self._find_elements(soup, decoder)

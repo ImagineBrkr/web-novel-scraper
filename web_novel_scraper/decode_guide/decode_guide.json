@@ -24,7 +24,11 @@
             "class": null,
             "selector": null,
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": "p",
@@ -60,7 +64,11 @@
             "class": null,
             "selector": "div.m-newest2 ul li a",
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": null,
@@ -72,7 +80,7 @@
         }
     },
     {
-        "host": "royalroad.com",
+        "host": "www.royalroad.com",
         "has_pagination": false,
         "title": {
             "element": null,
@@ -95,12 +103,7 @@
             "array": true
         },
         "index": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "tr.chapter-row td a",
-            "attributes": null,
-            "array": true
+            "use_custom_processor": true
         },
         "next_page": {
             "element": null,
@@ -140,7 +143,11 @@
             "class": null,
             "selector": "ul.list-chapter li a",
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": null,
@@ -180,7 +187,11 @@
             "class": null,
             "selector": "ul.list-chapter li a",
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": null,
@@ -207,7 +218,11 @@
         "index": {
             "element": "ul.main li a",
             "array": true,
-            "inverted": true
+            "inverted": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         }
     }
 ]

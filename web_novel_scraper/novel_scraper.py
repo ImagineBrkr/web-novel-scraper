@@ -507,12 +507,7 @@ class Novel:
         return content
 
     def _get_chapter_urls_from_toc_content(self, toc_content: str) -> list[str]:
-        toc_elements = self.decoder.decode_html(toc_content, 'index')
-        try:
-            toc_urls = [toc_element['href'] for toc_element in toc_elements]
-        except KeyError as e:
-            logger.error(f'{e} not found on the Tag elements decoded from TOC')
-            return
+        toc_urls = self.decoder.decode_html(toc_content, 'index')
         if toc_urls:
             return toc_urls
         logger.warning('No chapter links found on toc content')
