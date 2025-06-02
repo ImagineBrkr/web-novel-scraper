@@ -58,6 +58,9 @@ class Decoder:
         if not elements:
             logger.warning(f'{content_type} not found on html using {
                            DECODE_GUIDE_FILE} for host {self.host}')
+        
+        if content_type == 'title' and isinstance(elements, list):
+            return ' '.join(elements)
         return elements
 
     def has_pagination(self, host: str = None):
