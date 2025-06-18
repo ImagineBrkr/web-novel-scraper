@@ -52,7 +52,7 @@ def validate_date(ctx, param, value):
 
 # COMMON ARGUMENTS
 title_option = click.option(
-    '-t', '--title', type=str, required=True, help='Title of the novel, this server as the identifier.')
+    '-t', '--title', type=str, required=True, envvar='SCRAPER_NOVEL_TITLE', help='Title of the novel, this server as the identifier.')
 novel_base_dir_option = click.option(
     '-nb', '--novel-base-dir', type=str, help='Alternative base directory for the novel files.')
 
