@@ -352,6 +352,7 @@ def scrap_chapter(title, novel_base_dir, chapter_url, chapter_num, update_html):
     click.echo(chapter)
     click.echo('Content:')
     click.echo(chapter.chapter_content)
+
 @cli.command()
 @title_option
 @novel_base_dir_option
