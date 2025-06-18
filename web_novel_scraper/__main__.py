@@ -330,23 +330,28 @@ def show_toc(title, novel_base_dir):
 @click.option('--update-html', is_flag=True, default=False, show_default=True, help='If the chapter HTML is saved, it will be updated.')
 def scrap_chapter(title, novel_base_dir, chapter_url, chapter_num, update_html):
     """Scrap a chapter of a novel."""
+    if (chapter_url is None and chapter_num is None) or (chapter_url and chapter_num):
+        raise click.UsageError("You must set exactly one: --chapter-url o --chapter-num.")
+
     novel = obtain_novel(title, novel_base_dir)
-    if not chapter_url and not chapter_num:
-        click.echo('Chapter URL or chapter number should be set.', err=True)
-    if chapter_num and chapter_url:
-        click.echo('It should be either chapter URL or chapter number.', err=True)
-    if chapter_num <= 0 or chapter_num > len(novel.chapters):
-        raise click.BadParameter(
-            'Chapter number should be positive and an existing chapter.', param_hint='--chapter-num')
-    chapter = novel.scrap_chapter(
-        chapter_url=chapter_url, chapter_idx=chapter_num - 1, update_html=update_html)
+
+    if chapter_num is not None:
+        if chapter_num <= 0 or chapter_num > len(novel.chapters):
+            raise click.BadParameter(
+                'Chapter number should be positive and an existing chapter.', param_hint='--chapter-num')
+        chapter = novel.scrap_chapter(chapter_idx=chapter_num - 1,
+                                      update_html=update_html)
+
+    else:
+        chapter = novel.scrap_chapter(chapter_url=chapter_url,
+                                      update_html=update_html)
+
     if not chapter:
-        click.echo('Chapter number or URL not found.', err=True)
-        return
+        raise click.ClickException('Chapter not found or scrap failed.')
+
     click.echo(chapter)
     click.echo('Content:')
     click.echo(chapter.chapter_content)
-
 @cli.command()
 @title_option
 @novel_base_dir_option

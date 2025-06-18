@@ -174,10 +174,10 @@
             }
         },
         "content": {
-            "element": "div#chr-content",
+            "element": null,
             "id": null,
             "class": null,
-            "selector": null,
+            "selector": "div#chr-content p",
             "attributes": null,
             "array": true
         },
@@ -262,6 +262,38 @@
             "selector": null,
             "attributes": null,
             "array": true
+        }
+    },
+    {
+        "host": "hostednovel.com",
+        "has_pagination": true,
+        "title": {
+            "selector": "span#chapter-title",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "element": "div",
+            "id": "chapter-content",
+            "array": true
+        },
+        "index": {
+            "selector": "li ul li.flow-root a",
+            "array": true,
+            "inverted": false,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        },
+        "next_page": {
+            "selector": "a:has(span:contains('Next'))",
+            "array": false,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         }
     }
 ]

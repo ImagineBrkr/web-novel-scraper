@@ -6,7 +6,6 @@ from ..custom_processor import CustomProcessor, ProcessorRegistry
 GENESIS_STUDIO_VIEWER_URL = 'https://genesistudio.com/viewer'
 
 class GenesisChaptersProcessor(CustomProcessor):
-    
     def process(self, html: str) -> Optional[List[dict]]:
         pattern = r',chapters:\s*{\s*free:\s*(\[.*?"}}])'
         match = re.search(pattern, html, re.DOTALL)
