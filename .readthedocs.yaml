@@ -22,4 +22,3 @@ python:
    - requirements: docs/requirements.txt
    # We need to install the requirements to autogenerate the click docs
    - requirements: requirements.txt
-        

@@ -13,3 +13,5 @@ test.py
 web_novel_scraper/web_novel_scraper**
 dist
 docs/build
+.idea
+.venv

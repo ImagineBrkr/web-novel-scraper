@@ -24,7 +24,11 @@
             "class": null,
             "selector": null,
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": "p",
@@ -60,7 +64,11 @@
             "class": null,
             "selector": "div.m-newest2 ul li a",
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": null,
@@ -72,7 +80,7 @@
         }
     },
     {
-        "host": "royalroad.com",
+        "host": "www.royalroad.com",
         "has_pagination": false,
         "title": {
             "element": null,
@@ -95,12 +103,7 @@
             "array": true
         },
         "index": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "tr.chapter-row td a",
-            "attributes": null,
-            "array": true
+            "use_custom_processor": true
         },
         "next_page": {
             "element": null,
@@ -140,7 +143,11 @@
             "class": null,
             "selector": "ul.list-chapter li a",
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": null,
@@ -167,10 +174,10 @@
             }
         },
         "content": {
-            "element": "div#chr-content",
+            "element": null,
             "id": null,
             "class": null,
-            "selector": null,
+            "selector": "div#chr-content p",
             "attributes": null,
             "array": true
         },
@@ -180,7 +187,11 @@
             "class": null,
             "selector": "ul.list-chapter li a",
             "attributes": null,
-            "array": true
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         },
         "next_page": {
             "element": null,
@@ -207,7 +218,82 @@
         "index": {
             "element": "ul.main li a",
             "array": true,
-            "inverted": true
+            "inverted": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        }
+    },
+    {
+        "host": "genesistudio.com",
+        "has_pagination": false,
+        "title": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": "p.leading-none span",
+            "attributes": null,
+            "array": true,
+            "extract": {
+                "type": "text",
+                "key": "text"
+            }
+        },
+        "content": {
+            "element": "p",
+            "id": null,
+            "class": "narration",
+            "selector": null,
+            "attributes": null,
+            "array": true,
+            "extract": {
+                "type": "text",
+                "key": "text"
+            }
+        },
+        "index": {
+            "use_custom_processor": true
+        },
+        "next_page": {
+            "element": null,
+            "id": null,
+            "class": null,
+            "selector": null,
+            "attributes": null,
+            "array": true
+        }
+    },
+    {
+        "host": "hostednovel.com",
+        "has_pagination": true,
+        "title": {
+            "selector": "span#chapter-title",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "element": "div",
+            "id": "chapter-content",
+            "array": true
+        },
+        "index": {
+            "selector": "li ul li.flow-root a",
+            "array": true,
+            "inverted": false,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        },
+        "next_page": {
+            "selector": "a:has(span:contains('Next'))",
+            "array": false,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
         }
     }
 ]

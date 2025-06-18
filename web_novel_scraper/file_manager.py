@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 from dotenv import load_dotenv
 from ebooklib import epub
+import unicodedata
 
 from . import logger_manager
 
@@ -77,6 +78,16 @@ class FileManager:
     def save_chapter_html(self, filename: str, content: str):
         full_path = self.novel_chapters_dir / filename
         logger.debug(f'Saving chapter to {full_path}')
+        content = unicodedata.normalize('NFKC', content)
+        char_replacements = {
+            "â": "'",    # Reemplazar â con apóstrofe
+            "\u2018": "'", # Comillda simple izquierda Unicode
+            "\u2019": "'", # Comilla simple derecha Unicode
+            "\u201C": '"', # Comilla doble izquierda Unicode
+            "\u201D": '"', # Comilla doble derecha Unicode
+        }
+        for old_char, new_char in char_replacements.items():
+            content = content.replace(old_char, new_char)
         _save_content_to_file(full_path, content)
 
     def load_chapter_html(self, filename: str):
