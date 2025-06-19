@@ -45,7 +45,7 @@ def get_request(url: str,
 
 
 def get_request_flaresolver(url: str,
-                            timeout: int = 20,
+                            timeout: int = 240,
                             flaresolver_url: str = FLARESOLVER_URL,
                             retries: int = 3,
                             time_between_retries: int = 1) -> requests.Response | None:
@@ -115,7 +115,7 @@ def get_html_content(url: str,
     # Try with Flaresolver
     logger.debug(f'Trying with Flaresolver for {url}')
     response = get_request_flaresolver(
-        url, timeout=20, flaresolver_url=flaresolver_url, time_between_retries=time_between_retries)
+        url, timeout=60, flaresolver_url=flaresolver_url, time_between_retries=time_between_retries)
     if not response:
         logger.critical(f'Failed to get response from {url} using FlareSolver')
         return None

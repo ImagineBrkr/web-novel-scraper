@@ -137,6 +137,14 @@ class Decoder:
 
         return self.decode_guide['has_pagination']
 
+    def is_index_inverted(self, host:str = None) -> bool:
+        if host:
+            decode_guide = self._get_element_by_key(DECODE_GUIDE, 'host', host)
+        else:
+            decode_guide = self.decode_guide
+
+        return decode_guide.get('index', {}).get('inverted', False)
+
     def clean_html(self, html: str, hard_clean: bool = False):
         tags_for_soft_clean = ['script', 'style', 'link',
                                'form', 'meta', 'hr', 'noscript', 'button']
