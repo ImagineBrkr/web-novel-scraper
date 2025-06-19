@@ -45,10 +45,10 @@ class FileManager:
                  novel_config_dir: str = None,
                  read_only: bool = False):
         logger.debug(f'Initializing FileManager for novel: {novel_title}, read_only: {read_only}')
-        novel_base_dir = novel_base_dir if novel_base_dir else f'{
-            SCRAPER_BASE_DATA_DIR}/{novel_title}'
-        novel_config_dir = novel_config_dir if novel_config_dir else f'{
-            SCRAPER_BASE_CONFIG_DIR}/{novel_title}'
+        novel_base_dir = novel_base_dir if novel_base_dir else \
+                        f'{SCRAPER_BASE_DATA_DIR}/{novel_title}'
+        novel_config_dir = novel_config_dir if novel_config_dir else \
+                            f'{SCRAPER_BASE_CONFIG_DIR}/{novel_title}'
         
         logger.debug(f'Using base dir: {novel_base_dir}, config dir: {novel_config_dir}')
         
@@ -243,8 +243,7 @@ def _save_content_to_file(filepath: Path, content: str | dict, is_json: bool = F
     except (OSError, IOError) as e:
         logger.error(f'Error saving file "{filepath}": {e}')
     except Exception as e:
-        logger.error(f'Unexpected error saving file "{
-                     filepath}": {e}', exc_info=True)
+        logger.error(f'Unexpected error saving file "{filepath}": {e}', exc_info=True)
 
 
 def _read_content_from_file(filepath: Path, bytes: bool = False) -> str:
@@ -263,8 +262,7 @@ def _read_content_from_file(filepath: Path, bytes: bool = False) -> str:
         logger.error(f'Error reading file "{filepath}": {e}')
     except Exception as e:
         # Log for unexpected errors
-        logger.error(f'Unexpected error reading file "{
-                     filepath}": {e}', exc_info=True)
+        logger.error(f'Unexpected error reading file "{filepath}": {e}', exc_info=True)
 
 
 def _delete_file(filepath: Path) -> None:
@@ -280,8 +278,7 @@ def _delete_file(filepath: Path) -> None:
         logger.error(f'Error deleting file "{filepath}": {e}')
     except Exception as e:
         # Log any unexpected errors
-        logger.error(f'Unexpected error deleting file "{
-                     filepath}": {e}', exc_info=True)
+        logger.error(f'Unexpected error deleting file "{filepath}": {e}', exc_info=True)
 
 
 def _copy_file(source: Path, destination: Path) -> bool:
