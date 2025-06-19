@@ -39,9 +39,11 @@ class Metadata:
         """
         Dynamic string representation of the configuration.
         """
-        attributes = [f"{field.name}={
-            getattr(self, field.name)}" for field in fields(self)]
-        return f"Metadata: \n{'\n'.join(attributes)}"
+        attributes = [(f"{field.name}="
+                       f"{getattr(self, field.name)}") for field in fields(self)]
+        attributes_str = '\n'.join(attributes)
+        return (f"Metadata: \n"
+                f"{attributes_str}")
 
 
 @dataclass_json
@@ -70,9 +72,11 @@ class ScraperBehavior:
         """
         Dynamic string representation of the configuration.
         """
-        attributes = [f"{field.name}={
-            getattr(self, field.name)}" for field in fields(self)]
-        return f"Scraper Behavior: \n{'\n'.join(attributes)}"
+        attributes = [(f"{field.name}="
+                       f"{getattr(self, field.name)}") for field in fields(self)]
+        attributes_str = '\n'.join(attributes)
+        return (f"Scraper Behavior: \n"
+                f"{attributes_str}")
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -169,7 +173,9 @@ class Novel:
             f"TOC Info: {toc_info}",
             f"Host: {self.host}"
         ]
-        return f"Novel Info: \n{'\n'.join(attributes)}"
+        attributes_str = '\n'.join(attributes)
+        return (f"Novel Info: \n"
+                f"{attributes_str}")
 
     # NOVEL PARAMETERS MANAGEMENT
 
@@ -186,8 +192,7 @@ class Novel:
             self.metadata.tags.append(tag)
             self.save_novel()
             return True
-        logger.warning(f'Tag "{tag}" already exists on novel {
-                       self.metadata.novel_title}')
+        logger.warning(f'Tag "{tag}" already exists on novel {self.metadata.novel_title}')
         return False
 
     def remove_tag(self, tag: str) -> bool:
@@ -195,8 +200,7 @@ class Novel:
             self.metadata.tags.remove(tag)
             self.save_novel()
             return True
-        logger.warning(f'Tag "{tag}" doesn\'t exist on novel {
-                       self.metadata.novel_title}')
+        logger.warning(f'Tag "{tag}" doesn\'t exist on novel {self.metadata.novel_title}')
         return False
 
     def set_cover_image(self, cover_image_path: str) -> bool:
@@ -298,11 +302,9 @@ class Novel:
         chapter_list = "Chapters List:\n"
         for i, chapter in enumerate(self.chapters):
             chapter_list += f"Chapter {i + 1}:\n"
-            chapter_list += f"  Title: {
-                chapter.chapter_title if chapter.chapter_title else 'Title not yet scrapped'}\n"
+            chapter_list += f"  Title: {chapter.chapter_title if chapter.chapter_title else 'Title not yet scrapped'}\n"
             chapter_list += f"  URL: {chapter.chapter_url}\n"
-            chapter_list += f"  Filename: {
-                chapter.chapter_html_filename if chapter.chapter_html_filename else 'File not yet requested'}\n"
+            chapter_list += f"  Filename: {chapter.chapter_html_filename if chapter.chapter_html_filename else 'File not yet requested'}\n"
         return chapter_list
 
     def scrap_chapter(self, chapter_url: str = None, chapter_idx: int = None, update_html: bool = False) -> Chapter:
@@ -379,8 +381,7 @@ class Novel:
                 chapter = self._get_chapter(
                     chapter=chapter, reload=update_html)
                 if not chapter.chapter_html_filename:
-                    logger.critical(f'Error requesting chapter {
-                                    i} with url {chapter.chapter_url}')
+                    logger.critical(f'Error requesting chapter {i} with url {chapter.chapter_url}')
                     return False
 
                 self._add_or_update_chapter_data(chapter=chapter, link_idx=i,
@@ -402,16 +403,15 @@ class Novel:
             self.sync_toc()
 
         if start_chapter > len(self.chapters):
-            logger.info(f'The start chapter is bigger than the number of chapters saved ({
-                        len(self.chapters)})')
+            logger.info(f'The start chapter is bigger than the number of chapters saved ({len(self.chapters)})')
             return
 
         if not end_chapter:
             end_chapter = len(self.chapters)
         elif end_chapter > len(self.chapters):
             end_chapter = len(self.chapters)
-            logger.info(f'The end chapter is bigger than the number of chapters, automatically setting it to {
-                        end_chapter}.')
+            logger.info(f'The end chapter is bigger than the number of chapters, '
+                        f'automatically setting it to {end_chapter}.')
 
         idx = 1
         start = start_chapter
@@ -421,8 +421,8 @@ class Novel:
                                                  end_chapter=end,
                                                  collection_idx=idx)
             if not result:
-                logger.critical(f'Error with saving novel to epub, with start chapter: {
-                                start_chapter} and end chapter: {end_chapter}')
+                logger.critical(f'Error with saving novel to epub, with start chapter: '
+                                f'{start_chapter} and end chapter: {end_chapter}')
                 return False
             start = start + chapters_by_book
             idx = idx + 1
@@ -679,8 +679,7 @@ class Novel:
         idx_start = start_chapter - 1
         idx_end = end_chapter
         # We create the epub book
-        book_title = f'{self.metadata.novel_title} Chapters {
-            start_chapter} - {end_chapter}'
+        book_title = f'{self.metadata.novel_title} Chapters {start_chapter} - {end_chapter}'
         calibre_collection = None
         # If collection_idx is set, we create a calibre collection
         if collection_idx:
@@ -692,8 +691,7 @@ class Novel:
             book = self._add_chapter_to_epub_book(chapter=chapter,
                                                   book=book)
             if book is None:
-                logger.critical(f'Error saving epub {book_title}, could not decode chapter {
-                                chapter} using host {self.host}')
+                logger.critical(f'Error saving epub {book_title}, could not decode chapter {chapter} using host {self.host}')
                 return False
 
         book.add_item(epub.EpubNcx())

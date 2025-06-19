@@ -130,10 +130,10 @@
             }
         },
         "content": {
-            "element": "div#chr-content",
+            "element": null,
             "id": null,
             "class": null,
-            "selector": null,
+            "selector": "div#chr-content p",
             "attributes": null,
             "array": true
         },

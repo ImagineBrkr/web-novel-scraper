@@ -12,8 +12,7 @@ logger = logger_manager.create_logger('DECODE HTML')
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
-DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{
-                              CURRENT_DIR}/decode_guide/decode_guide.json')
+DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{CURRENT_DIR}/decode_guide/decode_guide.json')
 
 XOR_SEPARATOR = "XOR"
 
