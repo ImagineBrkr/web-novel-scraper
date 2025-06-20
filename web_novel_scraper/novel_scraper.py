@@ -277,16 +277,8 @@ class Novel:
             if chapters_url_from_toc_content is None:
                 logger.error('Chapters url not found on toc_content')
                 return False
-                # First we save a list of lists in case we need to invert the orderAdd commentMore actions
-            self.chapters_url_list.append(chapters_url_from_toc_content)
-
-        invert = self.decoder.is_index_inverted()
-        self.chapters_url_list = [
-            chapter
-            for chapters_url in (self.chapters_url_list[::-1] if invert else self.chapters_url_list)
-            for chapter in chapters_url
-        ]
-
+            self.chapters_url_list = [*self.chapters_url_list,
+                                      *chapters_url_from_toc_content]
         if self.scraper_behavior.auto_add_host:
             self.chapters_url_list = [
                 f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
@@ -517,9 +509,6 @@ class Novel:
             content = self.file_manager.get_toc(toc_filename)
             if content:
                 return content
-
-        if utils.check_incomplete_url(url):
-            url = self.toc_main_url + url
 
         # Fetch fresh content
         content = self._request_html_content(url)
