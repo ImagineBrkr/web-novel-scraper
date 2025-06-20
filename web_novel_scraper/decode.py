@@ -60,6 +60,14 @@ class Decoder:
 
         return DEFAULT_REQUEST_CONFIG
 
+    def is_index_inverted(self, host:str = None) -> bool:
+        if host:
+            decode_guide = self._get_element_by_key(DECODE_GUIDE, 'host', host)
+        else:
+            decode_guide = self.decode_guide
+
+        return decode_guide.get('index', {}).get('inverted', False)
+
     def get_chapter_urls(self, html: str) -> list[str]:
         logger.debug('Obtaining chapter URLs...')
         chapter_urls = self.decode_html(html, 'index')
