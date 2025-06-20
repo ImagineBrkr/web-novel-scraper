@@ -16,6 +16,13 @@ DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{CURRENT_DIR}/decode_guide/
 
 XOR_SEPARATOR = "XOR"
 
+DEFAULT_REQUEST_CONFIG = {
+    "force_flaresolver": False,
+    "request_retries": 3,
+    "request_timeout": 20,
+    "request_time_between_retries": 3
+}
+
 try:
     with open(DECODE_GUIDE_FILE, 'r', encoding='UTF-8') as f:
         DECODE_GUIDE = json.load(f)
@@ -36,11 +43,22 @@ except Exception as e:
 class Decoder:
     host: str
     decode_guide: json
+    request_config: dict
 
     def __init__(self, host: str):
         self.host = host
         self.decode_guide = self._get_element_by_key(
             DECODE_GUIDE, 'host', host)
+        host_request_config = self.get_request_config()
+        self.request_config = DEFAULT_REQUEST_CONFIG | host_request_config
+
+    def get_request_config(self) -> dict:
+        request_config = self.decode_guide.get('request_config')
+        if request_config:
+            logger.debug(f'Host "{self.host}" has a custom request configuration on the Decode Guide file.')
+            return request_config
+
+        return DEFAULT_REQUEST_CONFIG
 
     def get_chapter_urls(self, html: str) -> list[str]:
         logger.debug('Obtaining chapter URLs...')
@@ -130,7 +148,7 @@ class Decoder:
             return ' '.join(elements)
         return elements
 
-    def has_pagination(self, host: str = None):
+    def has_pagination(self, host: str = None) -> bool:
         if host:
             decode_guide = self._get_element_by_key(DECODE_GUIDE, 'host', host)
             return decode_guide['has_pagination']
@@ -245,9 +263,8 @@ class Decoder:
         return elements[0]
 
     @staticmethod
-    def _get_element_by_key(json_data, key, value):
+    def _get_element_by_key(json_data, key: str, value: str):
         for item in json_data:
             if item[key] == value:
                 return item
-        logger.warning('Host not found, using default decoder.')
         return json_data[0]

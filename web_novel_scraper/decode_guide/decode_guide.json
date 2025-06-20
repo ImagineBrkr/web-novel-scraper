@@ -160,6 +160,9 @@
     },
     {
         "host": "novelbin.com",
+        "request_config": {
+            "force_flaresolver": "true"
+        },
         "has_pagination": false,
         "title": {
             "element": "h2 a.chr-title",

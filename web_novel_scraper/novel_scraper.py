@@ -10,7 +10,7 @@ from .decode import Decoder
 from .file_manager import FileManager
 from . import utils
 
-from . import request_manager
+from .request_manager import get_html_content
 
 logger = logger_manager.create_logger('NOVEL SCRAPPING')
 
@@ -464,6 +464,16 @@ class Novel:
             toc = self.decoder.clean_html(toc, hard_clean=hard_clean)
             self.file_manager.update_toc(toc, i)
 
+    def _request_html_content(self, url: str) -> Optional[str]:
+        request_config = self.decoder.request_config
+        force_flaresolver = request_config.get('force_flaresolver') or self.scraper_behavior.force_flaresolver
+        html_content = get_html_content(url,
+                                        retries=request_config.get('request_retries'),
+                                        timeout=request_config.get('request_timeout'),
+                                        time_between_retries=request_config.get('request_time_between_retries'),
+                                        force_flaresolver=force_flaresolver)
+        return html_content
+
     def _get_chapter(self,
                      chapter: Chapter,
                      reload: bool = False) -> Chapter | None:
@@ -481,8 +491,7 @@ class Novel:
                 return chapter
 
         # Fetch fresh content
-        chapter.chapter_html = request_manager.get_html_content(chapter.chapter_url,
-                                                                force_flaresolver=self.scraper_behavior.force_flaresolver)
+        chapter.chapter_html = self._request_html_content(chapter.chapter_url)
         if not chapter.chapter_html:
             logger.error(f'No content found on link {chapter.chapter_url}')
             return chapter
@@ -501,7 +510,8 @@ class Novel:
             if content:
                 return content
 
-        content = request_manager.get_html_content(url)
+        # Fetch fresh content
+        content = self._request_html_content(url)
         if not content:
             logger.warning(f'No content found on link {url}')
             sys.exit(1)
