@@ -518,6 +518,9 @@ class Novel:
             if content:
                 return content
 
+        if utils.check_incomplete_url(url):
+            url = self.toc_main_url + url
+
         # Fetch fresh content
         content = self._request_html_content(url)
         if not content:
