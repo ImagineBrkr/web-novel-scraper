@@ -64,3 +64,10 @@ def check_exclusive_params(param1: any, param2: any) -> bool:
 
 def create_volume_id(n: int):
     return f'v{n:02}'
+
+def check_incomplete_url(url: str) -> bool:
+    if url.startswith('?') or url.startswith('#'):
+        return True
+
+    parsed = urlparse(url)
+    return not parsed.scheme or not parsed.netloc

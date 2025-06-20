@@ -160,6 +160,9 @@
     },
     {
         "host": "novelbin.com",
+        "request_config": {
+            "force_flaresolver": "true"
+        },
         "has_pagination": false,
         "title": {
             "element": "h2 a.chr-title",
@@ -289,6 +292,41 @@
         },
         "next_page": {
             "selector": "a:has(span:contains('Next'))",
+            "array": false,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        }
+    },
+    {
+        "host": "scribblehub.com",
+        "request_config": {
+            "force_flaresolver": "true",
+            "request_timeout": 60
+        },
+        "has_pagination": true,
+        "title": {
+            "selector": "div.chapter-title",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "selector": "div.chp_raw p",
+            "array": true
+        },
+        "index": {
+            "selector": "div.toc ol li a",
+            "array": true,
+            "inverted": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        },
+        "next_page": {
+            "selector": "div ul.simple-pagination li a.next",
             "array": false,
             "extract": {
                 "type": "attr",
