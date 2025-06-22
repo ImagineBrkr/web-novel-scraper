@@ -13,16 +13,7 @@ from . import logger_manager
 
 load_dotenv()
 
-app_author = "ImagineBrkr"
-app_name = "web-novel-scraper"
-
-
 CURRENT_DIR = Path(__file__).resolve().parent
-
-SCRAPER_BASE_CONFIG_DIR = os.getenv(
-    'SCRAPER_BASE_CONFIG_DIR', platformdirs.user_config_dir(app_name, app_author))
-SCRAPER_BASE_DATA_DIR = os.getenv(
-    'SCRAPER_BASE_DATA_DIR', platformdirs.user_data_dir(app_name, app_author))
 
 logger = logger_manager.create_logger('FILE MANAGER')
 
@@ -40,24 +31,23 @@ class FileManager:
     toc_preffix: str = "toc"
 
     def __init__(self,
-                 novel_title: str,
+                 title: str,
+                 base_novels_dir: str,
                  novel_base_dir: str = None,
-                 novel_config_dir: str = None,
                  read_only: bool = False):
-        logger.debug(f'Initializing FileManager for novel: {novel_title}, read_only: {read_only}')
-        novel_base_dir = novel_base_dir if novel_base_dir else \
-                        f'{SCRAPER_BASE_DATA_DIR}/{novel_title}'
-        novel_config_dir = novel_config_dir if novel_config_dir else \
-                            f'{SCRAPER_BASE_CONFIG_DIR}/{novel_title}'
-        
-        logger.debug(f'Using base dir: {novel_base_dir}, config dir: {novel_config_dir}')
-        
+        logger.debug(f'Initializing FileManager for novel: {title}')
+        if novel_base_dir:
+            logger.debug(f'Directory "{novel_base_dir}" was passed as novel base directory')
+        else:
+            logger.debug(f'Using novels base directory: "{base_novels_dir}"')
+            novel_base_dir = f'{base_novels_dir}/{title}'
+            logger.debug(f'Using directory {novel_base_dir} as novel "{title}" base directory')
+
         if read_only:
             self.novel_base_dir = _check_path(novel_base_dir)
             self.novel_data_dir = _check_path(f'{novel_base_dir}/data')
             self.novel_chapters_dir = _check_path(f'{self.novel_data_dir}/chapters')
-            self.novel_config_dir = _check_path(str(novel_config_dir))
-            logger.info(f'Initialized read-only FileManager for {novel_title}')
+            logger.info(f'Initialized read-only FileManager for {title}')
         else:
             try:
                 self.novel_base_dir = _create_path_if_not_exists(novel_base_dir)
@@ -65,8 +55,7 @@ class FileManager:
                     f'{novel_base_dir}/data')
                 self.novel_chapters_dir = _create_path_if_not_exists(
                     f'{self.novel_data_dir}/chapters')
-                self.novel_config_dir = _create_path_if_not_exists(novel_config_dir)
-                logger.info(f'Created directory structure for novel: {novel_title}')
+                logger.info(f'Created directory structure for novel: {title}')
             except Exception as e:
                 logger.critical(f'Failed to create directory structure: {e}')
                 raise
@@ -80,11 +69,11 @@ class FileManager:
         logger.debug(f'Saving chapter to {full_path}')
         content = unicodedata.normalize('NFKC', content)
         char_replacements = {
-            "â": "'",    # Reemplazar â con apóstrofe
-            "\u2018": "'", # Comillda simple izquierda Unicode
-            "\u2019": "'", # Comilla simple derecha Unicode
-            "\u201C": '"', # Comilla doble izquierda Unicode
-            "\u201D": '"', # Comilla doble derecha Unicode
+            "â": "'",
+            "\u2018": "'",
+            "\u2019": "'",
+            "\u201C": '"',
+            "\u201D": '"',
         }
         for old_char, new_char in char_replacements.items():
             content = content.replace(old_char, new_char)

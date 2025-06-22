@@ -1,5 +1,7 @@
 from .file_manager import FileManager
 from . import request_manager
+from typing import Optional
+
 import hashlib
 from urllib.parse import urlparse
 import re

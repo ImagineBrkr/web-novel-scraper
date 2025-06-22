@@ -11,6 +11,7 @@ from .file_manager import FileManager
 from . import utils
 
 from .request_manager import get_html_content
+from .config_manager import ScraperConfig
 
 logger = logger_manager.create_logger('NOVEL SCRAPPING')
 
@@ -18,7 +19,6 @@ logger = logger_manager.create_logger('NOVEL SCRAPPING')
 @dataclass_json
 @dataclass
 class Metadata:
-    novel_title: str
     author: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
@@ -105,10 +105,11 @@ class Chapter:
         return self.chapter_title < another.chapter_title
 
 
-@dataclass_json
+@dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass
 class Novel:
-    metadata: Metadata
+    metadata: Metadata = None
+    title: str = None
     scraper_behavior: ScraperBehavior = None
     chapters: list[Chapter] = field(default_factory=list)
     toc_main_url: Optional[str] = None
@@ -116,30 +117,23 @@ class Novel:
     host: str = None
 
     def __init__(self,
-                 novel_title: str = None,
+                 title: str,
                  toc_main_url: str = None,
                  toc_html: str = None,
                  chapters_url_list: list[str] = None,
                  metadata: Metadata = None,
                  chapters: list[Chapter] = None,
-                 novel_base_dir: str = None,
                  scraper_behavior: ScraperBehavior = None,
-                 host: str = None):
-
+                 host: str = None
+                 ):
         if toc_main_url and toc_html:
-            logger.error('There can only be one or toc_main_url or toc_html')
-            sys.exit(1)
+            logger.critical('There can only be one or toc_main_url or toc_html')
+            raise ValueError('There can only be one or toc_main_url or toc_html')
 
+        self.title = title
+        self.metadata = Metadata()
         if metadata is not None:
             self.metadata = metadata
-        elif novel_title is not None:
-            self.metadata = Metadata(novel_title)
-        else:
-            logger.error('You need to set "novel_title" or "metadata".')
-            sys.exit(1)
-
-        self.file_manager = FileManager(novel_title=self.metadata.novel_title,
-                                        novel_base_dir=novel_base_dir)
 
         if toc_html:
             self.file_manager.add_toc(toc_html)
@@ -155,9 +149,10 @@ class Novel:
             sys.exit(1)
 
         self.host = host if host else utils.obtain_host(self.toc_main_url)
-        self.decoder = Decoder(self.host)
 
-        self.save_novel()
+        self.config = None
+        self.file_manager = None
+        self.decoder = None
 
     def __str__(self):
         """
@@ -165,7 +160,7 @@ class Novel:
         """
         toc_info = self.toc_main_url if self.toc_main_url else "TOC added manually"
         attributes = [
-            f"Title: {self.metadata.novel_title}",
+            f"Title: {self.title}",
             f"Author: {self.metadata.author}",
             f"Language: {self.metadata.language}",
             f"Description: {self.metadata.description}",
@@ -179,28 +174,35 @@ class Novel:
 
     # NOVEL PARAMETERS MANAGEMENT
 
-    def set_scraper_behavior(self, **kwargs) -> None:
+    def set_config(self, config_file: str = None, base_novels_dir: str = None, novel_base_dir: str = None, decode_guide_file: str = None):
+        self.config = ScraperConfig(config_file=config_file,
+                                    base_novels_dir=base_novels_dir,
+                                    decode_guide_file=decode_guide_file)
+
+        self.file_manager = FileManager(title=self.title,
+                                        base_novels_dir=self.config.base_novels_dir,
+                                        novel_base_dir=novel_base_dir)
+
+        self.decoder = Decoder(self.host, self.config.decode_guide_file)
+
+    def set_scraper_behavior(self, save: bool = False, **kwargs) -> None:
         self.scraper_behavior.update_behavior(**kwargs)
-        self.save_novel()
 
     def set_metadata(self, **kwargs) -> None:
         self.metadata.update_behavior(**kwargs)
-        self.save_novel()
 
     def add_tag(self, tag: str) -> bool:
         if tag not in self.metadata.tags:
             self.metadata.tags.append(tag)
-            self.save_novel()
             return True
-        logger.warning(f'Tag "{tag}" already exists on novel {self.metadata.novel_title}')
+        logger.warning(f'Tag "{tag}" already exists on novel {self.title}')
         return False
 
     def remove_tag(self, tag: str) -> bool:
         if tag in self.metadata.tags:
             self.metadata.tags.remove(tag)
-            self.save_novel()
             return True
-        logger.warning(f'Tag "{tag}" doesn\'t exist on novel {self.metadata.novel_title}')
+        logger.warning(f'Tag "{tag}" doesn\'t exist on novel {self.title}')
         return False
 
     def set_cover_image(self, cover_image_path: str) -> bool:
@@ -209,9 +211,8 @@ class Novel:
     def set_host(self, host: str) -> None:
         self.host = host
         self.decoder = Decoder(self.host)
-        self.save_novel()
 
-    def save_novel(self) -> None:
+    def save_novel(self, save: bool = True) -> None:
         self.file_manager.save_novel_json(self.to_dict())
 
     # TABLE OF CONTENTS MANAGEMENT
@@ -224,7 +225,6 @@ class Novel:
             self.decoder = Decoder(self.host)
         elif update_host:
             self.decoder = Decoder(utils.obtain_host(self.toc_main_url))
-        self.save_novel()
 
     def add_toc_html(self, html: str, host: str = None) -> None:
         if self.toc_main_url:
@@ -236,13 +236,11 @@ class Novel:
             self.decoder = Decoder(self.host)
         self.file_manager.add_toc(html)
         # Delete toc_main_url since they are exclusive
-        self.save_novel()
 
     def delete_toc(self):
         self.file_manager.delete_toc()
         self.chapters = []
         self.chapters_url_list = []
-        self.save_novel()
 
     def sync_toc(self, reload_files: bool = False) -> bool:
         # Hard reload will request again the toc files from the toc_main_url
@@ -600,7 +598,7 @@ class Novel:
         chapter_title = self.decoder.get_chapter_title(chapter.chapter_html)
         if not chapter_title:
             logger.debug('No chapter title found, generating one...')
-            chapter_title = f'{self.metadata.novel_title} Chapter {idx_for_chapter_name}'
+            chapter_title = f'{self.title} Chapter {idx_for_chapter_name}'
         chapter.chapter_title = str(chapter_title)
         logger.debug(f'Chapter title: "{chapter_title}"')
 
@@ -615,7 +613,7 @@ class Novel:
     def _create_epub_book(self, book_title: str = None, calibre_collection: dict = None) -> epub.EpubBook:
         book = epub.EpubBook()
         if not book_title:
-            book_title = self.metadata.novel_title
+            book_title = self.title
         book.set_title(book_title)
         book.set_language(self.metadata.language)
         book.add_metadata('DC', 'description', self.metadata.description)
@@ -700,11 +698,11 @@ class Novel:
         idx_start = start_chapter - 1
         idx_end = end_chapter
         # We create the epub book
-        book_title = f'{self.metadata.novel_title} Chapters {start_chapter} - {end_chapter}'
+        book_title = f'{self.title} Chapters {start_chapter} - {end_chapter}'
         calibre_collection = None
         # If collection_idx is set, we create a calibre collection
         if collection_idx:
-            calibre_collection = {'title': self.metadata.novel_title,
+            calibre_collection = {'title': self.title,
                                   'idx': str(collection_idx)}
         book = self._create_epub_book(book_title, calibre_collection)
 
