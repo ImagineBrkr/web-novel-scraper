@@ -177,7 +177,7 @@ class Novel:
         fm = FileManager(title, cfg.base_novels_dir, novel_base_dir, read_only=True)
         raw = fm.load_novel_json()
         if raw is None:
-            logger.critical(f'Novel "{title}" was not found.')
+            logger.debug(f'Novel "{title}" was not found.')
             raise ValueError(f'Novel "{title}" was not found.')
         novel = Novel.from_json(raw)
         novel.config = cfg
@@ -192,9 +192,6 @@ class Novel:
                    base_novels_dir: str = None,
                    novel_base_dir: str = None,
                    decode_guide_file: str = None):
-        if not cfg and not config_file:
-            logger.critical('You need to set "config" or "config_file"')
-            raise ValueError(f'You need to set "config" or "config_file"')
         if cfg is not None:
             self.config = cfg
         else:

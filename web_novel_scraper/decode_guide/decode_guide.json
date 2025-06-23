@@ -333,5 +333,28 @@
                 "key": "href"
             }
         }
+    },
+    {
+        "host": "novelcool.com",
+        "has_pagination": false,
+        "title": {
+            "element": "h2",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "selector": "p:not(.chapter-end-mark)",
+            "array": true
+        },
+        "index": {
+            "selector": "div.chp-item a",
+            "array": true,
+            "inverted": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        }
     }
 ]
