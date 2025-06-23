@@ -304,8 +304,8 @@ class Novel:
             for chapters_url in (self.chapters_url_list[::-1] if invert else self.chapters_url_list)
             for chapter in chapters_url
         ]
-
-        if self.scraper_behavior.auto_add_host:
+        add_host_to_chapter = self.scraper_behavior.auto_add_host or self.decoder.add_host_to_chapter()
+        if add_host_to_chapter:
             self.chapters_url_list = [
                 f'https://{self.host}{chapter_url}' for chapter_url in self.chapters_url_list]
         self.chapters_url_list = utils.delete_duplicates(
@@ -627,8 +627,9 @@ class Novel:
         logger.debug(f'Chapter title: "{chapter_title}"')
 
         logger.debug('Obtaining chapter content...')
+        save_title_to_content = self.scraper_behavior.save_title_to_content or self.decoder.save_title_to_content()
         chapter.chapter_content = self.decoder.get_chapter_content(chapter.chapter_html,
-                                                           self.scraper_behavior.save_title_to_content,
+                                                           save_title_to_content,
                                                            chapter.chapter_title)
         logger.debug('Chapter successfully decoded')
 

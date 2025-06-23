@@ -45,6 +45,12 @@ class Decoder:
     def is_index_inverted(self) -> bool:
         return self.decode_guide.get('index', {}).get('inverted', False)
 
+    def save_title_to_content(self) -> bool:
+        return self.decode_guide.get('save_title_to_content', False)
+
+    def add_host_to_chapter(self) -> bool:
+        return self.decode_guide.get('add_host_to_chapter', False)
+
     def get_chapter_urls(self, html: str) -> list[str]:
         logger.debug('Obtaining chapter URLs...')
         chapter_urls = self.decode_html(html, 'index')
