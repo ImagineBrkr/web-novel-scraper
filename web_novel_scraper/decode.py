@@ -3,6 +3,7 @@ from typing import Optional
 
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
+from .utils import FileOps
 
 from bs4 import BeautifulSoup
 
@@ -24,8 +25,11 @@ class Decoder:
     request_config: dict
 
     def __init__(self, host: str, decode_guide_file: str):
-        self.host = host
         self.decode_guide_file = decode_guide_file
+        self.set_host(host)
+
+    def set_host(self, host: str) -> None:
+        self.host = host
         self._set_decode_guide()
         host_request_config = self.get_request_config()
         self.request_config = DEFAULT_REQUEST_CONFIG | host_request_config
@@ -120,7 +124,7 @@ class Decoder:
         decoder = self.decode_guide[content_type]
         elements = self._find_elements(soup, decoder)
         if not elements:
-            logger.warning(f'{content_type} not found on html using {self.decode_guide_file} '
+            logger.debug(f'{content_type} not found on html using {self.decode_guide_file} '
                            f'for host {self.host}')
 
         # Investigate this conditional
@@ -153,24 +157,11 @@ class Decoder:
         return "\n".join([line.strip() for line in str(soup).splitlines() if line.strip()])
 
     def _set_decode_guide(self) -> None:
-        try:
-            with open(self.decode_guide_file, 'r', encoding='UTF-8') as f:
-                decode_guide = json.load(f)
-            self.decode_guide = self._get_element_by_key(
-                    decode_guide, 'host', self.host)
-
-        except FileNotFoundError:
-            logger.critical(f"File {self.decode_guide_file} not found.")
-            raise
-        except PermissionError:
-            logger.critical(f"Permission error {self.decode_guide_file}.")
-            raise
-        except json.JSONDecodeError:
-            logger.critical(f"Json Decode error {self.decode_guide_file}.")
-            raise
-        except Exception as e:
-            logger.critical(f"Error {self.decode_guide_file}: {e}")
-            raise
+        decode_guide = FileOps.read_json(self.decode_guide_file)
+        self.decode_guide = self._get_element_by_key(decode_guide, 'host', self.host)
+        if self.decode_guide is None:
+            logger.critical(f'No decode guide found for host {self.host}')
+            raise ValueError(f'No decode guide found for host {self.host}')
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):
@@ -242,7 +233,7 @@ class Decoder:
                 elements = [element.string for element in elements]
 
         if not elements:
-            logger.error('No elements found, returning "None"')
+            logger.debug('No elements found, returning "None"')
             return None
 
         inverted = decoder.get('inverted')
@@ -260,8 +251,8 @@ class Decoder:
         return elements[0]
 
     @staticmethod
-    def _get_element_by_key(json_data, key: str, value: str):
+    def _get_element_by_key(json_data, key: str, value: str) -> Optional[dict]:
         for item in json_data:
             if item[key] == value:
                 return item
-        return json_data[0]
+        return None

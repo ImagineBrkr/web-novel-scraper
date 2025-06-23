@@ -172,12 +172,35 @@ class Novel:
         return (f"Novel Info: \n"
                 f"{attributes_str}")
 
+    @staticmethod
+    def load(title: str, cfg: ScraperConfig, novel_base_dir: str | None = None):
+        fm = FileManager(title, cfg.base_novels_dir, novel_base_dir, read_only=True)
+        raw = fm.load_novel_json()
+        if raw is None:
+            logger.critical(f'Novel "{title}" was not found.')
+            raise ValueError(f'Novel "{title}" was not found.')
+        novel = Novel.from_json(raw)
+        novel.config = cfg
+        novel.set_config(cfg=cfg, novel_base_dir=novel_base_dir)
+        return novel
+
     # NOVEL PARAMETERS MANAGEMENT
 
-    def set_config(self, config_file: str = None, base_novels_dir: str = None, novel_base_dir: str = None, decode_guide_file: str = None):
-        self.config = ScraperConfig(config_file=config_file,
-                                    base_novels_dir=base_novels_dir,
-                                    decode_guide_file=decode_guide_file)
+    def set_config(self,
+                   cfg: ScraperConfig = None,
+                   config_file: str = None,
+                   base_novels_dir: str = None,
+                   novel_base_dir: str = None,
+                   decode_guide_file: str = None):
+        if not cfg and not config_file:
+            logger.critical('You need to set "config" or "config_file"')
+            raise ValueError(f'You need to set "config" or "config_file"')
+        if cfg is not None:
+            self.config = cfg
+        else:
+            self.config = ScraperConfig(config_file=config_file,
+                                        base_novels_dir=base_novels_dir,
+                                        decode_guide_file=decode_guide_file)
 
         self.file_manager = FileManager(title=self.title,
                                         base_novels_dir=self.config.base_novels_dir,
@@ -210,7 +233,7 @@ class Novel:
 
     def set_host(self, host: str) -> None:
         self.host = host
-        self.decoder = Decoder(self.host)
+        self.decoder.set_host(host)
 
     def save_novel(self, save: bool = True) -> None:
         self.file_manager.save_novel_json(self.to_dict())
@@ -335,6 +358,7 @@ class Novel:
             chapter = self.chapters[chapter_idx]
         if update_html:
             logger.debug('HTML will be updated...')
+
         chapter = self._get_chapter(chapter,
                                     reload=update_html)
 
@@ -435,7 +459,7 @@ class Novel:
         return True
 
 
-# UTILS
+    ## UTILS
 
 
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
@@ -450,6 +474,9 @@ class Novel:
 
     def show_novel_dir(self) -> str:
         return self.file_manager.novel_base_dir
+
+
+    ## PRIVATE HELPERS
 
     def _clean_chapter(self, chapter_html_filename: str, hard_clean: bool = False) -> None:
         hard_clean = hard_clean or self.scraper_behavior.hard_clean

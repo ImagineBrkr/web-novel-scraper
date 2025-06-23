@@ -1,5 +1,7 @@
-from .file_manager import FileManager
-from . import request_manager
+import json
+import shutil
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import hashlib
@@ -7,6 +9,132 @@ from urllib.parse import urlparse
 import re
 import unicodedata
 
+class FileManagerError(Exception):
+    """Exception raised for any exception for file operations"""
+
+class FileOps:
+    """Static helper for disc operations."""
+
+    ## HELPERS
+
+    @staticmethod
+    def _atomic_tmp(path: Path) -> Path:
+        """Temporary file path in the same directory as *path*."""
+        return path.with_suffix(path.suffix + ".tmp")
+
+    ## DIRECTORY MANAGEMENT
+    @staticmethod
+    def ensure_dir(path: Path) -> Path:
+        """Create *path* (and parents) if missing."""
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            return path
+        except Exception as e:
+            raise FileManagerError(str(e)) from e
+
+    ## READ OPERATIONS
+
+    @staticmethod
+    def read_text(path: Path) -> Optional[str]:
+        """Return UTF-8 contents or None if *path* does not exist."""
+        if not path.exists():
+            return None
+        try:
+            return path.read_text(encoding="utf-8")
+        except Exception as e:
+            raise FileManagerError(str(e)) from e
+
+    @staticmethod
+    def read_json(path: Path | str) -> Optional[dict]:
+        """Return JSON object or None if *path* does not exist."""
+        path = Path(path)
+        raw = FileOps.read_text(path)
+        if raw is None:
+            return None
+        try:
+            return json.loads(raw)
+        except Exception as e:
+            raise FileManagerError(str(e)) from e
+
+    @staticmethod
+    def read_binary(path: Path) -> Optional[bytes]:
+        """Return binary contents or None if *path* does not exist."""
+        if not path.exists():
+            return None
+        try:
+            return path.read_bytes()
+        except Exception as e:
+            raise FileManagerError(str(e)) from e
+
+    ## WRITE OPERATION
+
+    @staticmethod
+    def save_text(path: Path, text: str) -> None:
+        """Atomically write UTF-8 text to *path*."""
+        tmp = FileOps._atomic_tmp(path)
+        try:
+            tmp.write_text(text, encoding="utf-8")
+            tmp.replace(path)
+        except Exception as e:
+            FileOps.delete(tmp)
+            raise FileManagerError(str(e)) from e
+
+    @staticmethod
+    def save_json(path: Path, obj: dict) -> None:
+        """Atomically write pretty-printed JSON to *path*."""
+        tmp = FileOps._atomic_tmp(path)
+        try:
+            tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.replace(path)
+        except Exception as e:
+            FileOps.delete(tmp)
+            raise FileManagerError(str(e)) from e
+
+    @staticmethod
+    def save_binary(path: Path, data: bytes) -> None:
+        """Atomically write binary data to *path* (e.g., cover images)."""
+        tmp = FileOps._atomic_tmp(path)
+        try:
+            tmp.write_bytes(data)
+            tmp.replace(path)
+        except Exception as e:
+            FileOps.delete(tmp)
+            raise FileManagerError(str(e)) from e
+
+    ## DELETE/COPY OPERATIONS
+
+    @staticmethod
+    def delete(path: Path) -> None:
+        """Delete *path* if it exists."""
+        try:
+            if path.exists():
+                path.unlink()
+        except Exception as e:
+            raise FileManagerError(str(e)) from e
+
+    @staticmethod
+    def copy(src: Path, dst: Path) -> None:
+        """Copy *src* to *dst*."""
+        try:
+            shutil.copy(src, dst)
+        except Exception as e:
+            raise FileManagerError(str(e)) from e
+
+def _normalize_dirname(name: str) -> str:
+    """
+    Keep whitespace as-is while replacing any other unsupported characters
+    with an underscore.
+    Allowed: letters, digits, underscore, hyphen, and spaces.
+    """
+    # Collapse multiple spaces into a single space (optional; comment out if not desired)
+    name = re.sub(r'\s+', ' ', name.strip())
+
+    # Replace any char that is *not* letter, digit, underscore, hyphen, or space.
+    return re.sub(r'[^\w\-\s]', '_', name)
+
+def now_iso() -> str:
+    """Current timestamp in ISO-8601 (seconds precision)."""
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 def generate_file_name_from_url(url: str) -> str:
     # Parsea URL

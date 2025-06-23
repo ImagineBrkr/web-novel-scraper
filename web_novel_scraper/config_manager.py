@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 from .logger_manager import create_logger
+from .utils import FileOps
 
 load_dotenv()
 
@@ -77,12 +78,7 @@ class ScraperConfig:
 
     @staticmethod
     def _load_config(config_file: Path) -> Optional[dict]:
-        if not config_file.exists():
-            logger.debug(f'Configuration file {config_file} does not exist. Skipping.')
-            return None
-        try:
-            config = config_file.read_text(encoding="utf-8", errors="ignore")
-            return json.loads(config)
-        except Exception as e:
-            logger.warning(f'Could not load configuration from file "{config_file}": {e}')
-            return None
+        config = FileOps.read_json(config_file)
+        if config is None:
+            logger.debug(f'Could not load configuration from file "{config_file}". Skipping...')
+        return config

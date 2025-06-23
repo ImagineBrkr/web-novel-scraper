@@ -1,12 +1,9 @@
-import json
 from pathlib import Path
-import sys
 from datetime import datetime
 from typing import Optional
 
 import click
 
-from .file_manager import FileManager
 from .config_manager import ScraperConfig
 from .novel_scraper import Novel
 from .version import __version__
@@ -20,35 +17,16 @@ def global_options(f):
     f = click.option('--decode-guide-file', type=click.Path(), required=False, help="Path to alternative decode guide file.")(f)
     return f
 
-def obtain_novel(title: str, ctx_options: dict, allow_not_exists: bool = False) -> Optional[Novel]:
-    """Obtain a novel instance from the file system."""
-    config = ScraperConfig(config_file=ctx_options.get('CONFIG_FILE'),
-                                base_novels_dir=ctx_options.get('BASE_NOVELS_DIR'))
-    file_manager = FileManager(
-        title=title, base_novels_dir=config.base_novels_dir, novel_base_dir=ctx_options.get('NOVEL_BASE_DIR'), read_only=True)
+def obtain_novel(title, ctx_opts, allow_missing=False):
+    cfg = ScraperConfig(ctx_opts.get("CONFIG_FILE"), ctx_opts.get("BASE_NOVELS_DIR"))
+    try:
+        return Novel.load(title, cfg, ctx_opts.get("NOVEL_BASE_DIR"))
+    except ValueError:
+        if allow_missing:
+            return None
+        click.echo("Novel not found.", err=True)
+        exit(1)
 
-    novel_json = file_manager.load_novel_json()
-    if novel_json:
-        try:
-            novel = Novel.from_json(novel_json)
-            novel.set_config(config_file=ctx_options.get('CONFIG_FILE'),
-                             base_novels_dir=ctx_options.get('BASE_NOVELS_DIR'),
-                             novel_base_dir=ctx_options.get('NOVEL_BASE_DIR'),
-                             decode_guide_file=ctx_options.get('DECODE_GUIDE_FILE')
-                             )
-            return novel
-        except KeyError:
-            click.echo(
-                'JSON file seems to be manipulated, please check it.', err=True)
-        except json.decoder.JSONDecodeError:
-            click.echo(
-                'JSON file seems to be corrupted, please check it.', err=True)
-    elif allow_not_exists:
-        return None
-    else:
-        click.echo(
-            'Novel with that title does not exist or the main data file was deleted.', err=True)
-    sys.exit(1)
 
 def validate_date(ctx, param, value):
     """Validate the date format."""
@@ -141,7 +119,7 @@ force_flaresolver_option = click.option('--force-flaresolver', is_flag=True, sho
 @force_flaresolver_option
 def create_novel(ctx, title, toc_main_url, toc_html, host, author, start_date, end_date, language, description, tags, cover, save_title_to_content, auto_add_host, force_flaresolver):
     """Creates a new novel and saves it."""
-    novel = obtain_novel(title, ctx.obj, allow_not_exists=True)
+    novel = obtain_novel(title, ctx.obj, allow_missing=True)
     if novel:
         click.confirm(f'A novel with the title {title} already exists, do you want to replace it?', abort=True)
         novel.delete_toc()
