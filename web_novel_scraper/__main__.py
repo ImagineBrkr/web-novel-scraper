@@ -237,10 +237,8 @@ def show_tags(ctx, title):
 def set_cover_image(ctx, title, cover_image):
     """Set the cover image for a novel."""
     novel = obtain_novel(title, ctx.obj)
-    if not novel.set_cover_image(cover_image):
-        click.echo('Error saving the cover image.', err=True)
-    else:
-        click.echo('New cover image set successfully.')
+    novel.set_cover_image(cover_image)
+    click.echo(f'Cover image saved successfully.')
 
 @cli.command()
 @click.pass_context

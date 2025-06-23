@@ -225,8 +225,8 @@ class Novel:
         logger.warning(f'Tag "{tag}" doesn\'t exist on novel {self.title}')
         return False
 
-    def set_cover_image(self, cover_image_path: str) -> bool:
-        return self.file_manager.save_novel_cover(cover_image_path)
+    def set_cover_image(self, cover_image_path: str) -> None:
+        self.file_manager.save_novel_cover(cover_image_path)
 
     def set_host(self, host: str) -> None:
         self.host = host
