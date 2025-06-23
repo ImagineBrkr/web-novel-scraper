@@ -333,5 +333,52 @@
                 "key": "href"
             }
         }
+    },
+    {
+        "host": "novelcool.com",
+        "has_pagination": false,
+        "title": {
+            "element": "h2",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "selector": "p:not(.chapter-end-mark)",
+            "array": true
+        },
+        "index": {
+            "selector": "div.chp-item a",
+            "array": true,
+            "inverted": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        }
+    },
+    {
+        "host": "freewebnovel.com",
+        "has_pagination": false,
+        "add_host_to_chapter": "true",
+        "title": {
+            "element": "span",
+            "class": "chapter",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "selector": "p:not([class])",
+            "array": true
+        },
+        "index": {
+            "selector": "ul#idData a",
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        }
     }
 ]

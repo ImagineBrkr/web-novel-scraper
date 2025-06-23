@@ -45,7 +45,7 @@ def _get_request(url: str,
         if attempt < retries - 1:
             logger.debug(f'Waiting {time_between_retries} seconds before retrying')
             time.sleep(time_between_retries)  # Wait before retrying
-    logger.warning(f'Failed to get a successful response for "{url}" after {retries} attempts using common HTTP Request')
+    logger.debug(f'Failed to get a successful response for "{url}" after {retries} attempts using common HTTP Request')
     return None
 
 
@@ -96,7 +96,7 @@ def _get_request_flaresolver(url: str,
             logger.debug(f'Waiting {time_between_retries} seconds before retrying')
             time.sleep(time_between_retries)  # Wait before retrying
 
-    logger.warning(f'Failed to get a successful response for "{url}" using FlareSolver after {retries} attempts')
+    logger.debug(f'Failed to get a successful response for "{url}" using FlareSolver after {retries} attempts')
     return None
 
 

@@ -1,18 +1,13 @@
-import os
 import json
-from pathlib import Path
 from typing import Optional
 
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
+from .utils import FileOps
 
 from bs4 import BeautifulSoup
 
 logger = logger_manager.create_logger('DECODE HTML')
-
-CURRENT_DIR = Path(__file__).resolve().parent
-
-DECODE_GUIDE_FILE = os.getenv('DECODE_GUIDE_FILE', f'{CURRENT_DIR}/decode_guide/decode_guide.json')
 
 XOR_SEPARATOR = "XOR"
 
@@ -23,32 +18,19 @@ DEFAULT_REQUEST_CONFIG = {
     "request_time_between_retries": 3
 }
 
-try:
-    with open(DECODE_GUIDE_FILE, 'r', encoding='UTF-8') as f:
-        DECODE_GUIDE = json.load(f)
-except FileNotFoundError:
-    logger.error(f"File {DECODE_GUIDE_FILE} not found.")
-    raise
-except PermissionError:
-    logger.error(f"Permission error {DECODE_GUIDE_FILE}.")
-    raise
-except json.JSONDecodeError:
-    logger.error(f"Json Decode error {DECODE_GUIDE_FILE}.")
-    raise
-except Exception as e:
-    logger.error(f"Error {DECODE_GUIDE_FILE}: {e}")
-    raise
-
-
 class Decoder:
     host: str
+    decode_guide_file: str
     decode_guide: json
     request_config: dict
 
-    def __init__(self, host: str):
+    def __init__(self, host: str, decode_guide_file: str):
+        self.decode_guide_file = decode_guide_file
+        self.set_host(host)
+
+    def set_host(self, host: str) -> None:
         self.host = host
-        self.decode_guide = self._get_element_by_key(
-            DECODE_GUIDE, 'host', host)
+        self._set_decode_guide()
         host_request_config = self.get_request_config()
         self.request_config = DEFAULT_REQUEST_CONFIG | host_request_config
 
@@ -60,13 +42,14 @@ class Decoder:
 
         return DEFAULT_REQUEST_CONFIG
 
-    def is_index_inverted(self, host:str = None) -> bool:
-        if host:
-            decode_guide = self._get_element_by_key(DECODE_GUIDE, 'host', host)
-        else:
-            decode_guide = self.decode_guide
+    def is_index_inverted(self) -> bool:
+        return self.decode_guide.get('index', {}).get('inverted', False)
 
-        return decode_guide.get('index', {}).get('inverted', False)
+    def save_title_to_content(self) -> bool:
+        return self.decode_guide.get('save_title_to_content', False)
+
+    def add_host_to_chapter(self) -> bool:
+        return self.decode_guide.get('add_host_to_chapter', False)
 
     def get_chapter_urls(self, html: str) -> list[str]:
         logger.debug('Obtaining chapter URLs...')
@@ -124,12 +107,12 @@ class Decoder:
     def decode_html(self, html: str, content_type: str) -> str | list[str] | None:
         logger.debug(f'Decoding HTML...')
         logger.debug(f'Content type: {content_type}')
-        logger.debug(f'Decode guide: {DECODE_GUIDE_FILE}')
+        logger.debug(f'Decode guide: {self.decode_guide_file}')
         logger.debug(f'Host: {self.host}')
         if not content_type in self.decode_guide:
-            logger.critical(f'{content_type} key does not exists on decode guide {DECODE_GUIDE_FILE}'
+            logger.critical(f'{content_type} key does not exists on decode guide {self.decode_guide_file}'
                             f'for host {self.host}')
-            raise ValueError(f'{content_type} key does not exists on decode guide {DECODE_GUIDE_FILE}'
+            raise ValueError(f'{content_type} key does not exists on decode guide {self.decode_guide_file}'
                             f'for host {self.host}')
 
         if ProcessorRegistry.has_processor(self.host, content_type):
@@ -147,7 +130,7 @@ class Decoder:
         decoder = self.decode_guide[content_type]
         elements = self._find_elements(soup, decoder)
         if not elements:
-            logger.warning(f'{content_type} not found on html using {DECODE_GUIDE_FILE} '
+            logger.debug(f'{content_type} not found on html using {self.decode_guide_file} '
                            f'for host {self.host}')
 
         # Investigate this conditional
@@ -156,11 +139,7 @@ class Decoder:
             return ' '.join(elements)
         return elements
 
-    def has_pagination(self, host: str = None) -> bool:
-        if host:
-            decode_guide = self._get_element_by_key(DECODE_GUIDE, 'host', host)
-            return decode_guide['has_pagination']
-
+    def has_pagination(self) -> bool:
         return self.decode_guide['has_pagination']
 
     def clean_html(self, html: str, hard_clean: bool = False):
@@ -182,6 +161,13 @@ class Decoder:
             unwanted_tags.decompose()
 
         return "\n".join([line.strip() for line in str(soup).splitlines() if line.strip()])
+
+    def _set_decode_guide(self) -> None:
+        decode_guide = FileOps.read_json(self.decode_guide_file)
+        self.decode_guide = self._get_element_by_key(decode_guide, 'host', self.host)
+        if self.decode_guide is None:
+            logger.critical(f'No decode guide found for host {self.host}')
+            raise ValueError(f'No decode guide found for host {self.host}')
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):
@@ -253,7 +239,7 @@ class Decoder:
                 elements = [element.string for element in elements]
 
         if not elements:
-            logger.error('No elements found, returning "None"')
+            logger.debug('No elements found, returning "None"')
             return None
 
         inverted = decoder.get('inverted')
@@ -271,8 +257,8 @@ class Decoder:
         return elements[0]
 
     @staticmethod
-    def _get_element_by_key(json_data, key: str, value: str):
+    def _get_element_by_key(json_data, key: str, value: str) -> Optional[dict]:
         for item in json_data:
             if item[key] == value:
                 return item
-        return json_data[0]
+        return None
