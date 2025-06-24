@@ -214,7 +214,8 @@ class FileManager:
         """
         base_dir_path = Path(base_novels_dir)
         if not base_dir_path.exists():
-            raise FileManagerError(f"Base novels directory does not exist: {base_dir_path}")
+            logger.info(f'{base_dir_path} does not exist. Creating new base directory.')
+            FileOps.ensure_dir(base_dir_path)
 
         # — 1. If the caller supplied a path, return it
         if novel_base_dir:
