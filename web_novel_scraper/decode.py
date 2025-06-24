@@ -79,7 +79,7 @@ class Decoder:
         chapter_title = self.decode_html(html, 'title')
         if chapter_title is None:
             logger.debug(f'No chapter_title found.')
-        return chapter_title
+        return str(chapter_title).strip()
 
     def get_chapter_content(self, html: str, save_title_to_content: bool, chapter_title: str) -> str:
         logger.debug('Obtaining chapter content...')

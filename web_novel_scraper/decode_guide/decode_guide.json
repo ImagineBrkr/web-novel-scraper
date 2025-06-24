@@ -380,5 +380,33 @@
                 "key": "href"
             }
         }
+    },
+    {
+        "host": "foxaholic.com",
+        "has_pagination": false,
+        "request_config": {
+            "force_flaresolver": "true",
+            "request_timeout": 30
+        },
+        "title": {
+            "element": "li",
+            "class": "active",
+            "extract": {
+                "type": "text"
+            }
+        },
+        "content": {
+            "selector": "div.text-left p:not([class])",
+            "array": true
+        },
+        "index": {
+            "selector": "li.free-chap a",
+            "inverted": true,
+            "array": true,
+            "extract": {
+                "type": "attr",
+                "key": "href"
+            }
+        }
     }
 ]
