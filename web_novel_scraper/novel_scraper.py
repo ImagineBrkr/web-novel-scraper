@@ -1,7 +1,7 @@
-from dataclasses import dataclass, fields, field
+from dataclasses import dataclass, fields, field, replace
 import sys
 
-from dataclasses_json import dataclass_json, config, Undefined
+from dataclasses_json import dataclass_json, Undefined, config
 from ebooklib import epub
 from typing import Optional
 
@@ -9,100 +9,11 @@ from . import logger_manager
 from .decode import Decoder
 from .file_manager import FileManager
 from . import utils
-
 from .request_manager import get_html_content
 from .config_manager import ScraperConfig
+from .models import ScraperBehavior, Metadata, Chapter
 
 logger = logger_manager.create_logger('NOVEL SCRAPPING')
-
-
-@dataclass_json
-@dataclass
-class Metadata:
-    author: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    language: Optional[str] = "en"
-    description: Optional[str] = None
-    tags: list[str] = field(default_factory=list)
-
-    def update_behavior(self, **kwargs):
-        """
-        Updates the behavior configuration dynamically.
-        Only updates the attributes provided in kwargs.
-        """
-        for key, value in kwargs.items():
-            if hasattr(self, key) and value is not None:
-                setattr(self, key, value)
-
-    def __str__(self):
-        """
-        Dynamic string representation of the configuration.
-        """
-        attributes = [(f"{field.name}="
-                       f"{getattr(self, field.name)}") for field in fields(self)]
-        attributes_str = '\n'.join(attributes)
-        return (f"Metadata: \n"
-                f"{attributes_str}")
-
-
-@dataclass_json
-@dataclass
-class ScraperBehavior:
-    # Some novels already have the title in the content.
-    save_title_to_content: bool = False
-    # Some novels have the toc link without the host
-    auto_add_host: bool = False
-    # Some hosts return 403 when scrapping, this will force the use of FlareSolver
-    # to save time
-    force_flaresolver: bool = False
-    # When you clean the html files, you can use hard clean by default
-    hard_clean: bool = False
-
-    def update_behavior(self, **kwargs):
-        """
-        Updates the behavior configuration dynamically.
-        Only updates the attributes provided in kwargs.
-        """
-        for key, value in kwargs.items():
-            if hasattr(self, key) and value is not None:
-                setattr(self, key, value)
-
-    def __str__(self):
-        """
-        Dynamic string representation of the configuration.
-        """
-        attributes = [(f"{field.name}="
-                       f"{getattr(self, field.name)}") for field in fields(self)]
-        attributes_str = '\n'.join(attributes)
-        return (f"Scraper Behavior: \n"
-                f"{attributes_str}")
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass
-class Chapter:
-    chapter_url: str
-    chapter_html_filename: Optional[str] = None
-    chapter_title: Optional[str] = None
-
-    def __init__(self, 
-                 chapter_url: str,
-                 chapter_html: str = None,
-                 chapter_content: str = None, 
-                 chapter_html_filename: str = None,
-                 chapter_title: str = None):
-        self.chapter_url = chapter_url
-        self.chapter_html = chapter_html
-        self.chapter_content = chapter_content
-        self.chapter_html_filename = chapter_html_filename
-        self.chapter_title = chapter_title
-
-    def __str__(self):
-        return f'Title: "{self.chapter_title}"\nURL: "{self.chapter_url}"\nFilename: "{self.chapter_html_filename}"'
-
-    def __lt__(self, another):
-        return self.chapter_title < another.chapter_title
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -205,18 +116,19 @@ class Novel:
 
         self.decoder = Decoder(self.host, self.config.decode_guide_file)
 
-    def set_scraper_behavior(self, save: bool = False, **kwargs) -> None:
-        self.scraper_behavior.update_behavior(**kwargs)
+    def set_scraper_behavior(self, **kwargs) -> None:
+        self.scraper_behavior = replace(self.scraper_behavior, **kwargs)
 
     def set_metadata(self, **kwargs) -> None:
-        self.metadata.update_behavior(**kwargs)
+        self.metadata = replace(self.metadata, **kwargs)
 
     def add_tag(self, tag: str) -> bool:
         if tag not in self.metadata.tags:
-            self.metadata.tags.append(tag)
-            return True
-        logger.warning(f'Tag "{tag}" already exists on novel {self.title}')
-        return False
+            self.metadata = replace(
+                self.metadata, tags=(*self.metadata.tags, tag)
+            )
+        else:
+            logger.warning("Tag %s already present in %s", tag, self.title)
 
     def remove_tag(self, tag: str) -> bool:
         if tag in self.metadata.tags:
@@ -319,7 +231,7 @@ class Novel:
             return 'No chapters in TOC, reload TOC and try again'
         toc_str = 'Table Of Contents:'
         for i, chapter_url in enumerate(self.chapters_url_list):
-            toc_str += f'\nChapter {i+1}: {chapter_url}'
+            toc_str += f'\nChapter {i + 1}: {chapter_url}'
         return toc_str
 
     # CHAPTERS MANAGEMENT
@@ -361,9 +273,9 @@ class Novel:
 
         if not chapter.chapter_html or not chapter.chapter_html_filename:
             logger.critical(f'Failed to create chapter on link: "{chapter_url}" '
-                           f'on path "{chapter.chapter_html_filename}"')
+                            f'on path "{chapter.chapter_html_filename}"')
             raise ValueError(f'Failed to create chapter on link: "{chapter_url}" '
-                           f'on path "{chapter.chapter_html_filename}"')
+                             f'on path "{chapter.chapter_html_filename}"')
 
         # We get the chapter title and content
         # We pass an index so we can autogenerate a Title
@@ -372,7 +284,8 @@ class Novel:
         logger.info(f'Chapter scrapped from link: {chapter_url}')
         return chapter
 
-    def scrap_all_chapters(self, sync_toc: bool = False, update_chapters: bool = False, update_html: bool = False) -> None:
+    def scrap_all_chapters(self, sync_toc: bool = False, update_chapters: bool = False,
+                           update_html: bool = False) -> None:
         if sync_toc:
             self.sync_toc()
         # We scrap all chapters from our chapter list
@@ -382,7 +295,7 @@ class Novel:
                 # If update_chapters is true, we scrap again the chapter info
                 if update_chapters:
                     chapter = self.scrap_chapter(chapter_idx=i,
-                                                    update_html=update_html)
+                                                 update_html=update_html)
                     self._add_or_update_chapter_data(
                         chapter=chapter, link_idx=i)
                     continue
@@ -390,13 +303,14 @@ class Novel:
                 if chapter.chapter_html_filename and chapter.chapter_title:
                     continue
                 chapter = self.scrap_chapter(chapter_idx=i,
-                                                update_html=update_html)
+                                             update_html=update_html)
                 self._add_or_update_chapter_data(chapter=chapter,
                                                  save_in_file=True)
         else:
             logger.warning('No chapters found')
 
-    def request_all_chapters(self, sync_toc: bool = False, update_html: bool = False, clean_chapters: bool = False) -> None:
+    def request_all_chapters(self, sync_toc: bool = False, update_html: bool = False,
+                             clean_chapters: bool = False) -> None:
         if sync_toc:
             self.sync_toc()
         if self.chapters_url_list:
@@ -419,7 +333,7 @@ class Novel:
         else:
             logger.warning('No chapters found')
 
-# EPUB CREATION
+    # EPUB CREATION
 
     def save_novel_to_epub(self,
                            sync_toc: bool = False,
@@ -455,9 +369,7 @@ class Novel:
             idx = idx + 1
         return True
 
-
     ## UTILS
-
 
     def clean_files(self, clean_chapters: bool = True, clean_toc: bool = True, hard_clean: bool = False) -> None:
         hard_clean = hard_clean or self.scraper_behavior.hard_clean
@@ -471,7 +383,6 @@ class Novel:
 
     def show_novel_dir(self) -> str:
         return self.file_manager.novel_base_dir
-
 
     ## PRIVATE HELPERS
 
@@ -629,8 +540,8 @@ class Novel:
         logger.debug('Obtaining chapter content...')
         save_title_to_content = self.scraper_behavior.save_title_to_content or self.decoder.save_title_to_content()
         chapter.chapter_content = self.decoder.get_chapter_content(chapter.chapter_html,
-                                                           save_title_to_content,
-                                                           chapter.chapter_title)
+                                                                   save_title_to_content,
+                                                                   chapter.chapter_title)
         logger.debug('Chapter successfully decoded')
 
         return chapter
@@ -661,7 +572,7 @@ class Novel:
         #     date_metadata += f'/{self.metadata.end_date}'
         if self.metadata.end_date:
             book.add_metadata('OPF', 'meta', self.metadata.end_date, {
-                              'name': 'end_date', 'content': self.metadata.end_date})
+                'name': 'end_date', 'content': self.metadata.end_date})
         if date_metadata:
             logger.debug(f'Using date_metadata {date_metadata}')
             book.add_metadata('DC', 'date', date_metadata)
@@ -669,9 +580,9 @@ class Novel:
         # Collections with calibre
         if calibre_collection:
             book.add_metadata('OPF', 'meta', '', {
-                              'name': 'calibre:series', 'content': calibre_collection["title"]})
+                'name': 'calibre:series', 'content': calibre_collection["title"]})
             book.add_metadata('OPF', 'meta', '', {
-                              'name': 'calibre:series_index', 'content': calibre_collection["idx"]})
+                'name': 'calibre:series_index', 'content': calibre_collection["idx"]})
 
         cover_image_content = self.file_manager.load_novel_cover()
         if cover_image_content:
@@ -735,7 +646,8 @@ class Novel:
             book = self._add_chapter_to_epub_book(chapter=chapter,
                                                   book=book)
             if book is None:
-                logger.critical(f'Error saving epub {book_title}, could not decode chapter {chapter} using host {self.host}')
+                logger.critical(
+                    f'Error saving epub {book_title}, could not decode chapter {chapter} using host {self.host}')
                 return False
 
         book.add_item(epub.EpubNcx())
