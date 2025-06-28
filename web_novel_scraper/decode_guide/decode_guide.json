@@ -388,6 +388,7 @@
             "force_flaresolver": "true",
             "request_timeout": 30
         },
+        "save_title_to_content": true,
         "title": {
             "element": "li",
             "class": "active",

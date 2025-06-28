@@ -4,10 +4,10 @@ import json
 import platformdirs
 from dotenv import load_dotenv
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from .logger_manager import create_logger
-from .utils import FileOps
+from .utils import FileOps, ValidationError
 
 load_dotenv()
 
@@ -30,18 +30,18 @@ logger = create_logger("CONFIG MANAGER")
 ## 3. CONFIG FILE VALUE
 ## 4. DEFAULT VALUE
 class ScraperConfig:
-    base_novels_dir: str
-    decode_guide_file: str
+    base_novels_dir: Path
+    decode_guide_file: Path
 
     def __init__(self,
-                 config_file: str = None,
-                 base_novels_dir: str = None,
-                 decode_guide_file: str = None):
+                 parameters: dict[str, Any] | None = None):
+        if parameters is None:
+            parameters = {}
         ## LOADING CONFIGURATION
         config_file = self._get_config(default_value=SCRAPER_CONFIG_FILE,
                                        config_file_value=None,
                                        env_variable="SCRAPER_CONFIG_FILE",
-                                       parameter_value=config_file)
+                                       parameter_value=parameters.get('config_file'))
 
         config_file = Path(config_file)
         logger.debug(f'Obtaining configuration from file "{config_file}"')
@@ -54,15 +54,15 @@ class ScraperConfig:
 
         ## SETTING CONFIGURATION VALUES
 
-        self.base_novels_dir = self._get_config(default_value=SCRAPER_BASE_NOVELS_DIR,
+        self.base_novels_dir = Path(self._get_config(default_value=SCRAPER_BASE_NOVELS_DIR,
                                                 config_file_value=config.get("base_novels_dir"),
                                                 env_variable="SCRAPER_BASE_NOVELS_DIR",
-                                                parameter_value=base_novels_dir)
+                                                parameter_value=parameters.get('base_novels_dir')))
 
-        self.decode_guide_file = self._get_config(default_value=SCRAPER_DECODE_GUIDE_FILE,
+        self.decode_guide_file = Path(self._get_config(default_value=SCRAPER_DECODE_GUIDE_FILE,
                                                   config_file_value=config.get("decode_guide_file"),
                                                   env_variable="SCRAPER_DECODE_GUIDE_FILE",
-                                                  parameter_value=decode_guide_file)
+                                                  parameter_value=parameters.get('decode_guide_file')))
 
     @staticmethod
     def _get_config(default_value: str,
