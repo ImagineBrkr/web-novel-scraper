@@ -9,8 +9,29 @@ from urllib.parse import urlparse
 import re
 import unicodedata
 
-class FileManagerError(Exception):
+def _always(_: object) -> bool:
+    """Predicate used by dataclasses_json to skip a field."""
+    return True
+
+## EXCEPTIONS
+
+class ScraperError(Exception):
+    """Default Exception for Scraper Exceptions"""
+
+class NetworkError(ScraperError):
+    """Exception raised for any exception for request operations"""
+
+class DecodeError(ScraperError):
+    """Exception raised for any exception for decoding operations"""
+
+class FileManagerError(ScraperError):
     """Exception raised for any exception for file operations"""
+
+class ValidationError(ScraperError):
+    """Exception raised for any exception for invalid values"""
+
+
+## FILE OPERATIONS HELPER
 
 class FileOps:
     """Static helper for disc operations."""

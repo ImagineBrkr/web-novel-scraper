@@ -6,6 +6,8 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 import pprint
 
+from .utils import _always, ValidationError
+
 
 def _pretty(obj, *, skip: set[str] | None = None) -> str:
     """Pretty-print dataclass dict, omits keys in *skip*."""
@@ -14,11 +16,6 @@ def _pretty(obj, *, skip: set[str] | None = None) -> str:
         for key in skip:
             d.pop(key, None)
     return pprint.pformat(d, sort_dicts=False, compact=True)
-
-
-def _always(_: object) -> bool:
-    """Predicate used by dataclasses_json to skip a field."""
-    return True
 
 
 @dataclass_json
@@ -73,7 +70,7 @@ class Chapter:
 
     def __post_init__(self):
         if not urlparse(self.chapter_url).scheme:
-            raise ValueError(f"Invalid URL: {self.chapter_url}")
+            raise ValidationError(f"Invalid URL: {self.chapter_url}")
 
     def __str__(self) -> str:
         return "Chapter:\n" + _pretty(self, skip={"chapter_html"})
