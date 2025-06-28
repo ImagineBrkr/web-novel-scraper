@@ -154,7 +154,6 @@ class Novel:
             raise ValidationError("When providing toc_html, host must be explicitly provided")
 
         novel = cls(title=title, host=host, toc_main_url=toc_main_url)
-        breakpoint()
         # If toc_main_url is provided and the host isn't, extract host from URL
         if toc_main_url and not host:
             host = utils.obtain_host(toc_main_url)
@@ -1142,7 +1141,6 @@ class Novel:
 
         cover_image_content = self.file_manager.load_novel_cover()
         if cover_image_content:
-            breakpoint()
             book.set_cover('cover.jpg', cover_image_content)
             book.spine += ['cover']
 
