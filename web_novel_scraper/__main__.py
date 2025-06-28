@@ -405,7 +405,6 @@ def scrap_chapter(ctx, title, chapter_url, chapter_num, update_html):
 
     chapter = novel.scrap_chapter(chapter=chapter,
                                   reload_file=update_html)
-
     click.echo(chapter)
     click.echo('Content:')
     click.echo(chapter.chapter_content)
