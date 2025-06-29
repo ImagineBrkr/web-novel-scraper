@@ -226,7 +226,7 @@ class Decoder:
 
             if isinstance(chapter_content, list):
                 logger.debug(f'Processing {len(chapter_content)} content paragraphs')
-                full_chapter_content += ''.join(str(p) for p in chapter_content)
+                full_chapter_content += '\n'.join(str(p) for p in chapter_content)
             else:
                 logger.debug('Processing single content block')
                 full_chapter_content += str(chapter_content)

@@ -642,27 +642,44 @@ class Novel:
         # We request the HTML files of all the chapters
         # The chapter will be requested again if:
         # 1. Reload files flag is True (Requested by user)
+        # 2. Chapter doesn't have a chapter_html_filename, or the HTML file does not exist
         chapters_obtained = 0
         total_chapters = len(self.chapters)
         for i in range(len(self.chapters)):
-            logger.info(f'Requesting chapter {i + 1} of {total_chapters}')
-            try:
-                self.chapters[i] = self._load_or_request_chapter(chapter=self.chapters[i],
-                                                                 reload_file=reload_files)
-            except FileManagerError:
-                logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
-                continue
-            except ValidationError:
-                logger.warning(f'Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
-                continue
+            request_chapter = reload_files
+            if self.chapters[i].chapter_html_filename is None:
+                logger.debug(f'No HTML file name for chapter {i + 1} of {total_chapters}, requesting...')
+                request_chapter = True
+            else:
+                chapter_file_exists = self.file_manager.chapter_file_exists(chapter_filename=self.chapters[i].chapter_html_filename)
+                if not chapter_file_exists:
+                    logger.debug(f'File for chapter {i + 1} of {total_chapters} does not exist, requesting...')
+                    request_chapter = True
 
-            if not self.chapters[i].chapter_html:
-                logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}')
-                continue
+            if request_chapter:
+                logger.info(f'Requesting chapter {i + 1} of {total_chapters}')
+                try:
+                    self.chapters[i] = self._load_or_request_chapter(chapter=self.chapters[i],
+                                                                     reload_file=reload_files)
+                except FileManagerError:
+                    logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
+                    continue
+                except ValidationError:
+                    logger.warning(f'Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
+                    continue
 
-            if clean_chapters:
-                self._clean_chapter(self.chapters[i].chapter_html_filename)
-            self.save_novel()
+                if not self.chapters[i].chapter_html:
+                    logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}')
+                    continue
+
+                if clean_chapters:
+                    self._clean_chapter(self.chapters[i].chapter_html_filename)
+                try:
+                    self.save_novel()
+                except FileManagerError:
+                    logger.warning(f'Error when trying to save novel data, Skipping...')
+            else:
+                logger.debug(f'Chapter {i + 1} of {total_chapters} already requested, skipping...')
             chapters_obtained += 1
         logger.info(f'Successfully requested {chapters_obtained} of {total_chapters} chapters.')
         return None

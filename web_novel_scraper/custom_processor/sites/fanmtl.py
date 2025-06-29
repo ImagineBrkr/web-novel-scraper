@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional
+from typing import Optional
 from ..custom_processor import CustomProcessor, ProcessorRegistry
 
 class GenesisNextPageProcessor(CustomProcessor):
