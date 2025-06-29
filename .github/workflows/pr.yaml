@@ -1,0 +1,9 @@
+name: PR Validation
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/test.yaml
