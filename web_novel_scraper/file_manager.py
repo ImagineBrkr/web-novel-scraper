@@ -140,7 +140,7 @@ class FileManager:
         except Exception as e:
             raise FileManagerError(f"Error deleting chapter {chapter_filename}: {str(e)}") from e
 
-    def save_novel_json(self, novel_data: dict) -> None:
+    def save_novel_data(self, novel_data: dict) -> None:
         """
         Save novel data in JSON format.
 
@@ -150,6 +150,8 @@ class FileManager:
         Raises:
             FileManagerError: If there are errors when saving the JSON file
         """
+        if not isinstance(novel_data, dict):
+            raise ValidationError("Novel data must be a dictionary")
 
         try:
             logger.debug(f'Saving novel data to {self.novel_json_file}')
@@ -157,24 +159,27 @@ class FileManager:
         except Exception as e:
             raise FileManagerError(f"Error saving novel JSON: {str(e)}") from e
 
-    def load_novel_json(self) -> Optional[str]:
+    def load_novel_data(self) -> Optional[dict]:
         """
         Load novel data from the JSON file.
 
         Returns:
-            str | None: Novel JSON content or None if the file doesn't exist
+            dict | None: Novel data on dict format or None if the file doesn't exist
 
         Raises:
             FileManagerError: If there are errors reading the JSON file
         """
         try:
             logger.debug(f'Loading novel data from {self.novel_json_file}')
-            novel_json = FileOps.read_text(self.novel_json_file)
-            if novel_json is None:
-                logger.debug('Could not read novel JSON file')
-            return novel_json
-        except Exception as e:
-            raise FileManagerError(f"Error loading novel JSON: {str(e)}") from e
+            novel_data = FileOps.read_json(self.novel_json_file)
+        except ValidationError as e:
+            logger.error(f'Could not read novel data file')
+            raise
+
+        if novel_data is None:
+            logger.debug('Could not read novel JSON file')
+        return novel_data
+
 
     def save_novel_cover(self, source_cover_path: str) -> None:
         """
@@ -261,22 +266,22 @@ class FileManager:
         Raises:
             FileManagerError: If TOC fragment doesn't exist or there are errors updating it
         """
+        toc_path = self.novel_toc_dir / f"toc_{idx}.html"
+        if not toc_path.exists():
+            raise FileManagerError(f"TOC #{idx} not found")
         try:
-            toc_path = self.novel_toc_dir / f"toc_{idx}.html"
-            if not toc_path.exists():
-                raise FileManagerError(f"TOC #{idx} not found")
-
             FileOps.save_text(toc_path, html)
+        except FileManagerError:
+            logger.error(f'Could not update TOC fragment with index {idx}')
+            raise
 
-            toc_index = self._load_toc_index()
-            for entry in toc_index["entries"]:
-                if entry["file"] == toc_path.name:
-                    entry["updated"] = now_iso()
-                    break
-            self._store_toc_index(toc_index)
-            logger.debug(f"Updated TOC #{idx}")
-        except Exception as e:
-            raise FileManagerError(f"Error updating TOC fragment: {str(e)}") from e
+        toc_index = self._load_toc_index()
+        for entry in toc_index["entries"]:
+            if entry["file"] == toc_path.name:
+                entry["updated"] = now_iso()
+                break
+        self._store_toc_index(toc_index)
+        logger.debug(f"Updated TOC #{idx}")
 
     def delete_toc(self, idx: Optional[int] = None) -> None:
         """

@@ -74,8 +74,8 @@ class FileOps:
             return None
         try:
             return json.loads(raw)
-        except Exception as e:
-            raise FileManagerError(str(e)) from e
+        except json.decoder.JSONDecodeError as e:
+            raise ValidationError(f"Invalid JSON in {path}: {e}") from e
 
     @staticmethod
     def read_binary(path: Path) -> Optional[bytes]:
