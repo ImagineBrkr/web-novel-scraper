@@ -113,11 +113,11 @@ class Novel:
         """
 
         fm = FileManager(title, cfg.base_novels_dir, novel_base_dir, read_only=True)
-        raw = fm.load_novel_json()
-        if raw is None:
+        novel_data = fm.load_novel_data()
+        if novel_data is None:
             logger.debug(f'Novel "{title}" was not found.')
             raise ValidationError(f'Novel "{title}" was not found.')
-        novel = cls.from_json(raw)
+        novel = cls.from_dict(novel_data)
         novel.set_config(cfg=cfg, novel_base_dir=novel_base_dir)
         return novel
 
@@ -299,7 +299,7 @@ class Novel:
         """
 
         try:
-            self.file_manager.save_novel_json(self.to_dict())
+            self.file_manager.save_novel_data(self.to_dict())
             logger.info(f'Novel data saved to disk on file "{self.file_manager.novel_json_file}".')
         except FileManagerError as e:
             logger.error("Could not save novel. File Manager Error", exc_info=e)

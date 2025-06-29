@@ -42,3 +42,8 @@ path = "web_novel_scraper/version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["web_novel_scraper"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
