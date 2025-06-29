@@ -411,29 +411,21 @@
         }
     },
     {
-        "host": "fanmtl.com",
-        "has_pagination": true,
-        "add_host_to_chapter": true,
+        "host": "novelhi.com",
+        "has_pagination": false,
         "save_title_to_content": true,
         "title": {
-            "element": "h2",
+            "element": "h1",
             "extract": {
                 "type": "text"
             }
         },
         "content": {
-            "selector": "div.chapter-content p",
+            "element": "div",
+            "class": "readBox",
             "array": true
         },
         "index": {
-            "selector": "ul.chapter-list li a",
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
             "use_custom_processor": true
         }
     }
