@@ -1,5 +1,4 @@
 import pytest
-from pathlib import Path
 
 from web_novel_scraper.file_manager import *
 
