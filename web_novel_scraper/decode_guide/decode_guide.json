@@ -1,432 +1,481 @@
 [
-    {
-        "host": "default",
-        "has_pagination": false,
-        "title": {
-            "element": "h4",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        },
-        "content": {
-            "element": "p",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        },
-        "index": {
-            "element": "p",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
-            "element": "p",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        }
+  {
+    "host": "default",
+    "has_pagination": false,
+    "title": {
+      "element": "h4",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
     },
-    {
-        "host": "novellive.net",
-        "has_pagination": true,
-        "title": {
-            "element": "h4",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": false
-        },
-        "content": {
-            "element": "p",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        },
-        "index": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "div.m-newest2 ul li a",
-            "attributes": null,
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "div.page > a.index-container-btn[href*='novellive']:nth-last-of-type(2)",
-            "attributes": null,
-            "array": true
-        }
+    "content": {
+      "element": "p",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
     },
-    {
-        "host": "www.royalroad.com",
-        "has_pagination": false,
-        "title": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "h1.break-word",
-            "attributes": null,
-            "array": false,
-            "extract": {
-                "type": "text",
-                "key": "text"
-            }
-        },
-        "content": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "p:not(div.author-note p):not(div.page-prefooter p):not(div.profile-info p) XOR div.chapter-content",
-            "attributes": null,
-            "array": true
-        },
-        "index": {
-            "use_custom_processor": true
-        },
-        "next_page": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        }
+    "index": {
+      "element": "p",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
     },
-    {
-        "host": "novelbin.me",
-        "has_pagination": false,
-        "title": {
-            "element": "h2 a.chr-title",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": false,
-            "extract": {
-                "type": "attr",
-                "key": "title"
-            }
-        },
-        "content": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "div#chr-content p",
-            "attributes": null,
-            "array": true
-        },
-        "index": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "ul.list-chapter li a",
-            "attributes": null,
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        }
-    },
-    {
-        "host": "novelbin.com",
-        "request_config": {
-            "force_flaresolver": "true"
-        },
-        "has_pagination": false,
-        "title": {
-            "element": "h2 a.chr-title",
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": false,
-            "extract": {
-                "type": "attr",
-                "key": "title"
-            }
-        },
-        "content": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "div#chr-content p",
-            "attributes": null,
-            "array": true
-        },
-        "index": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "ul.list-chapter li a",
-            "attributes": null,
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        }
-    },
-    {
-        "host": "hiraethtranslation.com",
-        "has_pagination": false,
-        "title": {
-            "element": "h1",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "element": "div.reading-content p",
-            "array": true
-        },
-        "index": {
-            "element": "ul.main li a",
-            "array": true,
-            "inverted": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        }
-    },
-    {
-        "host": "genesistudio.com",
-        "has_pagination": false,
-        "title": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": "p.leading-none span",
-            "attributes": null,
-            "array": true,
-            "extract": {
-                "type": "text",
-                "key": "text"
-            }
-        },
-        "content": {
-            "element": "p",
-            "id": null,
-            "class": "narration",
-            "selector": null,
-            "attributes": null,
-            "array": true,
-            "extract": {
-                "type": "text",
-                "key": "text"
-            }
-        },
-        "index": {
-            "use_custom_processor": true
-        },
-        "next_page": {
-            "element": null,
-            "id": null,
-            "class": null,
-            "selector": null,
-            "attributes": null,
-            "array": true
-        }
-    },
-    {
-        "host": "hostednovel.com",
-        "has_pagination": true,
-        "title": {
-            "selector": "span#chapter-title",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "element": "div",
-            "id": "chapter-content",
-            "array": true
-        },
-        "index": {
-            "selector": "li ul li.flow-root a",
-            "array": true,
-            "inverted": false,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
-            "selector": "a:has(span:contains('Next'))",
-            "array": false,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        }
-    },
-    {
-        "host": "scribblehub.com",
-        "request_config": {
-            "force_flaresolver": "true",
-            "request_timeout": 60
-        },
-        "has_pagination": true,
-        "title": {
-            "selector": "div.chapter-title",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "selector": "div.chp_raw p",
-            "array": true
-        },
-        "index": {
-            "selector": "div.toc ol li a",
-            "array": true,
-            "inverted": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        },
-        "next_page": {
-            "selector": "div ul.simple-pagination li a.next",
-            "array": false,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        }
-    },
-    {
-        "host": "novelcool.com",
-        "has_pagination": false,
-        "title": {
-            "element": "h2",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "selector": "p:not(.chapter-end-mark)",
-            "array": true
-        },
-        "index": {
-            "selector": "div.chp-item a",
-            "array": true,
-            "inverted": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        }
-    },
-    {
-        "host": "freewebnovel.com",
-        "has_pagination": false,
-        "add_host_to_chapter": "true",
-        "title": {
-            "element": "span",
-            "class": "chapter",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "selector": "p:not([class])",
-            "array": true
-        },
-        "index": {
-            "selector": "ul#idData a",
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        }
-    },
-    {
-        "host": "foxaholic.com",
-        "has_pagination": false,
-        "request_config": {
-            "force_flaresolver": "true",
-            "request_timeout": 30
-        },
-        "save_title_to_content": true,
-        "title": {
-            "element": "li",
-            "class": "active",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "selector": "div.text-left p:not([class])",
-            "array": true
-        },
-        "index": {
-            "selector": "li.free-chap a",
-            "inverted": true,
-            "array": true,
-            "extract": {
-                "type": "attr",
-                "key": "href"
-            }
-        }
-    },
-    {
-        "host": "novelhi.com",
-        "has_pagination": false,
-        "save_title_to_content": true,
-        "title": {
-            "element": "h1",
-            "extract": {
-                "type": "text"
-            }
-        },
-        "content": {
-            "element": "div",
-            "class": "readBox",
-            "array": true
-        },
-        "index": {
-            "use_custom_processor": true
-        }
+    "next_page": {
+      "element": "p",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
     }
+  },
+  {
+    "host": "novellive.net",
+    "has_pagination": true,
+    "title": {
+      "element": "h4",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": false
+    },
+    "content": {
+      "element": "p",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.m-newest2 ul li a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.page > a.index-container-btn[href*='novellive']:nth-last-of-type(2)",
+      "attributes": null,
+      "array": true
+    }
+  },
+  {
+    "host": "www.royalroad.com",
+    "has_pagination": false,
+    "title": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "h1.break-word",
+      "attributes": null,
+      "array": false,
+      "extract": {
+        "type": "text",
+        "key": "text"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "p:not(div.author-note p):not(div.page-prefooter p):not(div.profile-info p) XOR div.chapter-content",
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "use_custom_processor": true
+    },
+    "next_page": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
+    }
+  },
+  {
+    "host": "novelbin.me",
+    "has_pagination": false,
+    "title": {
+      "element": "h2 a.chr-title",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": false,
+      "extract": {
+        "type": "attr",
+        "key": "title"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div#chr-content p",
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "ul.list-chapter li a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
+    }
+  },
+  {
+    "host": "novelbin.com",
+    "request_config": {
+      "force_flaresolver": "true"
+    },
+    "has_pagination": false,
+    "title": {
+      "element": "h2 a.chr-title",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": false,
+      "extract": {
+        "type": "attr",
+        "key": "title"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div#chr-content p",
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "ul.list-chapter li a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
+    }
+  },
+  {
+    "host": "hiraethtranslation.com",
+    "has_pagination": false,
+    "title": {
+      "element": "h1",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": "div.reading-content p",
+      "array": true
+    },
+    "index": {
+      "element": "ul.main li a",
+      "array": true,
+      "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "genesistudio.com",
+    "has_pagination": false,
+    "title": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "p.leading-none span",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "text",
+        "key": "text"
+      }
+    },
+    "content": {
+      "element": "p",
+      "id": null,
+      "class": "narration",
+      "selector": null,
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "text",
+        "key": "text"
+      }
+    },
+    "index": {
+      "use_custom_processor": true
+    },
+    "next_page": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
+    }
+  },
+  {
+    "host": "hostednovel.com",
+    "has_pagination": true,
+    "title": {
+      "selector": "span#chapter-title",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": "div",
+      "id": "chapter-content",
+      "array": true
+    },
+    "index": {
+      "selector": "li ul li.flow-root a",
+      "array": true,
+      "inverted": false,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "selector": "a:has(span:contains('Next'))",
+      "array": false,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "scribblehub.com",
+    "request_config": {
+      "force_flaresolver": "true",
+      "request_timeout": 60
+    },
+    "has_pagination": true,
+    "title": {
+      "selector": "div.chapter-title",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "selector": "div.chp_raw p",
+      "array": true
+    },
+    "index": {
+      "selector": "div.toc ol li a",
+      "array": true,
+      "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "selector": "div ul.simple-pagination li a.next",
+      "array": false,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "novelcool.com",
+    "has_pagination": false,
+    "title": {
+      "element": "h2",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "selector": "p:not(.chapter-end-mark)",
+      "array": true
+    },
+    "index": {
+      "selector": "div.chp-item a",
+      "array": true,
+      "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "freewebnovel.com",
+    "has_pagination": false,
+    "add_host_to_chapter": "true",
+    "title": {
+      "element": "span",
+      "class": "chapter",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "selector": "p:not([class])",
+      "array": true
+    },
+    "index": {
+      "selector": "ul#idData a",
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "foxaholic.com",
+    "has_pagination": false,
+    "request_config": {
+      "force_flaresolver": "true",
+      "request_timeout": 30
+    },
+    "save_title_to_content": true,
+    "title": {
+      "element": "li",
+      "class": "active",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "selector": "div.text-left p:not([class])",
+      "array": true
+    },
+    "index": {
+      "selector": "li.free-chap a",
+      "inverted": true,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "novelhi.com",
+    "has_pagination": false,
+    "save_title_to_content": true,
+    "title": {
+      "element": "h1",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": "div",
+      "class": "readBox",
+      "array": true
+    },
+    "index": {
+      "use_custom_processor": true
+    }
+  },
+  {
+    "host": "fanmtl.com",
+    "has_pagination": true,
+    "add_host_to_chapter": true,
+    "save_title_to_content": true,
+    "title": {
+      "element": "h2",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "selector": "div.chapter-content p",
+      "array": true
+    },
+    "index": {
+      "selector": "ul.chapter-list li a",
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "use_custom_processor": true
+    }
+  },
+  {
+    "host": "pandamtl.com",
+    "title": {
+      "element": "h2",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": "div",
+      "class": "epcontent"
+    },
+    "index": {
+      "selector": "div.eplister ul li a",
+      "inverted": true,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  }
 ]
