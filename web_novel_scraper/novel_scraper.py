@@ -955,7 +955,7 @@ class Novel:
         for toc_content in all_tocs:
             try:
                 urls = self.decoder.get_chapter_urls(toc_content)
-                self.chapters_url_list.extend(urls)  # More efficient than creating intermediate lists
+                self.chapters_url_list.extend(urls)
             except DecodeError as e:
                 logger.error('Failed to decode chapter URLs from TOC content', exc_info=e)
                 raise
@@ -963,7 +963,7 @@ class Novel:
         # Handle inversion if needed
         if is_inverted:
             logger.debug('Inverting chapter URLs order')
-            self.chapters_url_list.reverse()  # In-place reversal is more efficient
+            self.chapters_url_list.reverse()
 
             # Add host if needed
         if add_host_to_chapter:

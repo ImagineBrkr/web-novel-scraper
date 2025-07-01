@@ -387,11 +387,11 @@ class Decoder:
             logger.debug('No elements found, returning "None"')
             return None
 
-        inverted = decoder.get('inverted')
-        if inverted:
-            logger.debug('Inverted option activate')
-            logger.debug('Inverting elements order...')
-            elements = elements[::-1]
+        # inverted = decoder.get('inverted')
+        # if inverted:
+        #     logger.debug('Inverted option activate')
+        #     logger.debug('Inverting elements order...')
+        #     elements = elements[::-1]
 
         if decoder.get('array'):
             logger.debug('Array option activated')
