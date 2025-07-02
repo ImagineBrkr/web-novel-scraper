@@ -47,15 +47,15 @@ class Novel:
     metadata: Metadata = field(default_factory=Metadata)
     scraper_behavior: ScraperBehavior = field(default_factory=ScraperBehavior)
 
-    file_manager: FileManager = field(default=None,
+    file_manager: Optional[FileManager] = field(default=None,
                                       repr=False,
                                       compare=False,
                                       metadata=config(exclude=_always))
-    decoder: Decoder = field(default=None,
+    decoder: Optional[Decoder] = field(default=None,
                              repr=False,
                              compare=False,
                              metadata=config(exclude=_always))
-    config: ScraperConfig = field(default=None,
+    config: Optional[ScraperConfig] = field(default=None,
                                   repr=False,
                                   compare=False,
                                   metadata=config(exclude=_always))
@@ -120,7 +120,7 @@ class Novel:
         try:
             novel = cls.from_dict(novel_data)
         except KeyError as e:
-            msg= f'Error when loading novel with title "{title}". KeyError, check if the main.json is valid'
+            msg = f'Error when loading novel with title "{title}". KeyError, check if the main.json is valid'
             logger.error(msg, exc_info=e)
             raise ValidationError(msg)
         novel.set_config(cfg=cfg, novel_base_dir=novel_base_dir)
@@ -656,7 +656,8 @@ class Novel:
                 logger.debug(f'No HTML file name for chapter {i + 1} of {total_chapters}, requesting...')
                 request_chapter = True
             else:
-                chapter_file_exists = self.file_manager.chapter_file_exists(chapter_filename=self.chapters[i].chapter_html_filename)
+                chapter_file_exists = self.file_manager.chapter_file_exists(
+                    chapter_filename=self.chapters[i].chapter_html_filename)
                 if not chapter_file_exists:
                     logger.debug(f'File for chapter {i + 1} of {total_chapters} does not exist, requesting...')
                     request_chapter = True
@@ -667,13 +668,16 @@ class Novel:
                     self.chapters[i] = self._load_or_request_chapter(chapter=self.chapters[i],
                                                                      reload_file=reload_files)
                 except FileManagerError:
-                    logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
+                    logger.warning(
+                        f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
                     continue
                 except ValidationError:
-                    logger.warning(f'Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
+                    logger.warning(
+                        f'Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
                     continue
                 except NetworkError:
-                    logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
+                    logger.warning(
+                        f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
                     continue
 
                 if not self.chapters[i].chapter_html:
