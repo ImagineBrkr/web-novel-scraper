@@ -71,13 +71,18 @@ class Decoder:
     def toc_main_url_process(self, toc_main_url: str) -> str:
         if self.decode_guide.get('toc_main_url_processor', False):
             logger.debug('Toc main URL has a custom processor flag, processing...')
-            try:
-                toc_main_url = ProcessorRegistry.get_processor(self.host, 'toc_main_url').process(toc_main_url)
-                toc_main_url = str(toc_main_url)
-                logger.debug(f'Processed URL: {toc_main_url}')
-            except DecodeError:
-                logger.debug(f'Could not process URL {toc_main_url}')
-                raise
+            if ProcessorRegistry.has_processor(self.host, 'toc_main_url'):
+                try:
+                    toc_main_url = ProcessorRegistry.get_processor(self.host,
+                                                                   'toc_main_url').process(toc_main_url)
+                    toc_main_url = str(toc_main_url)
+                    logger.debug(f'Processed URL: {toc_main_url}')
+                except DecodeError:
+                    logger.debug(f'Could not process URL {toc_main_url}')
+                    raise
+            else:
+                logger.warning(f'Toc main url processor requested but not found for host {self.host}'
+                             f', using "{toc_main_url}" as is')
         else:
             logger.debug(f'No processor configuration found for toc_main_url, using "{toc_main_url}" as is')
         return toc_main_url
