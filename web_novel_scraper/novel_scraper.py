@@ -922,13 +922,17 @@ class Novel:
 
         self.file_manager.delete_toc()
         has_pagination = self.decoder.has_pagination()
-
+        try:
+            toc_main_url = self.decoder.toc_main_url_process(self.toc_main_url)
+        except DecodeError:
+            logger.debug('Error when trying to preprocess toc main url')
+            raise
         if not has_pagination:
             logger.debug('TOC does not have pagination, requesting only one file.')
-            _get_toc(self.toc_main_url, get_next_page=False)
+            _get_toc(toc_main_url, get_next_page=False)
         else:
             logger.debug('TOC has pagination, requesting all files.')
-            next_page_url = self.toc_main_url
+            next_page_url = toc_main_url
             while next_page_url:
                 next_page_url = _get_toc(next_page_url, get_next_page=True)
 

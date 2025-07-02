@@ -5,7 +5,7 @@ from pathlib import Path
 
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
-from .utils import FileOps, DecodeError, ValidationError
+from .utils import FileOps, DecodeError, ValidationError, HTMLParseError, DecodeGuideError, ContentExtractionError
 
 from bs4 import BeautifulSoup
 
@@ -19,18 +19,6 @@ DEFAULT_REQUEST_CONFIG = {
     "request_timeout": 20,
     "request_time_between_retries": 3
 }
-
-
-class HTMLParseError(DecodeError):
-    """Raised when HTML parsing fails"""
-
-
-class DecodeGuideError(DecodeError):
-    """Raised when there are issues with decode guide configuration"""
-
-
-class ContentExtractionError(DecodeError):
-    """Raised when content extraction fails"""
 
 
 class Decoder:
@@ -79,6 +67,20 @@ class Decoder:
 
         logger.debug('Checking if index should be inverted...')
         return self.decode_guide.get('index', {}).get('inverted', False)
+
+    def toc_main_url_process(self, toc_main_url: str) -> str:
+        if self.decode_guide.get('toc_main_url_processor', False):
+            logger.debug('Toc main URL has a custom processor flag, processing...')
+            try:
+                toc_main_url = ProcessorRegistry.get_processor(self.host, 'toc_main_url').process(toc_main_url)
+                toc_main_url = str(toc_main_url)
+                logger.debug(f'Processed URL: {toc_main_url}')
+            except DecodeError:
+                logger.debug(f'Could not process URL {toc_main_url}')
+                raise
+        else:
+            logger.debug(f'No processor configuration found for toc_main_url, using "{toc_main_url}" as is')
+        return toc_main_url
 
     def save_title_to_content(self) -> bool:
         """
