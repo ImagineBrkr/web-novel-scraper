@@ -9,23 +9,45 @@ from urllib.parse import urlparse
 import re
 import unicodedata
 
+
 def _always(_: object) -> bool:
     """Predicate used by dataclasses_json to skip a field."""
     return True
+
 
 ## EXCEPTIONS
 
 class ScraperError(Exception):
     """Default Exception for Scraper Exceptions"""
 
+
 class NetworkError(ScraperError):
     """Exception raised for any exception for request operations"""
+
 
 class DecodeError(ScraperError):
     """Exception raised for any exception for decoding operations"""
 
+
+class HTMLParseError(DecodeError):
+    """Raised when HTML parsing fails"""
+
+
+class DecodeGuideError(DecodeError):
+    """Raised when there are issues with decode guide configuration"""
+
+
+class ContentExtractionError(DecodeError):
+    """Raised when content extraction fails"""
+
+
+class DecodeProcessorError(DecodeError):
+    """Raised when there is an error in a decoder processor"""
+
+
 class FileManagerError(ScraperError):
     """Exception raised for any exception for file operations"""
+
 
 class ValidationError(ScraperError):
     """Exception raised for any exception for invalid values"""
@@ -141,6 +163,7 @@ class FileOps:
         except Exception as e:
             raise FileManagerError(str(e)) from e
 
+
 def _normalize_dirname(name: str) -> str:
     """
     Keep whitespace as-is while replacing any other unsupported characters
@@ -153,9 +176,11 @@ def _normalize_dirname(name: str) -> str:
     # Replace any char that is *not* letter, digit, underscore, hyphen, or space.
     return re.sub(r'[^\w\-\s]', '_', name)
 
+
 def now_iso() -> str:
     """Current timestamp in ISO-8601 (seconds precision)."""
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
 
 def generate_file_name_from_url(url: str) -> str:
     # Parsea URL
@@ -194,8 +219,10 @@ def generate_epub_file_name_from_title(title: str) -> str:
     filename = f"{sanitized_title}_{title_hash}.xhtml"
     return filename
 
+
 def delete_duplicates(str_list: list[str]) -> list[str]:
     return list(dict.fromkeys(str_list))
+
 
 def obtain_host(url: str):
     host = url.split(':')[1]
@@ -210,11 +237,14 @@ def obtain_host(url: str):
 
     return host
 
+
 def check_exclusive_params(param1: any, param2: any) -> bool:
     return (param1 is None) != (param2 is None)
 
+
 def create_volume_id(n: int):
     return f'v{n:02}'
+
 
 def check_incomplete_url(url: str) -> bool:
     if url.startswith('?') or url.startswith('#'):

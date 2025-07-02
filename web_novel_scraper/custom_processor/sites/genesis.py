@@ -31,7 +31,7 @@ class GenesisChaptersProcessor(CustomProcessor):
                 chapters_json += ']'
             for old_key, new_key in replaces.items():
                 chapters_json = chapters_json.replace(old_key, new_key)
-            # print(f"Extracted JSON: {chapters_json[12200:12300]}")  # Debug print
+
             chapters = json.loads(chapters_json)
             chapters_url = []
             for chapter in chapters:

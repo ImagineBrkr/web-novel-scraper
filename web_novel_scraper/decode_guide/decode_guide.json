@@ -414,6 +414,7 @@
     "host": "novelhi.com",
     "has_pagination": false,
     "save_title_to_content": true,
+    "toc_main_url_processor": true,
     "title": {
       "element": "h1",
       "extract": {
