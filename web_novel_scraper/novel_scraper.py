@@ -117,7 +117,12 @@ class Novel:
         if novel_data is None:
             logger.debug(f'Novel "{title}" was not found.')
             raise ValidationError(f'Novel "{title}" was not found.')
-        novel = cls.from_dict(novel_data)
+        try:
+            novel = cls.from_dict(novel_data)
+        except KeyError as e:
+            msg= f'Error when loading novel with title "{title}". KeyError, check if the main.json is valid'
+            logger.error(msg, exc_info=e)
+            raise ValidationError(msg)
         novel.set_config(cfg=cfg, novel_base_dir=novel_base_dir)
         return novel
 
@@ -666,6 +671,9 @@ class Novel:
                     continue
                 except ValidationError:
                     logger.warning(f'Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
+                    continue
+                except NetworkError:
+                    logger.warning(f'Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping...')
                     continue
 
                 if not self.chapters[i].chapter_html:
