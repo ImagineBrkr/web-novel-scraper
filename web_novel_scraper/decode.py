@@ -13,13 +13,6 @@ logger = logger_manager.create_logger('DECODE HTML')
 
 XOR_SEPARATOR = "XOR"
 
-DEFAULT_REQUEST_CONFIG = {
-    "force_flaresolver": False,
-    "request_retries": 3,
-    "request_timeout": 20,
-    "request_time_between_retries": 3
-}
-
 
 class Decoder:
     host: str
@@ -27,8 +20,12 @@ class Decoder:
     decode_guide: json
     request_config: dict
 
-    def __init__(self, host: str, decode_guide_file: Path):
+    def __init__(self,
+                 host: str,
+                 decode_guide_file: Path,
+                 request_config: dict):
         self.decode_guide_file = decode_guide_file
+        self.request_config = request_config
         self.set_host(host)
 
     def set_host(self, host: str) -> None:
@@ -39,9 +36,10 @@ class Decoder:
             raise
 
         host_request_config = self.get_request_config()
-        self.request_config = DEFAULT_REQUEST_CONFIG | host_request_config
+        if host_request_config is not None:
+            self._set_request_config(host_request_config)
 
-    def get_request_config(self) -> dict:
+    def get_request_config(self) -> Optional[dict]:
         """
         Retrieves the request configuration for the current host.
 
@@ -55,7 +53,7 @@ class Decoder:
             logger.debug(f'Host "{self.host}" has a custom request configuration on the Decode Guide file.')
             return request_config
 
-        return DEFAULT_REQUEST_CONFIG
+        return None
 
     def is_index_inverted(self) -> bool:
         """
@@ -82,7 +80,7 @@ class Decoder:
                     raise
             else:
                 logger.warning(f'Toc main url processor requested but not found for host {self.host}'
-                             f', using "{toc_main_url}" as is')
+                               f', using "{toc_main_url}" as is')
         else:
             logger.debug(f'No processor configuration found for toc_main_url, using "{toc_main_url}" as is')
         return toc_main_url
@@ -313,6 +311,24 @@ class Decoder:
             logger.debug('Joining multiple title elements')
             return ' '.join(elements)
         return elements
+
+    def _set_request_config(self, request_config: dict) -> None:
+        if self.request_config is None:
+            self.request_config = request_config
+            return None
+
+        for key in ["force_flaresolver", "request_retries", "request_timeout", "request_time_between_retries"]:
+            new_value = request_config.get(key)
+            if new_value is None:
+                continue
+
+            if key == "force_flaresolver":
+                self.request_config[key] = self.request_config.get(key) or new_value
+            else:
+                self.request_config[key] = max(
+                    self.request_config.get(key, 0),
+                    new_value
+                )
 
     def _set_decode_guide(self) -> None:
         decode_guide = FileOps.read_json(self.decode_guide_file)

@@ -48,17 +48,17 @@ class Novel:
     scraper_behavior: ScraperBehavior = field(default_factory=ScraperBehavior)
 
     file_manager: Optional[FileManager] = field(default=None,
-                                      repr=False,
-                                      compare=False,
-                                      metadata=config(exclude=_always))
+                                                repr=False,
+                                                compare=False,
+                                                metadata=config(exclude=_always))
     decoder: Optional[Decoder] = field(default=None,
-                             repr=False,
-                             compare=False,
-                             metadata=config(exclude=_always))
+                                       repr=False,
+                                       compare=False,
+                                       metadata=config(exclude=_always))
     config: Optional[ScraperConfig] = field(default=None,
-                                  repr=False,
-                                  compare=False,
-                                  metadata=config(exclude=_always))
+                                            repr=False,
+                                            compare=False,
+                                            metadata=config(exclude=_always))
 
     def __post_init__(self):
         """
@@ -194,7 +194,7 @@ class Novel:
             self.file_manager = FileManager(title=self.title,
                                             base_novels_dir=self.config.base_novels_dir,
                                             novel_base_dir=novel_base_dir)
-            self.decoder = Decoder(self.host, self.config.decode_guide_file)
+            self.decoder = Decoder(self.host, self.config.decode_guide_file, self.config.get_request_config())
         except FileManagerError as e:
             logger.error("Could not set configuration. File Manager Error", exc_info=e)
             raise
