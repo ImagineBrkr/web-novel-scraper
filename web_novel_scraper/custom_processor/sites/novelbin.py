@@ -5,11 +5,12 @@ from web_novel_scraper.utils import DecodeProcessorError
 
 class NovelbinTocMainUrlProcessor(CustomProcessor):
     def process(self, toc_main_url: str) -> str:
-        pattern_novel_id = r"novel-book/([^/?]+)"
+        pattern_novel_id = r"(?:novel-book|b)/([^/?#]+)"
         match = re.search(pattern_novel_id, toc_main_url)
         if match is None:
             raise DecodeProcessorError("Could not get Novel Id, check if the toc_main_url has the correct format"
-                                       "(https://novelbin.me/novel-book/{novel-id}).")
+                                       " (https://novelbin.me/novel-book/{novel-id})"
+                                       " or (https://novelbin.me/b/{novel-id}).")
         return f'https://novelbin.me/ajax/chapter-archive?novelId={match.group(1)}'
 
 

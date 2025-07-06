@@ -92,7 +92,7 @@ metadata_end_date_option = click.option(
 # TOC options
 toc_main_url_option = click.option(
     '--toc-main-url', type=str, help='Main URL of the TOC, required if not loading from file.')
-sync_toc_option = click.option('--sync-toc', is_flag=True, default=False, show_default=True,
+sync_toc_option = click.option('--sync-toc', is_flag=True,
                                help='Reload the TOC before requesting chapters.')
 
 
@@ -430,8 +430,9 @@ def scrap_chapter(ctx, title, chapter_url, chapter_num, update_html):
 def request_all_chapters(ctx, title, sync_toc, update_html, clean_chapters):
     """Request all chapters of a novel."""
     novel = obtain_novel(title, ctx.obj)
+    if sync_toc:
+        novel.sync_toc(reload_files=update_html)
     novel.request_all_chapters(
-        sync_toc=sync_toc,
         reload_files=update_html,
         clean_chapters=clean_chapters)
     novel.save_novel()
@@ -473,10 +474,11 @@ def save_novel_to_epub(ctx, title, sync_toc, start_chapter, end_chapter, chapter
                 'Should be a positive number.', param_hint='--chapters-by-book')
 
     novel = obtain_novel(title, ctx.obj)
-    novel.save_novel_to_epub(sync_toc=sync_toc, start_chapter=start_chapter, end_chapter=end_chapter,
-                                chapters_by_book=chapters_by_book)
+    if sync_toc:
+        novel.sync_toc()
+    novel.save_novel_to_epub(start_chapter=start_chapter, end_chapter=end_chapter,
+                             chapters_by_book=chapters_by_book)
     click.echo('All books saved.')
-
 
 
 # UTILS
