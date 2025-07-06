@@ -601,7 +601,6 @@ class Novel:
             logger.error(f'Could not decode HTML title and content for chapter with URL "{chapter.chapter_url}"',
                          exc_info=e)
             raise
-
         logger.info(f'Chapter scrapped from link: {chapter.chapter_url}')
         return chapter
 

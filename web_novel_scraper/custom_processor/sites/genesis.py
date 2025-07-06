@@ -1,7 +1,10 @@
 import re
 import json
+from bs4 import BeautifulSoup
+from ftfy import fix_text
 from typing import List, Optional
 from ..custom_processor import CustomProcessor, ProcessorRegistry
+from web_novel_scraper.utils import HTMLParseError, DecodeError
 
 GENESIS_STUDIO_VIEWER_URL = 'https://genesistudio.com/viewer'
 
@@ -36,11 +39,25 @@ class GenesisChaptersProcessor(CustomProcessor):
             chapters_url = []
             for chapter in chapters:
                 chapters_url.append(f"{GENESIS_STUDIO_VIEWER_URL}/{chapter['id']}")
-            print(chapters)
             return chapters_url
             
         except (json.JSONDecodeError, IndexError) as e:
             print(f"Error processing JSON: {str(e)}")
             return None
 
+
+class GenesisContentProcessor(CustomProcessor):
+    def process(self, html: str) -> Optional[str]:
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+        except Exception as e:
+            raise HTMLParseError(f'Error parsing HTML with BeautifulSoup: {e}')
+        chapter_content = soup.select('div.novel-content')
+        if chapter_content is None:
+            return None
+        chapter_content = fix_text(str(chapter_content[0]))
+        return chapter_content
+
+
 ProcessorRegistry.register('genesistudio.com', 'index', GenesisChaptersProcessor())
+ProcessorRegistry.register('genesistudio.com', 'content', GenesisContentProcessor())
