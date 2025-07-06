@@ -236,6 +236,7 @@
   {
     "host": "genesistudio.com",
     "has_pagination": false,
+    "save_title_to_content": true,
     "title": {
       "element": null,
       "id": null,
@@ -249,16 +250,7 @@
       }
     },
     "content": {
-      "element": "p",
-      "id": null,
-      "class": "narration",
-      "selector": null,
-      "attributes": null,
-      "array": true,
-      "extract": {
-        "type": "text",
-        "key": "text"
-      }
+      "use_custom_processor": true
     },
     "index": {
       "use_custom_processor": true
