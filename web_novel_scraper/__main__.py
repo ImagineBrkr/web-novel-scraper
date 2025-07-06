@@ -20,6 +20,14 @@ def global_options(f):
                      help="Alternative base directory for all novels.")(f)
     f = click.option('--decode-guide-file', type=click.Path(), required=False,
                      help="Path to alternative decode guide file.")(f)
+    f = click.option('--force-flaresolver', is_flag=True,
+                     help="Only Flaresolver will be used for every request")(f)
+    f = click.option('--request-retries', type=int, required=False,
+                     help="Number of maximum retries for every request.")(f)
+    f = click.option('--request-timeout', type=int, required=False,
+                     help="Timeout for every request in seconds.")(f)
+    f = click.option('--request-time-between-retries', type=int, required=False,
+                     help="Number of seconds that will pass between retries for every request.")(f)
     return f
 
 
@@ -370,7 +378,8 @@ def delete_toc(ctx, title, auto_approve):
 def show_toc(ctx, title):
     """Show the TOC of a novel."""
     novel = obtain_novel(title, ctx.obj)
-    click.echo(novel.show_toc())
+    breakpoint()
+    # click.echo(novel.show_toc())
 
 
 # CHAPTER MANAGEMENT COMMANDS
