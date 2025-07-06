@@ -605,7 +605,6 @@ class Novel:
         return chapter
 
     def request_all_chapters(self,
-                             sync_toc: bool = True,
                              reload_files: bool = False,
                              clean_chapters: bool = False) -> None:
         """
@@ -615,7 +614,6 @@ class Novel:
         handling the loading and decoding of each one.
 
         Args:
-            sync_toc (bool, optional): If True, syncs the table of contents
             reload_files (bool, optional): If True, forces a new download of all
                 chapters, even if they already exist locally. Defaults to False.
             clean_chapters (bool, optional): If True, cleans the HTML content of the files
@@ -632,12 +630,6 @@ class Novel:
         """
 
         logger.debug('Requesting all chapters...')
-        if sync_toc:
-            logger.debug('Sync TOC flag present, syncing TOC...')
-            try:
-                self.sync_toc(reload_files=False)
-            except ScraperError:
-                logger.warning('Error when trying to sync TOC, continuing without syncing...')
 
         if len(self.chapters_url_list) == 0:
             logger.warning('No chapters in TOC, returning without requesting any...')
@@ -698,17 +690,10 @@ class Novel:
     # EPUB CREATION
 
     def save_novel_to_epub(self,
-                           sync_toc: bool = False,
                            start_chapter: int = 1,
                            end_chapter: int = None,
                            chapters_by_book: int = 100) -> None:
         logger.debug('Saving novel to epub...')
-        if sync_toc:
-            logger.debug('Sync TOC flag present, syncing TOC...')
-            try:
-                self.sync_toc(reload_files=False)
-            except ScraperError:
-                logger.warning('Error when trying to sync TOC, continuing without syncing...')
 
         if start_chapter < 1:
             logger.error('Start chapter is invalid.')
