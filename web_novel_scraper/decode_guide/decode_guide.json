@@ -475,5 +475,30 @@
         "key": "href"
       }
     }
+  },
+  {
+    "host": "mtlnovels.com",
+    "toc_main_url_processor": true,
+    "save_title_to_content": true,
+    "title": {
+      "element": "h1",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": "div",
+      "class": "par"
+    },
+    "index": {
+      "element": "a",
+      "class": "ch-link",
+      "array": true,
+      "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
   }
 ]

@@ -64,6 +64,7 @@ web-novel-scraper show-novel-info -t "My First Novel"
 - Foxaholic
 - Fanmtl
 - Pandamtl
+- MtlNovels
 
 ## 📖 Full Documentation
 

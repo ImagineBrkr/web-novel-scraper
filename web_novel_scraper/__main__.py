@@ -378,8 +378,7 @@ def delete_toc(ctx, title, auto_approve):
 def show_toc(ctx, title):
     """Show the TOC of a novel."""
     novel = obtain_novel(title, ctx.obj)
-    breakpoint()
-    # click.echo(novel.show_toc())
+    click.echo(novel.show_toc())
 
 
 # CHAPTER MANAGEMENT COMMANDS
