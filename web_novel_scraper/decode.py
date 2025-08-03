@@ -6,6 +6,7 @@ from pathlib import Path
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
 from .utils import FileOps, DecodeError, ValidationError, HTMLParseError, DecodeGuideError, ContentExtractionError
+from .utils import TitleInContentOption
 
 from bs4 import BeautifulSoup
 
@@ -85,18 +86,21 @@ class Decoder:
             logger.debug(f'No processor configuration found for toc_main_url, using "{toc_main_url}" as is')
         return toc_main_url
 
-    def save_title_to_content(self) -> bool:
+    def title_in_content(self) -> TitleInContentOption:
         """
         Checks if the title should be included in the content for the current host.
 
         Returns:
-            bool: True if the title should be saved with the content, False otherwise.
+            TitleInContentOption: Yes, Search for it or No
         """
         logger.debug('Checking if title should be saved to content...')
+        title_in_content = self.decode_guide.get('title_in_content', 'SEARCH')
         try:
-            return self.decode_guide.get('save_title_to_content', False)
-        except DecodeError:
-            raise
+            return TitleInContentOption[title_in_content]
+        except KeyError:
+            raise DecodeGuideError(
+                f"Invalid value on decode guide file for 'title_in_content' option for host {self.host}: "
+                f"{title_in_content}")
 
     def add_host_to_chapter(self) -> bool:
         """
@@ -199,14 +203,14 @@ class Decoder:
             logger.error(msg)
             raise HTMLParseError(msg) from e
 
-    def get_chapter_content(self, html: str, save_title_to_content: bool, chapter_title: str) -> str:
+    def get_chapter_content(self, html: str, title_in_content: TitleInContentOption, chapter_title: str) -> str:
         """
          Extracts and processes chapter content from HTML.
 
          Args:
              html (str): The HTML content of the chapter
-             save_title_to_content (bool): Whether to include the title in the content
-             chapter_title (str): The chapter title to include if save_title_to_content is True
+             title_in_content (TitleInContentOption): Whether to include the title in the content
+             chapter_title (str): The chapter title to include if it needs to add title in the content
 
          Returns:
              str: The processed chapter content with HTML formatting
@@ -225,16 +229,23 @@ class Decoder:
                 logger.error(msg)
                 raise ContentExtractionError(msg)
 
-            if save_title_to_content:
-                logger.debug('Adding chapter title to content...')
-                full_chapter_content += f'<h4>{chapter_title}</h4>'
-
             if isinstance(chapter_content, list):
                 logger.debug(f'Processing {len(chapter_content)} content paragraphs')
                 full_chapter_content += '\n'.join(str(p) for p in chapter_content)
-            else:
-                logger.debug('Processing single content block')
-                full_chapter_content += str(chapter_content)
+
+            logger.debug(f'Title in content option: {title_in_content}')
+            if title_in_content == TitleInContentOption.YES:
+                logger.debug('Adding chapter title to content...')
+                full_chapter_content = f'<h4>{chapter_title}</h4>\n' + full_chapter_content
+            elif title_in_content == TitleInContentOption.NO:
+                logger.debug('Chapter title will not be added to content')
+            elif title_in_content == TitleInContentOption.SEARCH:
+                is_title_in_content = full_chapter_content.find(chapter_title) != -1
+                if is_title_in_content:
+                    logger.debug('Chapter title found in content, will not add it.')
+                else:
+                    logger.debug('Chapter title not found in content, adding it.')
+                    full_chapter_content = f'<h4>{chapter_title}</h4>\n' + full_chapter_content
 
             return full_chapter_content
         except DecodeError:

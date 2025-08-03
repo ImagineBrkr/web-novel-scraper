@@ -42,6 +42,7 @@
   {
     "host": "novellive.net",
     "has_pagination": true,
+    "title_in_content": "YES",
     "title": {
       "element": "h4",
       "id": null,
@@ -82,7 +83,7 @@
   {
     "host": "royalroad.com",
     "has_pagination": false,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": null,
       "id": null,
@@ -117,6 +118,7 @@
   },
   {
     "host": "novelbin.me",
+    "title_in_content": "YES",
     "request_config": {
       "force_flaresolver": "true",
       "request_timeout": 50
@@ -166,6 +168,7 @@
   },
   {
     "host": "novelbin.com",
+    "title_in_content": "YES",
     "request_config": {
       "force_flaresolver": "true",
       "request_timeout": 50
@@ -216,6 +219,7 @@
   {
     "host": "hiraethtranslation.com",
     "has_pagination": false,
+    "title_in_content": "YES",
     "title": {
       "element": "h1",
       "extract": {
@@ -239,7 +243,7 @@
   {
     "host": "genesistudio.com",
     "has_pagination": false,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": null,
       "id": null,
@@ -270,6 +274,7 @@
   {
     "host": "hostednovel.com",
     "has_pagination": true,
+    "title_in_content": "YES",
     "title": {
       "selector": "span#chapter-title",
       "extract": {
@@ -301,6 +306,7 @@
   },
   {
     "host": "scribblehub.com",
+    "title_in_content": "YES",
     "request_config": {
       "force_flaresolver": "true",
       "request_timeout": 60
@@ -336,6 +342,7 @@
   },
   {
     "host": "novelcool.com",
+    "title_in_content": "YES",
     "has_pagination": false,
     "title": {
       "element": "h2",
@@ -361,6 +368,7 @@
     "host": "freewebnovel.com",
     "has_pagination": false,
     "add_host_to_chapter": "true",
+    "title_to_content": "YES",
     "title": {
       "element": "span",
       "class": "chapter",
@@ -388,7 +396,7 @@
       "force_flaresolver": "true",
       "request_timeout": 30
     },
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": "li",
       "class": "active",
@@ -413,7 +421,7 @@
   {
     "host": "novelhi.com",
     "has_pagination": false,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "toc_main_url_processor": true,
     "title": {
       "element": "h1",
@@ -434,7 +442,7 @@
     "host": "fanmtl.com",
     "has_pagination": true,
     "add_host_to_chapter": true,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": "h2",
       "extract": {
@@ -459,6 +467,7 @@
   },
   {
     "host": "pandamtl.com",
+    "title_in_content": "NO",
     "title": {
       "element": "h2",
       "extract": {
@@ -482,7 +491,7 @@
   {
     "host": "mtlnovels.com",
     "toc_main_url_processor": true,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": "h1",
       "extract": {
