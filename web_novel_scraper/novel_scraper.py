@@ -29,7 +29,7 @@ class Novel:
     Attributes:
         title (str): The title of the novel.
         host (Optional[str]): The host domain where the novel is located.
-        toc_main_url (Optional[str]): The main URL for the table of contents.
+        toc_main_url (str): The main URL for the table of contents.
         chapters (list[Chapter]): List of chapters in the novel.
         chapters_url_list (list[str]): List of URLs for all chapters.
         metadata (Metadata): Novel metadata like author, language, etc.
@@ -40,8 +40,8 @@ class Novel:
     """
 
     title: str
+    toc_main_url: str
     host: Optional[str] = None
-    toc_main_url: Optional[str] = None
     chapters: list[Chapter] = field(default_factory=list)
     chapters_url_list: list[str] = field(default_factory=list)
     metadata: Metadata = field(default_factory=Metadata)
@@ -65,13 +65,13 @@ class Novel:
         Validates the novel instance after initialization.
 
         Raises:
-            ValidationError: If the title is empty or neither host nor toc_main_url is provided.
+            ValidationError: If the title is empty or toc_main_url is not provided.
         """
 
         if not self.title:
             raise ValidationError("title can't be empty")
-        if not (self.host or self.toc_main_url):
-            raise ValidationError('You must provide "host" or "toc_main_url"')
+        if not self.toc_main_url:
+            raise ValidationError('You must provide a "toc_main_url"')
 
     def __str__(self):
         """
@@ -81,14 +81,13 @@ class Novel:
             str: A formatted string containing the novel's main information.
         """
 
-        toc_info = self.toc_main_url if self.toc_main_url else "TOC added manually"
         attributes = [
             f"Title: {self.title}",
             f"Author: {self.metadata.author}",
             f"Language: {self.metadata.language}",
             f"Description: {self.metadata.description}",
             f"Tags: {', '.join(self.metadata.tags)}",
-            f"TOC Info: {toc_info}",
+            f"TOC Main URL: {self.toc_main_url}",
             f"Host: {self.host}"
         ]
         attributes_str = '\n'.join(attributes)
@@ -127,46 +126,27 @@ class Novel:
         return novel
 
     @classmethod
-    def new(cls, title: str, cfg: ScraperConfig, host: str = None, toc_html: str = None,
-            toc_main_url: str = None) -> 'Novel':
+    def new(cls, title: str, cfg: ScraperConfig, toc_main_url: str, host: str = None) -> 'Novel':
         """Creates a new Novel instance.
 
         Args:
             title: Title of the novel (required)
             cfg: Scraper configuration (required)
             host: Host URL for the novel content (optional)
-            toc_html: HTML content for the table of contents (optional)
             toc_main_url: URL for the table of contents (optional)
 
         Note:
-            - Either toc_html or toc_main_url must be provided
-            - If toc_main_url is provided, host will be extracted from it if not explicitly provided
-            - If toc_html is provided, host must be explicitly provided
+            - Host will be extracted from toc_main_url it if not explicitly provided
 
         Returns:
             Novel: A new Novel instance
-
-        Raises:
-            ValidationError: If the title is empty, or if neither toc_html nor toc_main_url is provided
         """
-        if not title:
-            raise ValidationError("Title cannot be empty")
-
-        if not (toc_html or toc_main_url):
-            raise ValidationError("Either toc_html or toc_main_url must be provided")
-
-        if toc_html and not host:
-            raise ValidationError("When providing toc_html, host must be explicitly provided")
 
         novel = cls(title=title, host=host, toc_main_url=toc_main_url)
         # If toc_main_url is provided and the host isn't, extract host from URL
         if toc_main_url and not host:
             host = utils.obtain_host(toc_main_url)
             novel.host = host
-
-        # If toc_html is provided, add it to the novel
-        if toc_html:
-            novel.add_toc_html(toc_html, host)
 
         return novel
 
@@ -336,40 +316,13 @@ class Novel:
             logger.error("Could not delete TOCs. File Manager Error", exc_info=e)
             raise
 
+        self.chapters_url_list = []
+        self.chapters = []
+
         if update_host:
             new_host = utils.obtain_host(self.toc_main_url)
             logger.debug(f'Update Host flag present, new host is "{new_host}".')
             self.set_host(new_host)
-
-    def add_toc_html(self, html: str, host: str = None) -> None:
-        """
-        Adds HTML content as a table of contents fragment.
-
-        This method is mutually exclusive with using toc_main_url - if a main URL exists,
-        it will be cleared. Host must be provided either directly or from a previous configuration.
-
-        Args:
-            html: HTML content to add as TOC fragment
-            host: Optional host to set for this content
-
-        Raises:
-            ValidationError: If no host is provided when required
-            FileManagerError: If saving TOC content fails
-        """
-
-        if self.toc_main_url:
-            logger.debug(f'TOC main URL is exclusive with manual TOC files, TOC main URL will be deleted.')
-            self.delete_toc()
-            self.toc_main_url = None
-
-        if host:
-            self.set_host(host)
-        else:
-            if self.host is None:
-                logger.error(f'When using TOC files instead of URLs, host must be provided.')
-                raise ValidationError('Host must be provided when using TOC files instead of URLs.')
-        self.file_manager.add_toc(html)
-        logger.info('New TOC file added to disk.')
 
     def delete_toc(self):
         """
@@ -412,20 +365,13 @@ class Novel:
 
         all_tocs_content = self.file_manager.get_all_toc()
 
-        # If there is no toc_main_url and no manually added toc, there is no way to sync toc
-        toc_not_exists = not all_tocs_content and self.toc_main_url is None
-        if toc_not_exists:
-            logger.critical(
-                'There is no toc html and no toc url set, unable to get toc.')
-            raise ScraperError('There is no toc html and no toc url set, unable to get toc.')
-
         # Will reload files if:
-        # Reload_files is True (requested by user) AND there is a toc_main_url present.
+        # Reload_files is True (requested by user)
         # OR
-        # There is a toc_main_url present, but no toc files are saved in the disk.
-        reload_files = ((reload_files or
-                         all_tocs_content is None) or
-                        self.toc_main_url is not None)
+        # No toc files are saved in the disk.
+        breakpoint()
+        reload_files = (reload_files or
+                         all_tocs_content is None)
         if reload_files:
             logger.debug('Reloading TOC files.')
             try:
