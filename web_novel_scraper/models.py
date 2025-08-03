@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 import pprint
 
-from .utils import _always, ValidationError
+from .utils import _always, ValidationError, TitleInContentOption
 
 
 def _pretty(obj, *, skip: set[str] | None = None) -> str:
@@ -36,7 +36,13 @@ class Metadata:
 @dataclass(slots=True, frozen=True)
 class ScraperBehavior:
     # Some novels already have the title in the content.
-    save_title_to_content: bool = False
+    title_in_content: Optional[TitleInContentOption] = field(
+        default=None,
+        metadata=config(
+            encoder=lambda x: x.name if x else None,
+            decoder=lambda x: TitleInContentOption[x] if x else None
+        )
+    )
     # Some novels have the toc link without the host
     auto_add_host: bool = False
     # Some hosts return 403 when scrapping, this will force the use of FlareSolver

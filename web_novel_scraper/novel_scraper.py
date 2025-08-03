@@ -12,7 +12,8 @@ from . import utils
 from .request_manager import get_html_content
 from .config_manager import ScraperConfig
 from .models import ScraperBehavior, Metadata, Chapter
-from .utils import _always, ScraperError, FileManagerError, NetworkError, ValidationError, DecodeError
+from .utils import _always, ScraperError, FileManagerError, NetworkError, ValidationError, DecodeError, \
+    TitleInContentOption
 
 logger = logger_manager.create_logger('NOVEL SCRAPPING')
 
@@ -189,6 +190,12 @@ class Novel:
         """
 
         filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        if 'title_in_content' in filtered_kwargs:
+            try:
+                filtered_kwargs['title_in_content'] = TitleInContentOption[filtered_kwargs['title_in_content']]
+            except KeyError:
+                raise ValidationError(
+                    f"Invalid value for 'title_in_content' option: {filtered_kwargs['title_in_content']}")
         self.scraper_behavior = replace(self.scraper_behavior, **filtered_kwargs)
         logger.info(f'Scraper behavior updated')
 
@@ -369,9 +376,8 @@ class Novel:
         # Reload_files is True (requested by user)
         # OR
         # No toc files are saved in the disk.
-        breakpoint()
         reload_files = (reload_files or
-                         all_tocs_content is None)
+                        all_tocs_content is None)
         if reload_files:
             logger.debug('Reloading TOC files.')
             try:
@@ -534,11 +540,16 @@ class Novel:
 
         # We get the chapter title and content
         # We pass an index so we can autogenerate a Title
-        save_title_to_content = (self.scraper_behavior.save_title_to_content or
-                                 self.decoder.save_title_to_content())
+        if self.scraper_behavior.title_in_content is not None:
+            logger.debug(
+                f'Custom scraper behavior configured, title in config option: {self.scraper_behavior.title_in_content}')
+            title_in_content = self.scraper_behavior.title_in_content
+        else:
+            title_in_content = self.decoder.title_in_content()
+
         try:
             chapter = self._decode_chapter(chapter=chapter,
-                                           save_title_to_content=save_title_to_content)
+                                           title_in_content=title_in_content)
         except DecodeError as e:
             logger.error(f'Could not decode HTML title and content for chapter with URL "{chapter.chapter_url}"',
                          exc_info=e)
@@ -1004,7 +1015,7 @@ class Novel:
 
     def _decode_chapter(self,
                         chapter: Chapter,
-                        save_title_to_content: bool = False) -> Chapter:
+                        title_in_content: TitleInContentOption = TitleInContentOption.SEARCH) -> Chapter:
         """
         Decodes a chapter's HTML content to extract title and content.
 
@@ -1013,8 +1024,8 @@ class Novel:
 
         Args:
             chapter (Chapter): Chapter object containing the HTML content to decode.
-            save_title_to_content (bool, optional): Whether to include the title in the
-                chapter content. Defaults to False.
+            title_in_content (TitleInContentOption, optional): Whether to include the title in the
+                chapter content. Defaults to SEARCH.
 
         Returns:
             Chapter: The updated Chapter object with decoded title and content.
@@ -1055,7 +1066,7 @@ class Novel:
         logger.debug('Obtaining chapter content...')
         try:
             chapter.chapter_content = self.decoder.get_chapter_content(chapter.chapter_html,
-                                                                       save_title_to_content,
+                                                                       title_in_content,
                                                                        chapter.chapter_title)
         except DecodeError:
             logger.error(f'Failed to decode chapter content for chapter with URL "{chapter.chapter_url}"')
