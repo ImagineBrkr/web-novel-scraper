@@ -91,20 +91,10 @@ metadata_end_date_option = click.option(
 
 # TOC options
 toc_main_url_option = click.option(
-    '--toc-main-url', type=str, help='Main URL of the TOC, required if not loading from file.')
+    '--toc-main-url', type=str, required=True,
+    help='Main URL of the TOC, required if not loading from file.')
 sync_toc_option = click.option('--sync-toc', is_flag=True,
                                help='Reload the TOC before requesting chapters.')
-
-
-def create_toc_html_option(required: bool = False):
-    return click.option(
-        '--toc-html',
-        type=click.File(encoding='utf-8'),
-        required=required,
-        help=(
-            'Novel TOC HTML loaded from file.' if required else 'Novel TOC HTML loaded from file (required if not loading from URL)')
-    )
-
 
 host_option = click.option(
     '--host', type=str, help='Host used for decoding, optional if toc-main-url is provided.')
@@ -124,7 +114,6 @@ force_flaresolver_option = click.option('--force-flaresolver', is_flag=True, sho
 @click.pass_context
 @title_option
 @toc_main_url_option
-@create_toc_html_option()
 @host_option
 @metadata_author_option
 @metadata_start_date_option
@@ -136,37 +125,20 @@ force_flaresolver_option = click.option('--force-flaresolver', is_flag=True, sho
 @save_title_to_content_option
 @auto_add_host_option
 @force_flaresolver_option
-def create_novel(ctx, title, toc_main_url, toc_html, host, author, start_date, end_date, language, description, tags,
+def create_novel(ctx, title, toc_main_url, host, author, start_date, end_date, language, description, tags,
                  cover, save_title_to_content, auto_add_host, force_flaresolver):
     """Creates a new novel and saves it."""
     novel = obtain_novel(title, ctx.obj, allow_missing=True)
     if novel:
         click.confirm(f'A novel with the title {title} already exists, do you want to replace it?', abort=True)
         novel.delete_toc()
-    if toc_main_url and toc_html:
-        click.echo(
-            'You must provide either a TOC URL or a TOC HTML file, not both.', err=True)
-        return
 
-    if not toc_main_url and not toc_html:
-        click.echo(
-            'You must provide either a TOC URL or a TOC HTML file.', err=True)
-        return
-
-    if not host and not toc_main_url:
-        click.echo(
-            'You must provide a host if you are not providing a TOC URL.', err=True)
-        return
-    toc_html_content = None
-    if toc_html:
-        toc_html_content = toc_html.read()
     config = ScraperConfig(parameters=ctx.obj)
 
     novel = Novel.new(title=title,
                       cfg=config,
                       host=host,
-                      toc_main_url=toc_main_url,
-                      toc_html=toc_html_content)
+                      toc_main_url=toc_main_url)
     novel.set_config(cfg=config,
                      novel_base_dir=ctx.obj.get('novel_base_dir'))
     novel.set_metadata(author=author,
@@ -323,7 +295,7 @@ def set_host(ctx, title, host):
 @title_option
 @click.option('--toc-main-url', type=str, required=True, help='New TOC main URL (Previous links will be deleted).')
 def set_toc_main_url(ctx, title, toc_main_url):
-    """Set the main URL for the TOC of a novel."""
+    """Set the main URL for the TOC of a novel, will delete all chapter information from previous TOC."""
     novel = obtain_novel(title, ctx.obj)
     novel.set_toc_main_url(toc_main_url)
     novel.save_novel()
@@ -332,43 +304,17 @@ def set_toc_main_url(ctx, title, toc_main_url):
 @cli.command()
 @click.pass_context
 @title_option
-@create_toc_html_option(required=True)
-@host_option
-def add_toc_html(ctx, title, toc_html, host):
-    """Add TOC HTML to a novel."""
-    novel = obtain_novel(title, ctx.obj)
-    html_content = toc_html.read()
-    novel.add_toc_html(html_content, host)
-    novel.save_novel()
-
-
-@cli.command()
-@click.pass_context
-@title_option
-@click.option('--reload-files', is_flag=True, required=False, default=False, show_default=True,
-              help='Reload the TOC files before sync (only works if using a TOC URL).')
-def sync_toc(ctx, title, reload_files):
+@click.option('--no-reload-files', is_flag=True, required=False, default=True, show_default=True,
+              help="The files for the TOC will not be requested again (will make the request if there are no files anyway).")
+def sync_toc(ctx, title, no_reload_files):
     """Sync the TOC of a novel."""
     novel = obtain_novel(title, ctx.obj)
-    if novel.sync_toc(reload_files):
+    if novel.sync_toc(no_reload_files):
         click.echo(
             'Table of Contents synced with files, to see the new TOC use the command show-toc.')
     else:
         click.echo(
             'Error with the TOC syncing, please check the TOC files and decoding options.', err=True)
-    novel.save_novel()
-
-
-@cli.command()
-@click.pass_context
-@title_option
-@click.option('--auto-approve', is_flag=True, required=False, default=False, show_default=True, help='Auto approve.')
-def delete_toc(ctx, title, auto_approve):
-    """Delete the TOC of a novel."""
-    novel = obtain_novel(title, ctx.obj)
-    if not auto_approve:
-        click.confirm(f'Are you sure you want to delete the TOC for {title}?', abort=True)
-    novel.delete_toc()
     novel.save_novel()
 
 
