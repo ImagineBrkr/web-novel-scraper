@@ -64,8 +64,8 @@ class Decoder:
             bool: True if the index should be processed in reverse order, False otherwise.
         """
 
-        logger.debug('Checking if index should be inverted...')
-        return self.decode_guide.get('index', {}).get('inverted', False)
+        inverted = self.decode_guide.get('index', {}).get('inverted', False)
+        return inverted
 
     def toc_main_url_process(self, toc_main_url: str) -> str:
         if self.decode_guide.get('toc_main_url_processor', False):
@@ -93,7 +93,6 @@ class Decoder:
         Returns:
             TitleInContentOption: Yes, Search for it or No
         """
-        logger.debug('Checking if title should be saved to content...')
         title_in_content = self.decode_guide.get('title_in_content', 'SEARCH')
         try:
             return TitleInContentOption[title_in_content]
@@ -109,7 +108,6 @@ class Decoder:
         Returns:
             bool: True if host information should be included in chapter url, False otherwise.
         """
-        logger.debug('Checking if host should be added to chapter url...')
         return self.decode_guide.get('add_host_to_chapter', False)
 
     def get_chapter_urls(self, html: str) -> list[str]:
@@ -262,7 +260,6 @@ class Decoder:
         Returns:
             bool: True if the host uses pagination, False otherwise.
         """
-        logger.debug('Checking if index has pagination...')
         return self.decode_guide.get('has_pagination', False)
 
     def clean_html(self, html: str, hard_clean: bool = False):
@@ -288,10 +285,7 @@ class Decoder:
         return "\n".join([line.strip() for line in str(soup).splitlines() if line.strip()])
 
     def decode_html(self, html: str, content_type: str) -> str | list[str] | None:
-        logger.debug(f'Decoding HTML...')
-        logger.debug(f'Content type: {content_type}')
-        logger.debug(f'Decode guide: {self.decode_guide_file}')
-        logger.debug(f'Host: {self.host}')
+        logger.debug(f'Decoding HTML, Content Type: {content_type}...')
         if content_type not in self.decode_guide:
             msg = f'No decode rules found for {content_type} in guide {self.decode_guide_file}'
             logger.critical(msg)
@@ -301,7 +295,6 @@ class Decoder:
             logger.debug(f'Using custom processor for {self.host}')
             return ProcessorRegistry.get_processor(self.host, content_type).process(html)
 
-        logger.debug('Parsing HTML...')
         try:
             soup = BeautifulSoup(html, 'html.parser')
         except Exception as e:
@@ -350,7 +343,6 @@ class Decoder:
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):
-        logger.debug('Finding elements...')
         selector = decoder.get('selector')
         elements = []
         if selector is None:
@@ -361,31 +353,25 @@ class Decoder:
             attributes = decoder.get('attributes')
 
             if element:
-                logger.debug(f'Using element "{element}"')
                 selector += element
             if _id:
-                logger.debug(f'Using id "{_id}"')
                 selector += f'#{_id}'
             if _class:
-                logger.debug(f'Using class "{_class}"')
                 selector += f'.{_class}'
             if attributes:
                 for attr, value in attributes.items():
-                    logger.debug(f'Using attribute "{attr}"')
                     if value is not None:
-                        logger.debug(f'With value "{value}"')
                         selector += f'[{attr}="{value}"]'
                     else:
                         selector += f'[{attr}]'
             selectors = [selector]
         else:
-            logger.debug(f'Using selector "{selector}"')
             if XOR_SEPARATOR in selector:
-                logger.debug(f'Found XOR_OPERATOR "{XOR_SEPARATOR}" in selector')
-                logger.debug('Splitting selectors...')
                 selectors = selector.split(XOR_SEPARATOR)
             else:
                 selectors = [selector]
+
+        logger.debug(f'Selectors: {selectors}')
 
         for selector in selectors:
             logger.debug(f'Searching using selector "{selector}"...')
@@ -397,7 +383,6 @@ class Decoder:
 
         extract = decoder.get('extract')
         if extract:
-            logger.debug(f'Extracting from elements...')
             if extract["type"] == "attr":
                 attr_key = extract["key"]
                 logger.debug(f'Extracting value from attribute "{attr_key}"...')
@@ -409,16 +394,15 @@ class Decoder:
                         if attr:
                             elements.append(attr)
                     except KeyError:
-                        logger.debug(f'Attribute "{attr_key}" not found')
-                        logger.debug('Ignoring...')
+                        logger.debug(f'Attribute "{attr_key}" not found. Ignoring...')
                         pass
-                logger.debug(f'{len(elements)} elements found using attribute "{attr_key}"')
+                logger.debug(f'{len(elements)} elements found with attribute "{attr_key}"')
             if extract["type"] == "text":
                 logger.debug('Extracting text from elements...')
                 elements = [element.string for element in elements]
 
         if not elements:
-            logger.debug('No elements found, returning "None"')
+            logger.debug('No elements found')
             return None
 
         # inverted = decoder.get('inverted')
@@ -428,11 +412,9 @@ class Decoder:
         #     elements = elements[::-1]
 
         if decoder.get('array'):
-            logger.debug('Array option activated')
-            logger.debug('Returning elements a list')
+            logger.debug('Array option activated. Returning elements as a list')
             return elements
-        logger.debug('Array option not activated')
-        logger.debug('Returning only first element...')
+        logger.debug('Array option not activated. Returning only first element...')
         return elements[0]
 
     @staticmethod
