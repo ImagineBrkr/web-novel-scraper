@@ -5,7 +5,7 @@ from pathlib import Path
 
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
-from .utils import FileOps, DecodeError, ValidationError, HTMLParseError, DecodeGuideError, ContentExtractionError
+from .utils import FileOps, DecodeError, HTMLParseError, DecodeGuideError, ContentExtractionError, HostNotExistsError
 from .utils import TitleInContentOption
 
 from bs4 import BeautifulSoup
@@ -33,7 +33,7 @@ class Decoder:
         self.host = host
         try:
             self._set_decode_guide()
-        except ValidationError:
+        except HostNotExistsError:
             raise
 
         host_request_config = self.get_request_config()
@@ -46,7 +46,6 @@ class Decoder:
 
         Returns:
             dict: Request configuration parameters for the current host.
-                Returns DEFAULT_REQUEST_CONFIG if no custom configuration exists.
         """
 
         request_config = self.decode_guide.get('request_config')
@@ -338,8 +337,8 @@ class Decoder:
         decode_guide = FileOps.read_json(self.decode_guide_file)
         self.decode_guide = self._get_element_by_key(decode_guide, 'host', self.host)
         if self.decode_guide is None:
-            logger.error(f'No decode guide found for host {self.host}')
-            raise ValidationError(f'No decode guide found for host {self.host}')
+            logger.debug(f'No decode guide found for host {self.host}')
+            raise HostNotExistsError(f'No decode guide found for host {self.host}')
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):

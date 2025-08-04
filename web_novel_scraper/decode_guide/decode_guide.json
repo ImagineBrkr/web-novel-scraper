@@ -1,45 +1,5 @@
 [
   {
-    "host": "default",
-    "has_pagination": false,
-    "title": {
-      "element": "h4",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    },
-    "content": {
-      "element": "p",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    },
-    "index": {
-      "element": "p",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true,
-      "extract": {
-        "type": "attr",
-        "key": "href"
-      }
-    },
-    "next_page": {
-      "element": "p",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    }
-  },
-  {
     "host": "novellive.net",
     "has_pagination": true,
     "title_in_content": "YES",
@@ -120,7 +80,7 @@
     "host": "novelbin.me",
     "title_in_content": "YES",
     "request_config": {
-      "force_flaresolver": "true",
+      "force_flaresolver": true,
       "request_timeout": 50
     },
     "has_pagination": false,
@@ -170,7 +130,7 @@
     "host": "novelbin.com",
     "title_in_content": "YES",
     "request_config": {
-      "force_flaresolver": "true",
+      "force_flaresolver": true,
       "request_timeout": 50
     },
     "has_pagination": false,
@@ -308,7 +268,7 @@
     "host": "scribblehub.com",
     "title_in_content": "YES",
     "request_config": {
-      "force_flaresolver": "true",
+      "force_flaresolver": true,
       "request_timeout": 60
     },
     "has_pagination": true,
@@ -367,7 +327,7 @@
   {
     "host": "freewebnovel.com",
     "has_pagination": false,
-    "add_host_to_chapter": "true",
+    "add_host_to_chapter": true,
     "title_to_content": "YES",
     "title": {
       "element": "span",
@@ -393,7 +353,7 @@
     "host": "foxaholic.com",
     "has_pagination": false,
     "request_config": {
-      "force_flaresolver": "true",
+      "force_flaresolver": true,
       "request_timeout": 30
     },
     "title_in_content": "YES",
