@@ -275,7 +275,7 @@ class Novel:
         try:
             self.decoder.set_host(host)
             logger.info(f'Host updated to "{self.host}"')
-        except ValidationError as e:
+        except DecodeError as e:
             logger.error("Could not set host. Decode Error", exc_info=e)
             raise
 

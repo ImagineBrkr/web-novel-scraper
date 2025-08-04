@@ -40,6 +40,10 @@ class HTMLParseError(DecodeError):
     """Raised when HTML parsing fails"""
 
 
+class HostNotExistsError(DecodeError):
+    """Raised when the host doesn't exist on the Decode Guide"""
+
+
 class DecodeGuideError(DecodeError):
     """Raised when there are issues with decode guide configuration"""
 
