@@ -181,7 +181,8 @@
     "has_pagination": false,
     "title_in_content": "YES",
     "title": {
-      "element": "h1",
+      "element": "li",
+      "class": "active",
       "extract": {
         "type": "text"
       }
@@ -191,7 +192,7 @@
       "array": true
     },
     "index": {
-      "element": "ul.main li a",
+      "element": "li.free-chap a",
       "array": true,
       "inverted": true,
       "extract": {
