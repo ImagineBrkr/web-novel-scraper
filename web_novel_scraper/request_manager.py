@@ -18,11 +18,15 @@ FORCE_FLARESOLVER = os.getenv('FORCE_FLARESOLVER', '0') == '1'
 
 logger = create_logger('GET HTML CONTENT')
 
+def _dict_to_cookie_list(cookies: dict) -> list:
+    return [{'name': k, 'value': v} for k, v in cookies.items()]
+
 
 def _get_request(url: str,
                  timeout: int,
                  retries: int,
-                 time_between_retries: int) -> Optional[requests.Response]:
+                 time_between_retries: int,
+                 cookies: Optional[dict] = None) -> Optional[requests.Response]:
     logger.debug(
         f'Starting get_request for "{url}" with timeout={timeout}, '
         f'retries={retries}, '
@@ -30,7 +34,7 @@ def _get_request(url: str,
     for attempt in range(retries):
         logger.debug(f'Attempt {attempt + 1} for "{url}"')
         try:
-            response = requests.get(url, timeout=timeout)
+            response = requests.get(url, timeout=timeout, cookies=cookies)
             response.raise_for_status()
             logger.debug(f'Successful response for "{url}" on attempt {attempt + 1}')
             return response
@@ -56,7 +60,8 @@ def _get_request_flaresolver(url: str,
                              timeout: int,
                              retries: int,
                              time_between_retries: int,
-                             flaresolver_url: str) -> Optional[requests.Response]:
+                             flaresolver_url: str,
+                             cookies: Optional[dict] = None) -> Optional[requests.Response]:
     logger.debug(
         f'Starting get_request_flaresolver for "{url}" with timeout={timeout}, '
         f'retries={retries}, '
@@ -70,7 +75,8 @@ def _get_request_flaresolver(url: str,
                 json={
                     'cmd': 'request.get',
                     'url': url,
-                    'maxTimeout': timeout * 1000
+                    'maxTimeout': timeout * 1000,
+                    'cookies': _dict_to_cookie_list(cookies) if cookies else []
                 },
                 timeout=timeout
             )
@@ -108,7 +114,8 @@ def get_html_content(url: str,
                      timeout: int = 20,
                      time_between_retries: int = 3,
                      flaresolver_url: str = FLARESOLVER_URL,
-                     force_flaresolver: bool = FORCE_FLARESOLVER) -> Optional[str]:
+                     force_flaresolver: bool = FORCE_FLARESOLVER,
+                     cookies: Optional[dict] = None) -> Optional[str]:
     """
     Retrieves HTML content from a URL with support for anti-bot protection bypass.
 
@@ -125,6 +132,7 @@ def get_html_content(url: str,
             Defaults to FLARESOLVER_URL env variable.
         force_flaresolver (bool, optional): If True, skips standard HTTP request and uses
             FlareSolver directly. Defaults to FORCE_FLARESOLVER env variable.
+        cookies (Optional[dict], optional): Cookies to send with the request. Defaults to None.
 
     Returns:
         Optional[str]: The HTML content if successful, None otherwise
@@ -152,7 +160,8 @@ def get_html_content(url: str,
         response = _get_request(url,
                                 timeout=timeout,
                                 retries=retries,
-                                time_between_retries=time_between_retries)
+                                time_between_retries=time_between_retries,
+                                cookies=cookies)
         if response and response.ok:
             logger.debug(f'Successfully retrieved HTML content from "{url}" using common HTTP request')
             return response.text
@@ -163,7 +172,8 @@ def get_html_content(url: str,
                                 timeout=timeout,
                                 retries=retries,
                                 time_between_retries=time_between_retries,
-                                flaresolver_url=flaresolver_url)
+                                flaresolver_url=flaresolver_url,
+                                cookies=cookies)
     if not response or not response.ok:
         logger.debug(f'Failed all attempts to get HTML content from "{url}')
         raise NetworkError(f'Failed all attempts to get HTML content from "{url}"')

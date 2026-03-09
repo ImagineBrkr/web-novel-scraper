@@ -24,7 +24,8 @@ DEFAULT_REQUEST_CONFIG = {
     "force_flaresolver": 'False',
     "request_retries": '3',
     "request_timeout": '20',
-    "request_time_between_retries": '3'
+    "request_time_between_retries": '3',
+    "request_cookies": None
 }
 
 logger = create_logger("CONFIG MANAGER")

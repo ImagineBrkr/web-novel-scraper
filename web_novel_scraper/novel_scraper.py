@@ -741,7 +741,8 @@ class Novel:
                                         retries=request_config.get('request_retries'),
                                         timeout=request_config.get('request_timeout'),
                                         time_between_retries=request_config.get('request_time_between_retries'),
-                                        force_flaresolver=force_flaresolver)
+                                        force_flaresolver=force_flaresolver,
+                                        cookies=request_config.get('request_cookies'))
         return html_content
 
     def _load_or_request_chapter(self,

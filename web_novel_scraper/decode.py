@@ -322,13 +322,15 @@ class Decoder:
             self.request_config = request_config
             return None
 
-        for key in ["force_flaresolver", "request_retries", "request_timeout", "request_time_between_retries"]:
+        for key in ["force_flaresolver", "request_retries", "request_timeout", "request_time_between_retries", "request_cookies"]:
             new_value = request_config.get(key)
             if new_value is None:
                 continue
 
             if key == "force_flaresolver":
                 self.request_config[key] = self.request_config.get(key) or new_value
+            elif key == "request_cookies":
+                self.request_config[key] = new_value
             else:
                 self.request_config[key] = max(
                     self.request_config.get(key, 0),
