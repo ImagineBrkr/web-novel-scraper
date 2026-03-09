@@ -1,2 +1,2 @@
 from .custom_processor import CustomProcessor, ProcessorRegistry
-from .sites import royalroad, genesis, fanmtl, novelhi, novelbin, mtlnovels
+from .sites import royalroad, genesis, fanmtl, novelhi, novelbin, mtlnovels, novelingua
