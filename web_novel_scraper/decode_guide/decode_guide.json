@@ -293,7 +293,7 @@
       }
     },
     "next_page": {
-      "selector": "div ul.simple-pagination li a.next",
+      "selector": "div ul#pagination-mesh-toc li a.next",
       "array": false,
       "extract": {
         "type": "attr",
@@ -468,6 +468,39 @@
       "class": "ch-link",
       "array": true,
       "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "empirenovel.com",
+    "title_in_content": "NO",
+    "has_pagination": true,
+    "title": {
+      "use_custom_processor": true
+    },
+    "content": {
+      "element": "div",
+      "id": "read-novel"
+    },
+    "index": {
+      "element": "a",
+      "class": "chapter_link",
+      "array": true,
+      "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "element": "a",
+      "class": "page-link",
+      "attributes": {
+        "rel": "next"
+      },
       "extract": {
         "type": "attr",
         "key": "href"

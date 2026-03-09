@@ -229,6 +229,8 @@ class Decoder:
             if isinstance(chapter_content, list):
                 logger.debug(f'Processing {len(chapter_content)} content paragraphs')
                 full_chapter_content += '\n'.join(str(p) for p in chapter_content)
+            else :
+                full_chapter_content = str(chapter_content)
 
             logger.debug(f'Title in content option: {title_in_content}')
             if title_in_content == TitleInContentOption.YES:
