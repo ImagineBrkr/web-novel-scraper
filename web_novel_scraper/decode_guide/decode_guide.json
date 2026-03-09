@@ -500,5 +500,32 @@
         "key": "href"
       }
     }
+  },
+  {
+    "host": "novelingua.com",
+    "has_pagination": false,
+    "title": {
+      "use_custom_processor": true
+    },
+    "content": {
+      "element": "div.pagelayer-text-holder > p[dir]",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.pagelayer-text-holder span a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
   }
 ]
