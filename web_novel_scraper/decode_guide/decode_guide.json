@@ -270,7 +270,10 @@
     "title_in_content": "YES",
     "request_config": {
       "force_flaresolver": true,
-      "request_timeout": 60
+      "request_timeout": 60,
+      "request_cookies": {
+        "toc_show": "10000"
+      }
     },
     "has_pagination": true,
     "title": {
