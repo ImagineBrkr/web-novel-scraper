@@ -80,8 +80,9 @@
     }
   },
   {
-    "host": "www.royalroad.com",
+    "host": "royalroad.com",
     "has_pagination": false,
+    "save_title_to_content": true,
     "title": {
       "element": null,
       "id": null,

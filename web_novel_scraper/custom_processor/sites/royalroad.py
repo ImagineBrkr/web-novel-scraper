@@ -14,9 +14,9 @@ class RoyalRoadChaptersProcessor(CustomProcessor):
         try:
             chapters_json = match.group(1)
             chapters = json.loads(chapters_json)
-            chapters = [chapter['url'] for chapter in chapters if 'url' in chapter]
+            chapters = [f"https://www.royalroad.com{chapter['url']}" for chapter in chapters if 'url' in chapter]
             return chapters
         except (json.JSONDecodeError, IndexError):
             return None
 
-ProcessorRegistry.register('www.royalroad.com', 'index', RoyalRoadChaptersProcessor())
+ProcessorRegistry.register('royalroad.com', 'index', RoyalRoadChaptersProcessor())
