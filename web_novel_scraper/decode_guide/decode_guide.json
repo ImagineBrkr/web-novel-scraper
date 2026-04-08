@@ -536,5 +536,35 @@
         "key": "href"
       }
     }
+  },
+  {
+    "host": "nobadnovel.com",
+    "has_pagination": false,
+    "title": {
+      "element": "h1",
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.text-base p",
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div#chapter-list a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
   }
 ]
