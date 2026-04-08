@@ -5,7 +5,8 @@ from pathlib import Path
 
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
-from .utils import FileOps, DecodeError, ValidationError, HTMLParseError, DecodeGuideError, ContentExtractionError
+from .utils import FileOps, DecodeError, HTMLParseError, DecodeGuideError, ContentExtractionError, HostNotExistsError
+from .utils import TitleInContentOption
 
 from bs4 import BeautifulSoup
 
@@ -32,7 +33,7 @@ class Decoder:
         self.host = host
         try:
             self._set_decode_guide()
-        except ValidationError:
+        except HostNotExistsError:
             raise
 
         host_request_config = self.get_request_config()
@@ -45,7 +46,6 @@ class Decoder:
 
         Returns:
             dict: Request configuration parameters for the current host.
-                Returns DEFAULT_REQUEST_CONFIG if no custom configuration exists.
         """
 
         request_config = self.decode_guide.get('request_config')
@@ -63,8 +63,8 @@ class Decoder:
             bool: True if the index should be processed in reverse order, False otherwise.
         """
 
-        logger.debug('Checking if index should be inverted...')
-        return self.decode_guide.get('index', {}).get('inverted', False)
+        inverted = self.decode_guide.get('index', {}).get('inverted', False)
+        return inverted
 
     def toc_main_url_process(self, toc_main_url: str) -> str:
         if self.decode_guide.get('toc_main_url_processor', False):
@@ -85,18 +85,20 @@ class Decoder:
             logger.debug(f'No processor configuration found for toc_main_url, using "{toc_main_url}" as is')
         return toc_main_url
 
-    def save_title_to_content(self) -> bool:
+    def title_in_content(self) -> TitleInContentOption:
         """
         Checks if the title should be included in the content for the current host.
 
         Returns:
-            bool: True if the title should be saved with the content, False otherwise.
+            TitleInContentOption: Yes, Search for it or No
         """
-        logger.debug('Checking if title should be saved to content...')
+        title_in_content = self.decode_guide.get('title_in_content', 'SEARCH')
         try:
-            return self.decode_guide.get('save_title_to_content', False)
-        except DecodeError:
-            raise
+            return TitleInContentOption[title_in_content]
+        except KeyError:
+            raise DecodeGuideError(
+                f"Invalid value on decode guide file for 'title_in_content' option for host {self.host}: "
+                f"{title_in_content}")
 
     def add_host_to_chapter(self) -> bool:
         """
@@ -105,7 +107,6 @@ class Decoder:
         Returns:
             bool: True if host information should be included in chapter url, False otherwise.
         """
-        logger.debug('Checking if host should be added to chapter url...')
         return self.decode_guide.get('add_host_to_chapter', False)
 
     def get_chapter_urls(self, html: str) -> list[str]:
@@ -199,14 +200,14 @@ class Decoder:
             logger.error(msg)
             raise HTMLParseError(msg) from e
 
-    def get_chapter_content(self, html: str, save_title_to_content: bool, chapter_title: str) -> str:
+    def get_chapter_content(self, html: str, title_in_content: TitleInContentOption, chapter_title: str) -> str:
         """
          Extracts and processes chapter content from HTML.
 
          Args:
              html (str): The HTML content of the chapter
-             save_title_to_content (bool): Whether to include the title in the content
-             chapter_title (str): The chapter title to include if save_title_to_content is True
+             title_in_content (TitleInContentOption): Whether to include the title in the content
+             chapter_title (str): The chapter title to include if it needs to add title in the content
 
          Returns:
              str: The processed chapter content with HTML formatting
@@ -225,16 +226,25 @@ class Decoder:
                 logger.error(msg)
                 raise ContentExtractionError(msg)
 
-            if save_title_to_content:
-                logger.debug('Adding chapter title to content...')
-                full_chapter_content += f'<h4>{chapter_title}</h4>'
-
             if isinstance(chapter_content, list):
                 logger.debug(f'Processing {len(chapter_content)} content paragraphs')
                 full_chapter_content += '\n'.join(str(p) for p in chapter_content)
-            else:
-                logger.debug('Processing single content block')
-                full_chapter_content += str(chapter_content)
+            else :
+                full_chapter_content = str(chapter_content)
+
+            logger.debug(f'Title in content option: {title_in_content}')
+            if title_in_content == TitleInContentOption.YES:
+                logger.debug('Adding chapter title to content...')
+                full_chapter_content = f'<h4>{chapter_title}</h4>\n' + full_chapter_content
+            elif title_in_content == TitleInContentOption.NO:
+                logger.debug('Chapter title will not be added to content')
+            elif title_in_content == TitleInContentOption.SEARCH:
+                is_title_in_content = full_chapter_content.find(chapter_title) != -1
+                if is_title_in_content:
+                    logger.debug('Chapter title found in content, will not add it.')
+                else:
+                    logger.debug('Chapter title not found in content, adding it.')
+                    full_chapter_content = f'<h4>{chapter_title}</h4>\n' + full_chapter_content
 
             return full_chapter_content
         except DecodeError:
@@ -251,7 +261,6 @@ class Decoder:
         Returns:
             bool: True if the host uses pagination, False otherwise.
         """
-        logger.debug('Checking if index has pagination...')
         return self.decode_guide.get('has_pagination', False)
 
     def clean_html(self, html: str, hard_clean: bool = False):
@@ -277,10 +286,7 @@ class Decoder:
         return "\n".join([line.strip() for line in str(soup).splitlines() if line.strip()])
 
     def decode_html(self, html: str, content_type: str) -> str | list[str] | None:
-        logger.debug(f'Decoding HTML...')
-        logger.debug(f'Content type: {content_type}')
-        logger.debug(f'Decode guide: {self.decode_guide_file}')
-        logger.debug(f'Host: {self.host}')
+        logger.debug(f'Decoding HTML, Content Type: {content_type}...')
         if content_type not in self.decode_guide:
             msg = f'No decode rules found for {content_type} in guide {self.decode_guide_file}'
             logger.critical(msg)
@@ -290,7 +296,6 @@ class Decoder:
             logger.debug(f'Using custom processor for {self.host}')
             return ProcessorRegistry.get_processor(self.host, content_type).process(html)
 
-        logger.debug('Parsing HTML...')
         try:
             soup = BeautifulSoup(html, 'html.parser')
         except Exception as e:
@@ -317,13 +322,15 @@ class Decoder:
             self.request_config = request_config
             return None
 
-        for key in ["force_flaresolver", "request_retries", "request_timeout", "request_time_between_retries"]:
+        for key in ["force_flaresolver", "request_retries", "request_timeout", "request_time_between_retries", "request_cookies"]:
             new_value = request_config.get(key)
             if new_value is None:
                 continue
 
             if key == "force_flaresolver":
                 self.request_config[key] = self.request_config.get(key) or new_value
+            elif key == "request_cookies":
+                self.request_config[key] = new_value
             else:
                 self.request_config[key] = max(
                     self.request_config.get(key, 0),
@@ -334,12 +341,11 @@ class Decoder:
         decode_guide = FileOps.read_json(self.decode_guide_file)
         self.decode_guide = self._get_element_by_key(decode_guide, 'host', self.host)
         if self.decode_guide is None:
-            logger.error(f'No decode guide found for host {self.host}')
-            raise ValidationError(f'No decode guide found for host {self.host}')
+            logger.debug(f'No decode guide found for host {self.host}')
+            raise HostNotExistsError(f'No decode guide found for host {self.host}')
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):
-        logger.debug('Finding elements...')
         selector = decoder.get('selector')
         elements = []
         if selector is None:
@@ -350,31 +356,25 @@ class Decoder:
             attributes = decoder.get('attributes')
 
             if element:
-                logger.debug(f'Using element "{element}"')
                 selector += element
             if _id:
-                logger.debug(f'Using id "{_id}"')
                 selector += f'#{_id}'
             if _class:
-                logger.debug(f'Using class "{_class}"')
                 selector += f'.{_class}'
             if attributes:
                 for attr, value in attributes.items():
-                    logger.debug(f'Using attribute "{attr}"')
                     if value is not None:
-                        logger.debug(f'With value "{value}"')
                         selector += f'[{attr}="{value}"]'
                     else:
                         selector += f'[{attr}]'
             selectors = [selector]
         else:
-            logger.debug(f'Using selector "{selector}"')
             if XOR_SEPARATOR in selector:
-                logger.debug(f'Found XOR_OPERATOR "{XOR_SEPARATOR}" in selector')
-                logger.debug('Splitting selectors...')
                 selectors = selector.split(XOR_SEPARATOR)
             else:
                 selectors = [selector]
+
+        logger.debug(f'Selectors: {selectors}')
 
         for selector in selectors:
             logger.debug(f'Searching using selector "{selector}"...')
@@ -386,7 +386,6 @@ class Decoder:
 
         extract = decoder.get('extract')
         if extract:
-            logger.debug(f'Extracting from elements...')
             if extract["type"] == "attr":
                 attr_key = extract["key"]
                 logger.debug(f'Extracting value from attribute "{attr_key}"...')
@@ -398,16 +397,15 @@ class Decoder:
                         if attr:
                             elements.append(attr)
                     except KeyError:
-                        logger.debug(f'Attribute "{attr_key}" not found')
-                        logger.debug('Ignoring...')
+                        logger.debug(f'Attribute "{attr_key}" not found. Ignoring...')
                         pass
-                logger.debug(f'{len(elements)} elements found using attribute "{attr_key}"')
+                logger.debug(f'{len(elements)} elements found with attribute "{attr_key}"')
             if extract["type"] == "text":
                 logger.debug('Extracting text from elements...')
                 elements = [element.string for element in elements]
 
         if not elements:
-            logger.debug('No elements found, returning "None"')
+            logger.debug('No elements found')
             return None
 
         # inverted = decoder.get('inverted')
@@ -417,11 +415,9 @@ class Decoder:
         #     elements = elements[::-1]
 
         if decoder.get('array'):
-            logger.debug('Array option activated')
-            logger.debug('Returning elements a list')
+            logger.debug('Array option activated. Returning elements as a list')
             return elements
-        logger.debug('Array option not activated')
-        logger.debug('Returning only first element...')
+        logger.debug('Array option not activated. Returning only first element...')
         return elements[0]
 
     @staticmethod

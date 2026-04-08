@@ -1,47 +1,8 @@
 [
   {
-    "host": "default",
-    "has_pagination": false,
-    "title": {
-      "element": "h4",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    },
-    "content": {
-      "element": "p",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    },
-    "index": {
-      "element": "p",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true,
-      "extract": {
-        "type": "attr",
-        "key": "href"
-      }
-    },
-    "next_page": {
-      "element": "p",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    }
-  },
-  {
     "host": "novellive.net",
     "has_pagination": true,
+    "title_in_content": "YES",
     "title": {
       "element": "h4",
       "id": null,
@@ -82,7 +43,7 @@
   {
     "host": "royalroad.com",
     "has_pagination": false,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": null,
       "id": null,
@@ -117,8 +78,10 @@
   },
   {
     "host": "novelbin.me",
+    "title_in_content": "YES",
     "request_config": {
-      "force_flaresolver": "true"
+      "force_flaresolver": true,
+      "request_timeout": 50
     },
     "has_pagination": false,
     "toc_main_url_processor": true,
@@ -165,8 +128,10 @@
   },
   {
     "host": "novelbin.com",
+    "title_in_content": "YES",
     "request_config": {
-      "force_flaresolver": "true"
+      "force_flaresolver": true,
+      "request_timeout": 50
     },
     "has_pagination": false,
     "toc_main_url_processor": true,
@@ -214,8 +179,10 @@
   {
     "host": "hiraethtranslation.com",
     "has_pagination": false,
+    "title_in_content": "YES",
     "title": {
-      "element": "h1",
+      "element": "li",
+      "class": "active",
       "extract": {
         "type": "text"
       }
@@ -225,7 +192,7 @@
       "array": true
     },
     "index": {
-      "element": "ul.main li a",
+      "element": "li.free-chap a",
       "array": true,
       "inverted": true,
       "extract": {
@@ -237,7 +204,7 @@
   {
     "host": "genesistudio.com",
     "has_pagination": false,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": null,
       "id": null,
@@ -268,6 +235,7 @@
   {
     "host": "hostednovel.com",
     "has_pagination": true,
+    "title_in_content": "YES",
     "title": {
       "selector": "span#chapter-title",
       "extract": {
@@ -299,9 +267,13 @@
   },
   {
     "host": "scribblehub.com",
+    "title_in_content": "YES",
     "request_config": {
-      "force_flaresolver": "true",
-      "request_timeout": 60
+      "force_flaresolver": true,
+      "request_timeout": 60,
+      "request_cookies": {
+        "toc_show": "10000"
+      }
     },
     "has_pagination": true,
     "title": {
@@ -324,7 +296,7 @@
       }
     },
     "next_page": {
-      "selector": "div ul.simple-pagination li a.next",
+      "selector": "div ul#pagination-mesh-toc li a.next",
       "array": false,
       "extract": {
         "type": "attr",
@@ -334,6 +306,7 @@
   },
   {
     "host": "novelcool.com",
+    "title_in_content": "YES",
     "has_pagination": false,
     "title": {
       "element": "h2",
@@ -358,7 +331,8 @@
   {
     "host": "freewebnovel.com",
     "has_pagination": false,
-    "add_host_to_chapter": "true",
+    "add_host_to_chapter": true,
+    "title_to_content": "YES",
     "title": {
       "element": "span",
       "class": "chapter",
@@ -383,10 +357,10 @@
     "host": "foxaholic.com",
     "has_pagination": false,
     "request_config": {
-      "force_flaresolver": "true",
+      "force_flaresolver": true,
       "request_timeout": 30
     },
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": "li",
       "class": "active",
@@ -411,7 +385,7 @@
   {
     "host": "novelhi.com",
     "has_pagination": false,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "toc_main_url_processor": true,
     "title": {
       "element": "h1",
@@ -432,7 +406,7 @@
     "host": "fanmtl.com",
     "has_pagination": true,
     "add_host_to_chapter": true,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": "h2",
       "extract": {
@@ -457,6 +431,7 @@
   },
   {
     "host": "pandamtl.com",
+    "title_in_content": "NO",
     "title": {
       "element": "h2",
       "extract": {
@@ -480,7 +455,7 @@
   {
     "host": "mtlnovels.com",
     "toc_main_url_processor": true,
-    "save_title_to_content": true,
+    "title_in_content": "YES",
     "title": {
       "element": "h1",
       "extract": {
@@ -496,6 +471,39 @@
       "class": "ch-link",
       "array": true,
       "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
+  },
+  {
+    "host": "empirenovel.com",
+    "title_in_content": "NO",
+    "has_pagination": true,
+    "title": {
+      "use_custom_processor": true
+    },
+    "content": {
+      "element": "div",
+      "id": "read-novel"
+    },
+    "index": {
+      "element": "a",
+      "class": "chapter_link",
+      "array": true,
+      "inverted": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "element": "a",
+      "class": "page-link",
+      "attributes": {
+        "rel": "next"
+      },
       "extract": {
         "type": "attr",
         "key": "href"

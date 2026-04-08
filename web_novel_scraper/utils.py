@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+import enum
 
 import hashlib
 from urllib.parse import urlparse
@@ -14,6 +15,12 @@ def _always(_: object) -> bool:
     """Predicate used by dataclasses_json to skip a field."""
     return True
 
+## ENUM
+
+class TitleInContentOption(enum.Enum):
+    YES = enum.auto()
+    SEARCH = enum.auto()
+    NO = enum.auto()
 
 ## EXCEPTIONS
 
@@ -31,6 +38,10 @@ class DecodeError(ScraperError):
 
 class HTMLParseError(DecodeError):
     """Raised when HTML parsing fails"""
+
+
+class HostNotExistsError(DecodeError):
+    """Raised when the host doesn't exist on the Decode Guide"""
 
 
 class DecodeGuideError(DecodeError):
