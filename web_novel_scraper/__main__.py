@@ -304,12 +304,12 @@ def set_toc_main_url(ctx, title, toc_main_url):
 @cli.command()
 @click.pass_context
 @title_option
-@click.option('--no-reload-files', is_flag=True, required=False, default=True, show_default=True,
-              help="The files for the TOC will not be requested again (will make the request if there are no files anyway).")
-def sync_toc(ctx, title, no_reload_files):
+@click.option('--reload-files/--no-reload-files', 'reload_files', is_flag=True, default=True, show_default=True,
+              help="Whether to request again the TOC files (will make the request if there are no files anyway).")
+def sync_toc(ctx, title, reload_files):
     """Sync the TOC of a novel."""
     novel = obtain_novel(title, ctx.obj)
-    if novel.sync_toc(no_reload_files):
+    if novel.sync_toc(reload_files=reload_files):
         click.echo(
             'Table of Contents synced with files, to see the new TOC use the command show-toc.')
     else:
@@ -368,7 +368,7 @@ def scrap_chapter(ctx, title, chapter_url, chapter_num, update_html):
 @click.pass_context
 @title_option
 @sync_toc_option
-@click.option('--update-html', is_flag=True, default=False, show_default=True,
+@click.option('--update-html/--no-update-html', 'update_html', is_flag=True, default=False, show_default=True,
               help='If the chapter HTML is saved, it will be updated.')
 @click.option('--clean-chapters', is_flag=True, default=False, show_default=True,
               help='If the chapter HTML should be cleaned upon saving.')

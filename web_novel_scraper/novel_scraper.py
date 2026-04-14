@@ -360,7 +360,7 @@ class Novel:
         4. Creates/updates chapters based on URLs
 
         Args:
-            reload_files: Whether to force reload of TOC files from remote (default: True)
+            reload_files: Whether to avoid reload of TOC files from remote (default: True)
 
         Raises:
             ScraperError: If no TOC content is available
@@ -373,7 +373,7 @@ class Novel:
         all_tocs_content = self.file_manager.get_all_toc()
 
         # Will reload files if:
-        # Reload_files is True (requested by user)
+        # reload_files is True
         # OR
         # No toc files are saved in the disk.
         reload_files = (reload_files or
