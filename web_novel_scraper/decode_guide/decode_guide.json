@@ -481,6 +481,10 @@
     "host": "empirenovel.com",
     "title_in_content": "NO",
     "has_pagination": true,
+    "request_config": {
+      "force_flaresolver": true,
+      "request_timeout": 50
+    },
     "title": {
       "use_custom_processor": true
     },
