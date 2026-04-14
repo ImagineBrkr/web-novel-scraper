@@ -634,5 +634,55 @@
     "index": {
       "use_custom_processor": true
     }
+  },
+  {
+    "host": "noveltrust.com",
+    "has_pagination": true,
+    "title_in_content": "SEARCH",
+    "request_config": {
+      "force_flaresolver": true
+    },
+    "title": {
+      "element": "span",
+      "id": null,
+      "class": "chapter",
+      "selector": null,
+      "attributes": null,
+      "array": false,
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.txt p",
+      "attributes": null,
+      "array": true
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.m-newest2 ul li a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.page > a.index-container-btn[href*='https://']:nth-last-of-type(2)",
+      "attributes": null,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
   }
 ]
