@@ -1,27 +1,21 @@
 import os
 import json
 
-import platformdirs
 from dotenv import load_dotenv
 from pathlib import Path
 from typing import Optional, Any
 
 from .logger_manager import create_logger
-from .utils import FileOps, ValidationError
+from web_novel_scraper.io_helpers.config_io_helper import load_config, get_default_decode_guide_file, get_default_config_file, get_default_base_novel_dirs, LoadConfigError
 
 load_dotenv()
+logger = create_logger("CONFIG MANAGER")
 
-CURRENT_DIR = Path(__file__).resolve().parent
-
-app_author = "web-novel-scraper"
-app_name = "web-novel-scraper"
 
 # DEFAULT VALUES
-SCRAPER_CONFIG_FILE = str(Path(platformdirs.user_config_dir(app_name, app_author)) / "config.json")
-SCRAPER_BASE_NOVELS_DIR = platformdirs.user_data_dir(app_name, app_author)
-SCRAPER_DECODE_GUIDE_FILE = str(CURRENT_DIR / 'decode_guide/decode_guide.json')
-
-logger = create_logger("CONFIG MANAGER")
+SRAPER_CONFIG_FILE = get_default_config_file()
+SCRAPER_BASE_NOVELS_DIR = get_default_base_novel_dirs()
+SCRAPER_DECODE_GUIDE_FILE = get_default_decode_guide_file()
 
 
 ## ORDER PRIORITY
@@ -31,26 +25,25 @@ logger = create_logger("CONFIG MANAGER")
 ## 4. DEFAULT VALUE
 class ScraperConfig:
     base_novels_dir: Path
-    decode_guide_file: Path
+    decode_guide_file: str
 
     def __init__(self,
                  parameters: dict[str, Any] | None = None):
         if parameters is None:
             parameters = {}
+
         ## LOADING CONFIGURATION
-        config_file = self._get_config(default_value=SCRAPER_CONFIG_FILE,
+        config_file = self._get_config(default_value=SRAPER_CONFIG_FILE,
                                        config_file_value=None,
                                        env_variable="SCRAPER_CONFIG_FILE",
                                        parameter_value=parameters.get('config_file'))
+        if config_file == SRAPER_CONFIG_FILE:
+            logger.debug(f"No Config File path provided, using default Config File path: {SRAPER_CONFIG_FILE}.")
 
-        config_file = Path(config_file)
-        logger.debug(f'Obtaining configuration from file "{config_file}"')
         config = self._load_config(config_file)
 
-        if config is None:
-            logger.debug('No configuration found on config file.')
-            logger.debug('If no other config option was set, the default configuration will be used.')
-            config = {}
+        if config:
+            logger.info(f"Custom configuration loaded from file {config_file}")
 
         ## SETTING CONFIGURATION VALUES
 
@@ -59,16 +52,16 @@ class ScraperConfig:
                                                 env_variable="SCRAPER_BASE_NOVELS_DIR",
                                                 parameter_value=parameters.get('base_novels_dir')))
 
-        self.decode_guide_file = Path(self._get_config(default_value=SCRAPER_DECODE_GUIDE_FILE,
+        self.decode_guide_file = ScraperConfig._get_config(default_value=SCRAPER_DECODE_GUIDE_FILE,
                                                   config_file_value=config.get("decode_guide_file"),
                                                   env_variable="SCRAPER_DECODE_GUIDE_FILE",
-                                                  parameter_value=parameters.get('decode_guide_file')))
+                                                  parameter_value=parameters.get('decode_guide_file'))
 
     @staticmethod
     def _get_config(default_value: str,
                     config_file_value: Optional[str],
                     env_variable: str,
-                    parameter_value: Optional[str]) -> str:
+                    parameter_value: Optional[str]) -> Optional[str]:
         return (
                 parameter_value
                 or os.getenv(env_variable)
@@ -78,7 +71,11 @@ class ScraperConfig:
 
     @staticmethod
     def _load_config(config_file: Path) -> Optional[dict]:
-        config = FileOps.read_json(config_file)
-        if config is None:
-            logger.debug(f'Could not load configuration from file "{config_file}". Skipping...')
+        try:
+            config = load_config(config_file)
+        except LoadConfigError as e:
+            logger.error(f"Error loading config file")
+            logger.error(f"LoadConfigError - {e}", exc_info=e)
+            config = {}
+
         return config

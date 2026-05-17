@@ -6,6 +6,7 @@ from pathlib import Path
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
 from .utils import FileOps, DecodeError, ValidationError, HTMLParseError, DecodeGuideError, ContentExtractionError
+from web_novel_scraper.io_helpers.decode_io_helper import load_decode_guide, LoadDecodeGuideError
 
 from bs4 import BeautifulSoup
 
@@ -23,11 +24,11 @@ DEFAULT_REQUEST_CONFIG = {
 
 class Decoder:
     host: str
-    decode_guide_file: Path
+    decode_guide_file: str
     decode_guide: json
     request_config: dict
 
-    def __init__(self, host: str, decode_guide_file: Path):
+    def __init__(self, host: str, decode_guide_file: str):
         self.decode_guide_file = decode_guide_file
         self.set_host(host)
 
@@ -315,11 +316,12 @@ class Decoder:
         return elements
 
     def _set_decode_guide(self) -> None:
-        decode_guide = FileOps.read_json(self.decode_guide_file)
-        self.decode_guide = self._get_element_by_key(decode_guide, 'host', self.host)
-        if self.decode_guide is None:
-            logger.error(f'No decode guide found for host {self.host}')
-            raise ValidationError(f'No decode guide found for host {self.host}')
+        try:
+            self.decode_guide = load_decode_guide(path = self.decode_guide_file, host = self.host)
+
+        except LoadDecodeGuideError:
+            logger.error(f"Error loading Decode Guide file")
+            raise
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):
