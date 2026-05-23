@@ -1,26 +1,52 @@
-from web_novel_scraper.io_helpers.utils import IOUtils, IOUtilsError, logger, _get_element_by_key
-from web_novel_scraper.utils import ScraperError
+from typing import Optional
 
-class LoadDecodeGuideError(ScraperError):
-    pass
+from web_novel_scraper.logger_manager import create_logger
+from web_novel_scraper.io_helpers.utils import IOUtils
+from web_novel_scraper.exceptions import (
+    LoadDecodeGuideError,
+    HostNotInDecodeGuideError,
+    IOUtilsError,
+    DecodeGuideNotFoundError,
+    DecodeGuideIsEmptyError,
+    EmptyFileError,
+    FileNotFoundCustomError,
+    InvalidDecodeGuideError,
+)
+
+logger = create_logger(__name__)
+
 
 def load_decode_guide(path: str, host: str) -> dict:
     """Loads full Decode Guide from a JSON file at *path*. Returns the Decode Guide for the specified *host*."""
 
-    logger.debug(f"Attempting to load Decode Guide File from {path}")
-
     try:
-        decode_guide = IOUtils.read_json_file(path = path, type = list)
-        if not decode_guide:
-            raise LoadDecodeGuideError(f"Decode Guide File at {path} is empty.")
+        decode_guide = IOUtils.read_json_file(path=path, type=list)
+
+    except EmptyFileError as e:
+        raise DecodeGuideIsEmptyError(f"Decode Guide File at {path} is empty.") from e
+
+    except FileNotFoundCustomError as e:
+        raise DecodeGuideNotFoundError(f"Decode Guide File not found at {path}.") from e
 
     except IOUtilsError as e:
-        raise LoadDecodeGuideError(e) from e
+        raise LoadDecodeGuideError(
+            f"Couldn't load Decode Guide File at {path}: {e}"
+        ) from e
 
-    logger.debug(f"Successfully loaded Decode Guide File from {path}, loading Decode Guide for Host {host}.")
-
-    host_decode_guide = _get_element_by_key(decode_guide, 'host', host)
+    try:
+        host_decode_guide = _get_element_by_key(decode_guide, "host", host)
+    except KeyError:
+        raise InvalidDecodeGuideError(f'Decode Guide File "{path}" is invalid.')
     if host_decode_guide is None:
-        raise LoadDecodeGuideError(f"No Decode Guide found for Host {host} in {path}.")
+        raise HostNotInDecodeGuideError(
+            f"No Decode Guide found for Host '{host}' in Decode Guide File '{path}'."
+        )
 
     return host_decode_guide
+
+
+def _get_element_by_key(json_data, key: str, value: str) -> Optional[dict]:
+    for item in json_data:
+        if item[key] == value:
+            return item
+    return None

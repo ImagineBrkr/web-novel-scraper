@@ -6,7 +6,8 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 import pprint
 
-from .utils import _always, ValidationError
+from .utils import _always
+from .exceptions import ValidationError
 
 
 def _pretty(obj, *, skip: set[str] | None = None) -> str:
@@ -54,16 +55,10 @@ class ScraperBehavior:
 class Chapter:
     chapter_url: str
     chapter_html: Optional[str] = field(
-        default=None,
-        repr=False,
-        compare=False,
-        metadata=config(exclude=_always)
+        default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
     chapter_content: Optional[str] = field(
-        default=None,
-        repr=False,
-        compare=False,
-        metadata=config(exclude=_always)
+        default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
     chapter_html_filename: Optional[str] = None
     chapter_title: Optional[str] = field(default=None, compare=False)

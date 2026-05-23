@@ -1,6 +1,6 @@
 import re
 from ..custom_processor import CustomProcessor, ProcessorRegistry
-from web_novel_scraper.utils import DecodeProcessorError
+from web_novel_scraper.exceptions import DecodeProcessorError
 
 
 class NovelbinTocMainUrlProcessor(CustomProcessor):
