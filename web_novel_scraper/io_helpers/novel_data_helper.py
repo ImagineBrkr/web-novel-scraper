@@ -67,7 +67,9 @@ class NovelDataHelper:
             self.novel_json_file = self.novel_data_dir / NOVEL_JSON_FILENAME
             self.novel_cover_file = self.novel_data_dir / NOVEL_COVER_FILENAME
 
-            logger.debug(f'Initializing data directories for Novel Base Dir {novel_base_dir}')
+            logger.debug(
+                f"Initializing data directories for Novel Base Dir {novel_base_dir}"
+            )
 
             IOUtils.ensure_dir(self.novel_base_dir)
             IOUtils.ensure_dir(self.novel_data_dir)
@@ -86,11 +88,11 @@ class NovelDataHelper:
         except IOUtilsError as e:
             raise InvalidNovelDataError(f"Invalid Novel Base Dir: {e}") from e
 
-        logger.debug(f'Trying to load Novel Data from File {novel_data_file_path}')
+        logger.debug(f"Trying to load Novel Data from File {novel_data_file_path}")
 
         try:
             novel_data = IOUtils.read_json_file(path=novel_data_file_path, type=dict)
-            logger.debug(f'Loaded Novel Data from file {novel_data_file_path}')
+            logger.debug(f"Loaded Novel Data from file {novel_data_file_path}")
         except EmptyFileError:
             raise NovelDataNotFoundError(
                 f"Novel Data File is empty: {novel_data_file_path}"

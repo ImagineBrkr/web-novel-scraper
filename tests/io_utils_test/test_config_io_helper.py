@@ -40,11 +40,7 @@ class TestLoadConfig:
     def test_load_valid_config_dict(self, tmp_path):
         """Test loading valid config file with dict."""
         config_file = tmp_path / "config.json"
-        data = {
-            "name": "test",
-            "enabled": True,
-            "value": 123
-        }
+        data = {"name": "test", "enabled": True, "value": 123}
         config_file.write_text(json.dumps(data))
 
         result = load_config(str(config_file))
@@ -55,14 +51,8 @@ class TestLoadConfig:
         """Test loading config with nested dictionary."""
         config_file = tmp_path / "config.json"
         data = {
-            "app": {
-                "name": "test",
-                "version": "1.0"
-            },
-            "settings": {
-                "debug": True,
-                "timeout": 30
-            }
+            "app": {"name": "test", "version": "1.0"},
+            "settings": {"debug": True, "timeout": 30},
         }
         config_file.write_text(json.dumps(data))
 
@@ -94,70 +84,49 @@ class TestLoadConfig:
 
     def test_load_invalid_json_syntax_raises_error(self, tmp_path):
         """Test loading invalid JSON syntax raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.json",
-            '{"invalid": }'
-        )
+        config_file = create_config_file(tmp_path / "config.json", '{"invalid": }')
 
         with pytest.raises(LoadConfigError):
             load_config(str(config_file))
 
     def test_load_json_number_instead_of_dict_raises_error(self, tmp_path):
         """Test JSON number type raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.json",
-            "123"
-        )
+        config_file = create_config_file(tmp_path / "config.json", "123")
 
         with pytest.raises(LoadConfigError):
             load_config(str(config_file))
 
     def test_load_json_list_instead_of_dict_raises_error(self, tmp_path):
         """Test JSON list instead of dict raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.json",
-            '[{"key": "value"}]'
-        )
+        config_file = create_config_file(tmp_path / "config.json", '[{"key": "value"}]')
 
         with pytest.raises(LoadConfigError):
             load_config(str(config_file))
 
     def test_load_json_null_raises_error(self, tmp_path):
         """Test JSON null value raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.json",
-            "null"
-        )
+        config_file = create_config_file(tmp_path / "config.json", "null")
 
         with pytest.raises(LoadConfigError):
             load_config(str(config_file))
 
     def test_load_json_string_instead_of_dict_raises_error(self, tmp_path):
         """Test JSON string instead of dict raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.json",
-            '"string value"'
-        )
+        config_file = create_config_file(tmp_path / "config.json", '"string value"')
 
         with pytest.raises(LoadConfigError):
             load_config(str(config_file))
 
     def test_load_config_wrong_extension_raises_error(self, tmp_path):
         """Test loading file with wrong extension raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.txt",
-            '{"test": 123}'
-        )
+        config_file = create_config_file(tmp_path / "config.txt", '{"test": 123}')
 
         with pytest.raises(LoadConfigError):
             load_config(str(config_file))
 
     def test_load_empty_json_object_raises_error(self, tmp_path):
         """Test loading empty JSON object raises error."""
-        config_file = create_config_file(
-            tmp_path / "config.json",
-            "{}"
-        )
+        config_file = create_config_file(tmp_path / "config.json", "{}")
 
         with pytest.raises(EmptyConfigFileError):
             load_config(str(config_file))
@@ -165,10 +134,7 @@ class TestLoadConfig:
     def test_load_config_with_special_characters(self, tmp_path):
         """Test loading config with special characters."""
         config_file = tmp_path / "config.json"
-        data = {
-            "app_name": "Scraper™",
-            "description": "Español: áéíóú, 中文, 😀"
-        }
+        data = {"app_name": "Scraper™", "description": "Español: áéíóú, 中文, 😀"}
         config_file.write_text(json.dumps(data, ensure_ascii=True))
 
         result = load_config(str(config_file))
@@ -178,10 +144,7 @@ class TestLoadConfig:
     def test_load_config_with_unicode(self, tmp_path):
         """Test loading config with unicode characters."""
         config_file = tmp_path / "config.json"
-        data = {
-            "title": "网络小说下载器",
-            "author": "作者"
-        }
+        data = {"title": "网络小说下载器", "author": "作者"}
         config_file.write_text(json.dumps(data, ensure_ascii=True))
 
         result = load_config(str(config_file))
@@ -192,7 +155,7 @@ class TestLoadConfig:
         """Test loading corrupted JSON raises error."""
         config_file = create_config_file(
             tmp_path / "config.json",
-            '{"test": "value"'  # Missing closing brace
+            '{"test": "value"',  # Missing closing brace
         )
 
         with pytest.raises(LoadConfigError):
@@ -201,11 +164,7 @@ class TestLoadConfig:
     def test_load_config_with_boolean_values(self, tmp_path):
         """Test loading config with boolean values."""
         config_file = tmp_path / "config.json"
-        data = {
-            "enabled": True,
-            "debug": False,
-            "verbose": True
-        }
+        data = {"enabled": True, "debug": False, "verbose": True}
         config_file.write_text(json.dumps(data))
 
         result = load_config(str(config_file))
@@ -215,11 +174,7 @@ class TestLoadConfig:
     def test_load_config_with_numeric_values(self, tmp_path):
         """Test loading config with numeric values."""
         config_file = tmp_path / "config.json"
-        data = {
-            "timeout": 30,
-            "retries": 5,
-            "version": 1.5
-        }
+        data = {"timeout": 30, "retries": 5, "version": 1.5}
         config_file.write_text(json.dumps(data))
 
         result = load_config(str(config_file))
@@ -229,10 +184,7 @@ class TestLoadConfig:
     def test_load_config_with_arrays(self, tmp_path):
         """Test loading config with arrays inside dict."""
         config_file = tmp_path / "config.json"
-        data = {
-            "hosts": ["example.com", "test.org"],
-            "ports": [8080, 9000, 3000]
-        }
+        data = {"hosts": ["example.com", "test.org"], "ports": [8080, 9000, 3000]}
         config_file.write_text(json.dumps(data))
 
         result = load_config(str(config_file))
@@ -318,10 +270,7 @@ class TestGetDefaultBaseNovelDirs:
 
 
 def test_load_non_json_extension_raises_error(tmp_path):
-    config_file = create_config_file(
-        tmp_path / "config.txt",
-        '{"test": 123}'
-    )
+    config_file = create_config_file(tmp_path / "config.txt", '{"test": 123}')
 
     with pytest.raises(LoadConfigError):
         load_config(str(config_file))
@@ -333,29 +282,20 @@ def test_load_invalid_path_type_raises_error():
 
 
 def test_load_corrupted_json_raises_error(tmp_path):
-    config_file = create_config_file(
-        tmp_path / "config.json",
-        '{"test": "abc"'
-    )
+    config_file = create_config_file(tmp_path / "config.json", '{"test": "abc"')
 
     with pytest.raises(LoadConfigError):
         load_config(str(config_file))
 
 
 def test_load_json_null_returns_error(tmp_path):
-    config_file = create_config_file(
-        tmp_path / "config.json",
-        "null"
-    )
+    config_file = create_config_file(tmp_path / "config.json", "null")
 
     with pytest.raises(LoadConfigError):
         load_config(str(config_file))
 
 
 def test_load_empty_json_object_returns_none(tmp_path):
-    config_file = create_config_file(
-        tmp_path / "config.json",
-        "{}"
-    )
+    config_file = create_config_file(tmp_path / "config.json", "{}")
     with pytest.raises(EmptyConfigFileError):
         load_config(str(config_file))

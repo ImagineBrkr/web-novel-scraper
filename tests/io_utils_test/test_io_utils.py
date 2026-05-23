@@ -11,7 +11,7 @@ from web_novel_scraper.exceptions import (
     InvalidFileTypeError,
     JsonParseError,
     InvalidJsonTypeError,
-    EmptyFileError
+    EmptyFileError,
 )
 
 
@@ -240,7 +240,6 @@ class TestReadBinaryFile:
         path.write_bytes(b"")
         with pytest.raises(EmptyFileError):
             IOUtils.read_binary_file(path)
-
 
     def test_path_as_string(self, tmp_path):
         """Test that string paths work correctly"""
@@ -730,9 +729,9 @@ class TestCopyFile:
         dst = tmp_path / "destination.txt"
         content = "test content"
         src.write_text(content)
-        
+
         IOUtils.copy_file(src, dst)
-        
+
         assert dst.exists()
         assert dst.read_text() == content
 
@@ -742,20 +741,20 @@ class TestCopyFile:
         dst = tmp_path / "destination.txt"
         src.write_text("new content")
         dst.write_text("old content")
-        
+
         IOUtils.copy_file(src, dst)
-        
+
         assert dst.read_text() == "new content"
 
     def test_copy_binary_file(self, tmp_path):
         """Test copying a binary file"""
         src = tmp_path / "source.bin"
         dst = tmp_path / "destination.bin"
-        data = b'\xff\xd8\xff\xe0binary data'
+        data = b"\xff\xd8\xff\xe0binary data"
         src.write_bytes(data)
-        
+
         IOUtils.copy_file(src, dst)
-        
+
         assert dst.exists()
         assert dst.read_bytes() == data
 
@@ -764,9 +763,9 @@ class TestCopyFile:
         src = tmp_path / "source.txt"
         dst = tmp_path / "nested" / "dir" / "destination.txt"
         src.write_text("content")
-        
+
         IOUtils.copy_file(src, dst)
-        
+
         assert dst.exists()
         assert dst.read_text() == "content"
 
@@ -774,7 +773,7 @@ class TestCopyFile:
         """Test copying nonexistent source file raises error"""
         src = tmp_path / "missing.txt"
         dst = tmp_path / "destination.txt"
-        
+
         with pytest.raises(Exception):  # FileNotFoundCustomError
             IOUtils.copy_file(src, dst)
 
@@ -783,7 +782,7 @@ class TestCopyFile:
         src = tmp_path / "source_dir"
         dst = tmp_path / "destination.txt"
         src.mkdir()
-        
+
         with pytest.raises(Exception):  # InvalidPathError
             IOUtils.copy_file(src, dst)
 
@@ -791,7 +790,7 @@ class TestCopyFile:
         """Test that copying to same path raises error"""
         path = tmp_path / "file.txt"
         path.write_text("content")
-        
+
         with pytest.raises(InvalidPathError):
             IOUtils.copy_file(path, path)
 
@@ -800,9 +799,9 @@ class TestCopyFile:
         src = tmp_path / "source.txt"
         dst = tmp_path / "destination.txt"
         src.write_text("content")
-        
+
         IOUtils.copy_file(str(src), str(dst))
-        
+
         assert dst.read_text() == "content"
 
 
@@ -819,9 +818,9 @@ class TestListFilesFromDir:
         (tmp_path / "file1.txt").write_text("content1")
         (tmp_path / "file2.txt").write_text("content2")
         (tmp_path / "file3.txt").write_text("content3")
-        
+
         files = IOUtils.list_files_from_dir(tmp_path, "*.txt")
-        
+
         assert len(files) == 3
         assert all(isinstance(f, Path) for f in files)
 
@@ -830,9 +829,9 @@ class TestListFilesFromDir:
         (tmp_path / "file1.txt").write_text("content")
         (tmp_path / "file2.txt").write_text("content")
         (tmp_path / "file.json").write_text("{}")
-        
+
         files = IOUtils.list_files_from_dir(tmp_path, "*.txt")
-        
+
         assert len(files) == 2
         assert all(str(f).endswith(".txt") for f in files)
 
@@ -840,14 +839,14 @@ class TestListFilesFromDir:
         """Test listing files in empty directory raises EmptyDirError"""
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
-        
+
         with pytest.raises(Exception):  # EmptyDirError
             IOUtils.list_files_from_dir(empty_dir)
 
     def test_list_files_no_matches_raises_error(self, tmp_path):
         """Test listing with no matching files raises EmptyDirError"""
         (tmp_path / "file.txt").write_text("content")
-        
+
         with pytest.raises(Exception):  # EmptyDirError
             IOUtils.list_files_from_dir(tmp_path, "*.json")
 
@@ -855,9 +854,9 @@ class TestListFilesFromDir:
         """Test that listing only returns files, not directories"""
         (tmp_path / "file.txt").write_text("content")
         (tmp_path / "subfolder").mkdir()
-        
+
         files = IOUtils.list_files_from_dir(tmp_path, "*")
-        
+
         assert len(files) == 1
         assert files[0].name == "file.txt"
 
@@ -867,15 +866,15 @@ class TestListFilesFromDir:
         subdir.mkdir()
         (subdir / "file.txt").write_text("content")
         (tmp_path / "file.txt").write_text("content")
-        
+
         files = IOUtils.list_files_from_dir(tmp_path, "*.txt")
-        
+
         assert len(files) == 1  # Only top-level files
 
     def test_list_files_nonexistent_directory_raises_error(self, tmp_path):
         """Test listing from nonexistent directory raises error"""
         nonexistent = tmp_path / "missing"
-        
+
         with pytest.raises(Exception):  # InvalidPathError
             IOUtils.list_files_from_dir(nonexistent)
 
@@ -883,14 +882,14 @@ class TestListFilesFromDir:
         """Test listing when path is a file raises error"""
         file_path = tmp_path / "file.txt"
         file_path.write_text("content")
-        
+
         with pytest.raises(Exception):  # InvalidPathError
             IOUtils.list_files_from_dir(file_path)
 
     def test_list_files_as_string_path(self, tmp_path):
         """Test that string paths work correctly"""
         (tmp_path / "file.txt").write_text("content")
-        
+
         files = IOUtils.list_files_from_dir(str(tmp_path), "*.txt")
-        
+
         assert len(files) == 1
