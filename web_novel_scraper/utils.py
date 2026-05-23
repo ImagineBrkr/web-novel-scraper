@@ -15,14 +15,18 @@ def _always(_: object) -> bool:
     """Predicate used by dataclasses_json to skip a field."""
     return True
 
+
 ## ENUM
+
 
 class TitleInContentOption(enum.Enum):
     YES = enum.auto()
     SEARCH = enum.auto()
     NO = enum.auto()
 
+
 ## EXCEPTIONS
+
 
 class ScraperError(Exception):
     """Default Exception for Scraper Exceptions"""
@@ -65,6 +69,7 @@ class ValidationError(ScraperError):
 
 
 ## FILE OPERATIONS HELPER
+
 
 class FileOps:
     """Static helper for disc operations."""
@@ -138,7 +143,9 @@ class FileOps:
         """Atomically write pretty-printed JSON to *path*."""
         tmp = FileOps._atomic_tmp(path)
         try:
-            tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.write_text(
+                json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             tmp.replace(path)
         except Exception as e:
             FileOps.delete(tmp)
@@ -182,10 +189,10 @@ def _normalize_dirname(name: str) -> str:
     Allowed: letters, digits, underscore, hyphen, and spaces.
     """
     # Collapse multiple spaces into a single space (optional; comment out if not desired)
-    name = re.sub(r'\s+', ' ', name.strip())
+    name = re.sub(r"\s+", " ", name.strip())
 
     # Replace any char that is *not* letter, digit, underscore, hyphen, or space.
-    return re.sub(r'[^\w\-\s]', '_', name)
+    return re.sub(r"[^\w\-\s]", "_", name)
 
 
 def now_iso() -> str:
@@ -197,35 +204,36 @@ def generate_file_name_from_url(url: str) -> str:
     # Parsea URL
     parsed_url = urlparse(url)
     # Delete slash
-    path = parsed_url.path.strip('/')
-    path_parts = path.split('/')
+    path = parsed_url.path.strip("/")
+    path_parts = path.split("/")
     last_two_parts = path_parts[-2:] if len(path_parts) >= 2 else path_parts
-    base_name = '_'.join(last_two_parts) if last_two_parts else 'index'
+    base_name = "_".join(last_two_parts) if last_two_parts else "index"
 
     # Replace not allowed characters
-    safe_base_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', base_name)
+    safe_base_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", base_name)
     # Limit the path length
     if len(safe_base_name) > 50:
         safe_base_name = safe_base_name[:50]
     # Hash if neccesary
-    url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()[:8]
+    url_hash = hashlib.md5(url.encode("utf-8")).hexdigest()[:8]
     filename = f"{safe_base_name}_{url_hash}.html"
     return filename
 
 
 def generate_epub_file_name_from_title(title: str) -> str:
-    normalized_title = unicodedata.normalize(
-        'NFKD', title).encode('ASCII', 'ignore').decode('ASCII')
+    normalized_title = (
+        unicodedata.normalize("NFKD", title).encode("ASCII", "ignore").decode("ASCII")
+    )
     normalized_title = normalized_title.lower()
-    normalized_title = re.sub(r'[\s\-]+', '_', normalized_title)
-    sanitized_title = re.sub(r'[^a-zA-Z0-9_]', '', normalized_title)
-    title_hash = hashlib.md5(sanitized_title.encode('utf-8')).hexdigest()[:8]
+    normalized_title = re.sub(r"[\s\-]+", "_", normalized_title)
+    sanitized_title = re.sub(r"[^a-zA-Z0-9_]", "", normalized_title)
+    title_hash = hashlib.md5(sanitized_title.encode("utf-8")).hexdigest()[:8]
 
     max_length = 50
     if len(sanitized_title) > max_length:
         sanitized_title = sanitized_title[:max_length]
     if not sanitized_title:
-        sanitized_title = 'chapter'
+        sanitized_title = "chapter"
 
     filename = f"{sanitized_title}_{title_hash}.xhtml"
     return filename
@@ -236,15 +244,15 @@ def delete_duplicates(str_list: list[str]) -> list[str]:
 
 
 def obtain_host(url: str):
-    host = url.split(':')[1]
+    host = url.split(":")[1]
     # try:
     #     host = url.split(':')[1]
     # except Exception as e:
     #     pass
-    while host.startswith('/'):
+    while host.startswith("/"):
         host = host[1:]
 
-    host = host.split('/')[0].replace('www.', '')
+    host = host.split("/")[0].replace("www.", "")
 
     return host
 
@@ -254,11 +262,11 @@ def check_exclusive_params(param1: any, param2: any) -> bool:
 
 
 def create_volume_id(n: int):
-    return f'v{n:02}'
+    return f"v{n:02}"
 
 
 def check_incomplete_url(url: str) -> bool:
-    if url.startswith('?') or url.startswith('#'):
+    if url.startswith("?") or url.startswith("#"):
         return True
 
     parsed = urlparse(url)

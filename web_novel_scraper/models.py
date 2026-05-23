@@ -40,8 +40,8 @@ class ScraperBehavior:
         default=None,
         metadata=config(
             encoder=lambda x: x.name if x else None,
-            decoder=lambda x: TitleInContentOption[x] if x else None
-        )
+            decoder=lambda x: TitleInContentOption[x] if x else None,
+        ),
     )
     # Some novels have the toc link without the host
     auto_add_host: bool = False
@@ -60,16 +60,10 @@ class ScraperBehavior:
 class Chapter:
     chapter_url: str
     chapter_html: Optional[str] = field(
-        default=None,
-        repr=False,
-        compare=False,
-        metadata=config(exclude=_always)
+        default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
     chapter_content: Optional[str] = field(
-        default=None,
-        repr=False,
-        compare=False,
-        metadata=config(exclude=_always)
+        default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
     chapter_html_filename: Optional[str] = None
     chapter_title: Optional[str] = field(default=None, compare=False)

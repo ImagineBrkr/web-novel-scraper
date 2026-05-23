@@ -12,25 +12,29 @@ from .utils import ValidationError, NetworkError
 
 load_dotenv()
 
-FLARESOLVER_URL = os.getenv('SCRAPER_FLARESOLVER_URL', 'http://localhost:8191/v1')
-FLARE_HEADERS = {'Content-Type': 'application/json'}
-FORCE_FLARESOLVER = os.getenv('FORCE_FLARESOLVER', '0') == '1'
+FLARESOLVER_URL = os.getenv("SCRAPER_FLARESOLVER_URL", "http://localhost:8191/v1")
+FLARE_HEADERS = {"Content-Type": "application/json"}
+FORCE_FLARESOLVER = os.getenv("FORCE_FLARESOLVER", "0") == "1"
 
-logger = create_logger('GET HTML CONTENT')
+logger = create_logger("GET HTML CONTENT")
+
 
 def _dict_to_cookie_list(cookies: dict) -> list:
-    return [{'name': k, 'value': v} for k, v in cookies.items()]
+    return [{"name": k, "value": v} for k, v in cookies.items()]
 
 
-def _get_request(url: str,
-                 timeout: int,
-                 retries: int,
-                 time_between_retries: int,
-                 cookies: Optional[dict] = None) -> Optional[requests.Response]:
+def _get_request(
+    url: str,
+    timeout: int,
+    retries: int,
+    time_between_retries: int,
+    cookies: Optional[dict] = None,
+) -> Optional[requests.Response]:
     logger.debug(
         f'Starting get_request for "{url}" with timeout={timeout}, '
-        f'retries={retries}, '
-        f'time_between_retries={time_between_retries}')
+        f"retries={retries}, "
+        f"time_between_retries={time_between_retries}"
+    )
     for attempt in range(retries):
         logger.debug(f'Attempt {attempt + 1} for "{url}"')
         try:
@@ -39,33 +43,38 @@ def _get_request(url: str,
             logger.debug(f'Successful response for "{url}" on attempt {attempt + 1}')
             return response
         except requests.exceptions.ConnectionError as e:
-            logger.debug(f'Connection error ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"Connection error ({attempt + 1}/{retries}): {e}")
         except requests.exceptions.Timeout as e:
-            logger.debug(f'Request timed out ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"Request timed out ({attempt + 1}/{retries}): {e}")
         except requests.exceptions.HTTPError as e:
-            logger.debug(f'HTTP error ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"HTTP error ({attempt + 1}/{retries}): {e}")
         except requests.exceptions.InvalidSchema as e:
             logger.debug(f'Invalid URL schema for "{url}": {e}')
         except requests.exceptions.RequestException as e:
-            logger.debug(f'Request failed ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"Request failed ({attempt + 1}/{retries}): {e}")
 
         if attempt < retries - 1:
-            logger.debug(f'Waiting {time_between_retries} seconds before retrying')
+            logger.debug(f"Waiting {time_between_retries} seconds before retrying")
             time.sleep(time_between_retries)  # Wait before retrying
-    logger.debug(f'Failed to get a successful response for "{url}" after {retries} attempts using common HTTP Request')
+    logger.debug(
+        f'Failed to get a successful response for "{url}" after {retries} attempts using common HTTP Request'
+    )
     return None
 
 
-def _get_request_flaresolver(url: str,
-                             timeout: int,
-                             retries: int,
-                             time_between_retries: int,
-                             flaresolver_url: str,
-                             cookies: Optional[dict] = None) -> Optional[requests.Response]:
+def _get_request_flaresolver(
+    url: str,
+    timeout: int,
+    retries: int,
+    time_between_retries: int,
+    flaresolver_url: str,
+    cookies: Optional[dict] = None,
+) -> Optional[requests.Response]:
     logger.debug(
         f'Starting get_request_flaresolver for "{url}" with timeout={timeout}, '
-        f'retries={retries}, '
-        f'time_between_retries={time_between_retries}')
+        f"retries={retries}, "
+        f"time_between_retries={time_between_retries}"
+    )
     for attempt in range(retries):
         logger.debug(f'Attempt {attempt + 1} for "{url}" using FlareSolver')
         try:
@@ -73,49 +82,61 @@ def _get_request_flaresolver(url: str,
                 flaresolver_url,
                 headers=FLARE_HEADERS,
                 json={
-                    'cmd': 'request.get',
-                    'url': url,
-                    'maxTimeout': timeout * 1000,
-                    'cookies': _dict_to_cookie_list(cookies) if cookies else []
+                    "cmd": "request.get",
+                    "url": url,
+                    "maxTimeout": timeout * 1000,
+                    "cookies": _dict_to_cookie_list(cookies) if cookies else [],
                 },
-                timeout=timeout
+                timeout=timeout,
             )
             response.raise_for_status()
-            logger.debug(f'Successful response for "{url}" on attempt {attempt + 1} using FlareSolver')
+            logger.debug(
+                f'Successful response for "{url}" on attempt {attempt + 1} using FlareSolver'
+            )
             return response
 
         except requests.exceptions.ConnectionError as e:
-            logger.warning(f'Connection error with flaresolver (URL: "{flaresolver_url}"): {e}')
-            logger.warning(f'If the url is incorrect, set the env variable "FLARESOLVER_URL" to the correct value')
-            logger.warning('If FlareSolver is not installed in your machine, consider installing it.')
-            break # Don't retry on Connection Error
+            logger.warning(
+                f'Connection error with flaresolver (URL: "{flaresolver_url}"): {e}'
+            )
+            logger.warning(
+                'If the url is incorrect, set the env variable "FLARESOLVER_URL" to the correct value'
+            )
+            logger.warning(
+                "If FlareSolver is not installed in your machine, consider installing it."
+            )
+            break  # Don't retry on Connection Error
         except requests.exceptions.Timeout as e:
-            logger.debug(f'Request timed out ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"Request timed out ({attempt + 1}/{retries}): {e}")
         except requests.exceptions.InvalidSchema as e:
             logger.debug(f'Invalid FlareSolver URL schema "{flaresolver_url}": {e}')
             break  # Don't retry on invalid schema
         except requests.exceptions.HTTPError as e:
-            logger.debug(f'HTTP error ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"HTTP error ({attempt + 1}/{retries}): {e}")
         except requests.exceptions.RequestException as e:
-            logger.debug(f'Request failed ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"Request failed ({attempt + 1}/{retries}): {e}")
         except json.JSONDecodeError as e:
-            logger.debug(f'Invalid JSON response ({attempt + 1}/{retries}): {e}')
+            logger.debug(f"Invalid JSON response ({attempt + 1}/{retries}): {e}")
 
         if attempt < retries - 1:
-            logger.debug(f'Waiting {time_between_retries} seconds before retrying')
+            logger.debug(f"Waiting {time_between_retries} seconds before retrying")
             time.sleep(time_between_retries)  # Wait before retrying
 
-    logger.debug(f'Failed to get a successful response for "{url}" using FlareSolver after {retries} attempts')
+    logger.debug(
+        f'Failed to get a successful response for "{url}" using FlareSolver after {retries} attempts'
+    )
     return None
 
 
-def get_html_content(url: str,
-                     retries: int = 3,
-                     timeout: int = 20,
-                     time_between_retries: int = 3,
-                     flaresolver_url: str = FLARESOLVER_URL,
-                     force_flaresolver: bool = FORCE_FLARESOLVER,
-                     cookies: Optional[dict] = None) -> Optional[str]:
+def get_html_content(
+    url: str,
+    retries: int = 3,
+    timeout: int = 20,
+    time_between_retries: int = 3,
+    flaresolver_url: str = FLARESOLVER_URL,
+    force_flaresolver: bool = FORCE_FLARESOLVER,
+    cookies: Optional[dict] = None,
+) -> Optional[str]:
     """
     Retrieves HTML content from a URL with support for anti-bot protection bypass.
 
@@ -146,45 +167,51 @@ def get_html_content(url: str,
     if not all([parsed_url.scheme, parsed_url.netloc]):
         raise ValidationError(f"Invalid URL format: {url}")
 
-
     logger.debug(
         f'Requesting HTML Content for "{url}" with '
         f'retries: "{retries}", '
         f'timeout: "{timeout}", '
-        f'time between retries: "{time_between_retries}"')
+        f'time between retries: "{time_between_retries}"'
+    )
     if force_flaresolver:
-        logger.debug('Will directly try with FlareSolver')
+        logger.debug("Will directly try with FlareSolver")
 
     # First try with common HTTP request
     if not force_flaresolver:
-        response = _get_request(url,
-                                timeout=timeout,
-                                retries=retries,
-                                time_between_retries=time_between_retries,
-                                cookies=cookies)
+        response = _get_request(
+            url,
+            timeout=timeout,
+            retries=retries,
+            time_between_retries=time_between_retries,
+            cookies=cookies,
+        )
         if response and response.ok:
-            logger.debug(f'Successfully retrieved HTML content from "{url}" using common HTTP request')
+            logger.debug(
+                f'Successfully retrieved HTML content from "{url}" using common HTTP request'
+            )
             return response.text
 
     # Try with Flaresolver
     logger.debug(f'Trying with Flaresolver for "{url}"')
-    response = _get_request_flaresolver(url,
-                                timeout=timeout,
-                                retries=retries,
-                                time_between_retries=time_between_retries,
-                                flaresolver_url=flaresolver_url,
-                                cookies=cookies)
+    response = _get_request_flaresolver(
+        url,
+        timeout=timeout,
+        retries=retries,
+        time_between_retries=time_between_retries,
+        flaresolver_url=flaresolver_url,
+        cookies=cookies,
+    )
     if not response or not response.ok:
         logger.debug(f'Failed all attempts to get HTML content from "{url}')
         raise NetworkError(f'Failed all attempts to get HTML content from "{url}"')
 
     try:
         response_json = response.json()
-        response_content = response_json.get('solution', {}).get('response')
+        response_content = response_json.get("solution", {}).get("response")
         if not response_content:
             raise NetworkError(f'No solution response for "{url}"')
 
         return response_content
     except json.JSONDecodeError as e:
-        logger.error(f'Failed to decode FlareSolver response: {e}')
+        logger.error(f"Failed to decode FlareSolver response: {e}")
         raise NetworkError(f'Invalid FlareSolver response for "{url}"')
