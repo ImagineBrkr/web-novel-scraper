@@ -6,10 +6,6 @@ from pathlib import Path
 import pytest
 
 from web_novel_scraper.io_helpers.novel_base_dir_helper import NovelBaseDirHelper
-from web_novel_scraper.exceptions import (
-    InvalidNovelBaseDirError,
-    InvalidMetaFileError,
-)
 
 
 # ============================================================================

@@ -86,7 +86,7 @@ def _get_request_flaresolver(
                 f'Connection error with flaresolver (URL: "{flaresolver_url}"): {e}'
             )
             logger.warning(
-                f'If the url is incorrect, set the env variable "FLARESOLVER_URL" to the correct value'
+                'If the url is incorrect, set the env variable "FLARESOLVER_URL" to the correct value'
             )
             logger.warning(
                 "If FlareSolver is not installed in your machine, consider installing it."

@@ -4,20 +4,17 @@ import json
 import tempfile
 import pytest
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime
 
 from web_novel_scraper.io_helpers.novel_data_helper import NovelDataHelper
 from web_novel_scraper.exceptions import (
-    InvalidNovelDataDirError,
     SaveNovelDataError,
     InvalidNovelDataError,
     ChapterFileNotFoundError,
     ChapterFileIsEmptyError,
-    DeleteNovelDataError,
     CoverImageNotFoundError,
     LoadNovelDataError,
     TOCFragmentNotFoundError,
-    TOCFragmentFileIsEmptyError,
     CoverImageFileIsEmptyError,
     NovelDataNotFoundError,
 )
@@ -97,7 +94,7 @@ class TestNovelDataHelperConstructor:
         """Test constructor creates base directory if it doesn't exist."""
         with tempfile.TemporaryDirectory() as tmpdir:
             novel_dir = Path(tmpdir) / "nonexistent" / "path"
-            helper = NovelDataHelper(novel_dir)
+            NovelDataHelper(novel_dir)
             assert novel_dir.exists()
 
 

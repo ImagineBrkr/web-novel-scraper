@@ -1,6 +1,5 @@
 from pathlib import Path
 from ebooklib import epub
-from typing import Optional
 from datetime import datetime, timezone
 # import unicodedata
 

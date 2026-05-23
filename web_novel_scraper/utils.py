@@ -1,17 +1,9 @@
-import json
-import shutil
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional
 
 import hashlib
 from urllib.parse import urlparse
 import re
 import unicodedata
-
-from .exceptions import (
-    ValidationError,
-)
 
 
 def _always(_: object) -> bool:

@@ -8,9 +8,6 @@ from web_novel_scraper.exceptions import (
     HTMLParseError,
     DecodeGuideError,
     ContentExtractionError,
-    DecodeGuideIsEmptyError,
-    DecodeGuideNotFoundError,
-    HostNotInDecodeGuideError,
     LoadDecodeGuideError,
 )
 from web_novel_scraper.io_helpers.decode_io_helper import load_decode_guide
@@ -325,7 +322,7 @@ class Decoder:
         )
 
     def decode_html(self, html: str, content_type: str) -> str | list[str] | None:
-        logger.debug(f"Decoding HTML...")
+        logger.debug("Decoding HTML...")
         logger.debug(f"Content type: {content_type}")
         logger.debug(f"Decode guide: {self.decode_guide_file}")
         logger.debug(f"Host: {self.host}")
@@ -456,7 +453,7 @@ class Decoder:
 
         extract = decoder.get("extract")
         if extract:
-            logger.debug(f"Extracting from elements...")
+            logger.debug("Extracting from elements...")
             if extract["type"] == "attr":
                 attr_key = extract["key"]
                 logger.debug(f'Extracting value from attribute "{attr_key}"...')

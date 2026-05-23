@@ -1,7 +1,6 @@
 # tests/io_utils_test/test_decode_io_helper.py
 
 import json
-from pathlib import Path
 
 import pytest
 

@@ -9,8 +9,6 @@ from .models import Chapter
 from web_novel_scraper.exceptions import (
     ValidationError,
     ScraperError,
-    NetworkError,
-    DecodeError,
     NovelNotFoundError,
 )
 from .version import __version__
@@ -381,7 +379,7 @@ def set_cover_image(ctx, title, cover_image):
     """Set the cover image for a novel."""
     novel = obtain_novel(title, ctx.obj)
     novel.set_cover_image(cover_image)
-    click.echo(f"Cover image saved successfully.")
+    click.echo("Cover image saved successfully.")
 
 
 @cli.command()

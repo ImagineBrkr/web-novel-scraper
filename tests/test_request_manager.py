@@ -5,7 +5,6 @@ from web_novel_scraper.request_manager import (
     ValidationError,
     NetworkError,
 )
-from urllib.parse import urlparse
 import json
 
 
