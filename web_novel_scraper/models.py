@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 import pprint
 
-from .utils import _always, TitleInContentOption
+from web_novel_scraper.utils import _always, TitleInContentOption
 from web_novel_scraper.exceptions import ValidationError
 
 

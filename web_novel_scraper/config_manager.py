@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 from typing import Optional, Any, Callable
 
-from .logger_manager import create_logger
+from web_novel_scraper.logger_manager import create_logger
 from web_novel_scraper.io_helpers.config_io_helper import (
     load_config,
     get_default_decode_guide_file,
@@ -33,7 +33,7 @@ DEFAULT_REQUEST_CONFIG = {
     "request_cookies": None,
 }
 
-logger = create_logger("CONFIG MANAGER")
+logger = create_logger(__name__)
 
 
 ## ORDER PRIORITY

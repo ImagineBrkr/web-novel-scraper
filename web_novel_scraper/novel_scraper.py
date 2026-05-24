@@ -5,19 +5,19 @@ from ebooklib import epub
 from typing import Optional
 from pathlib import Path
 
-from . import logger_manager
+from web_novel_scraper import logger_manager
 from web_novel_scraper.io_helpers.novel_base_dir_helper import NovelBaseDirHelper
 from web_novel_scraper.io_helpers.novel_data_helper import NovelDataHelper
-from .decode import Decoder
-from . import utils
-from .request_manager import get_html_content
-from .config_manager import ScraperConfig
-from .models import ScraperBehavior, Metadata, Chapter
-from .utils import (
+from web_novel_scraper.decode import Decoder
+from web_novel_scraper import utils
+from web_novel_scraper.request_manager import get_html_content
+from web_novel_scraper.config_manager import ScraperConfig
+from web_novel_scraper.models import ScraperBehavior, Metadata, Chapter
+from web_novel_scraper.utils import (
     _always,
     TitleInContentOption,
 )
-from .exceptions import (
+from web_novel_scraper.exceptions import (
     ScraperError,
     NetworkError,
     ValidationError,
@@ -34,7 +34,7 @@ from .exceptions import (
 )
 
 
-logger = logger_manager.create_logger("NOVEL SCRAPPING")
+logger = logger_manager.create_logger(__name__)
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

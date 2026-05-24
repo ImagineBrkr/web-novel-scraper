@@ -3,8 +3,8 @@ from typing import Optional
 
 from pathlib import Path
 
-from . import logger_manager
-from .custom_processor.custom_processor import ProcessorRegistry
+from web_novel_scraper import logger_manager
+from web_novel_scraper.custom_processor.custom_processor import ProcessorRegistry
 
 from web_novel_scraper.exceptions import (
     DecodeError,
@@ -14,11 +14,11 @@ from web_novel_scraper.exceptions import (
     LoadDecodeGuideError,
 )
 from web_novel_scraper.io_helpers.decode_io_helper import load_decode_guide
-from .utils import TitleInContentOption
+from web_novel_scraper.utils import TitleInContentOption
 
 from bs4 import BeautifulSoup
 
-logger = logger_manager.create_logger("DECODE HTML")
+logger = logger_manager.create_logger(__name__)
 
 XOR_SEPARATOR = "XOR"
 

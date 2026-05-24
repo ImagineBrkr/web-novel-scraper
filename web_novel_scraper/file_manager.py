@@ -5,8 +5,8 @@ from ebooklib import epub
 from typing import Optional, Dict
 import unicodedata
 
-from .logger_manager import create_logger
-from .utils import (
+from web_novel_scraper.logger_manager import create_logger
+from web_novel_scraper.utils import (
     _normalize_dirname,
     FileOps,
     now_iso,
@@ -17,7 +17,7 @@ from .utils import (
 NOVEL_JSON_FILENAME = "main.json"
 NOVEL_COVER_FILENAME = "cover.jpg"
 
-logger = create_logger("FILE MANAGER")
+logger = create_logger(__name__)
 
 
 class FileManager:

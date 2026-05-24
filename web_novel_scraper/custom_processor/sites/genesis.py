@@ -3,7 +3,10 @@ import json
 from bs4 import BeautifulSoup
 from ftfy import fix_text
 from typing import List, Optional
-from ..custom_processor import CustomProcessor, ProcessorRegistry
+from web_novel_scraper.custom_processor.custom_processor import (
+    CustomProcessor,
+    ProcessorRegistry,
+)
 from web_novel_scraper.exceptions import HTMLParseError
 
 GENESIS_STUDIO_VIEWER_URL = "https://genesistudio.com/viewer"

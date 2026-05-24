@@ -1,6 +1,9 @@
 import re
 from typing import List, Optional
-from ..custom_processor import CustomProcessor, ProcessorRegistry
+from web_novel_scraper.custom_processor.custom_processor import (
+    CustomProcessor,
+    ProcessorRegistry,
+)
 from web_novel_scraper.exceptions import DecodeProcessorError
 
 

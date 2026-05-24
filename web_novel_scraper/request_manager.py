@@ -7,7 +7,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-from .logger_manager import create_logger
+from web_novel_scraper.logger_manager import create_logger
 from web_novel_scraper.exceptions import ValidationError, NetworkError
 
 load_dotenv()
@@ -16,7 +16,7 @@ FLARESOLVER_URL = os.getenv("SCRAPER_FLARESOLVER_URL", "http://localhost:8191/v1
 FLARE_HEADERS = {"Content-Type": "application/json"}
 FORCE_FLARESOLVER = os.getenv("FORCE_FLARESOLVER", "0") == "1"
 
-logger = create_logger("GET HTML CONTENT")
+logger = create_logger(__name__)
 
 
 def _dict_to_cookie_list(cookies: dict) -> list:

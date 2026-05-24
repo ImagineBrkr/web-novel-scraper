@@ -3,10 +3,10 @@ from datetime import datetime
 
 import click
 
-from .config_manager import ScraperConfig
-from .novel_scraper import Novel
-from .models import Chapter
-from .utils import (
+from web_novel_scraper.config_manager import ScraperConfig
+from web_novel_scraper.novel_scraper import Novel
+from web_novel_scraper.models import Chapter
+from web_novel_scraper.utils import (
     TitleInContentOption,
 )
 from web_novel_scraper.exceptions import (
@@ -14,7 +14,7 @@ from web_novel_scraper.exceptions import (
     ScraperError,
     NovelNotFoundError,
 )
-from .version import __version__
+from web_novel_scraper.version import __version__
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
