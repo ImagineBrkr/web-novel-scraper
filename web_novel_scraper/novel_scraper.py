@@ -6,21 +6,33 @@ from typing import Optional
 from pathlib import Path
 
 from . import logger_manager
+from web_novel_scraper.io_helpers.novel_base_dir_helper import NovelBaseDirHelper
+from web_novel_scraper.io_helpers.novel_data_helper import NovelDataHelper
 from .decode import Decoder
-from .file_manager import FileManager
 from . import utils
 from .request_manager import get_html_content
 from .config_manager import ScraperConfig
 from .models import ScraperBehavior, Metadata, Chapter
 from .utils import (
     _always,
+    TitleInContentOption,
+)
+from .exceptions import (
     ScraperError,
-    FileManagerError,
     NetworkError,
     ValidationError,
     DecodeError,
-    TitleInContentOption,
+    DecodeGuideError,
+    NovelBaseDirError,
+    LoadNovelDataError,
+    NovelDataNotFoundError,
+    NovelNotFoundError,
+    NovelDataError,
+    ChapterFileNotFoundError,
+    ChapterFileIsEmptyError,
+    CoverImageNotFoundError,
 )
+
 
 logger = logger_manager.create_logger("NOVEL SCRAPPING")
 
@@ -42,7 +54,6 @@ class Novel:
         chapters_url_list (list[str]): List of URLs for all chapters.
         metadata (Metadata): Novel metadata like author, language, etc.
         scraper_behavior (ScraperBehavior): Configuration for scraping behavior.
-        file_manager (FileManager): Handles file operations for the novel.
         decoder (Decoder): Handles HTML decoding and parsing.
         config (ScraperConfig): General scraper configuration.
     """
@@ -55,7 +66,7 @@ class Novel:
     metadata: Metadata = field(default_factory=Metadata)
     scraper_behavior: ScraperBehavior = field(default_factory=ScraperBehavior)
 
-    file_manager: Optional[FileManager] = field(
+    novel_data_helper: Optional[NovelDataHelper] = field(
         default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
     decoder: Optional[Decoder] = field(
@@ -117,23 +128,62 @@ class Novel:
             ValidationError: If the novel with the given title is not found.
         """
 
-        fm = FileManager(title, cfg.base_novels_dir, novel_base_dir, read_only=True)
-        novel_data = fm.load_novel_data()
-        if novel_data is None:
-            logger.debug(f'Novel "{title}" was not found.')
-            raise ValidationError(f'Novel "{title}" was not found.')
+        if novel_base_dir is None:
+            try:
+                novel_base_dir = NovelBaseDirHelper.get_novel_base_dir_from_meta(
+                    title=title, base_novels_dir=cfg.base_novels_dir
+                )
+            except NovelBaseDirError as e:
+                logger.debug("Traceback:", exc_info=True)
+                raise ScraperError(e) from e
+
+            if novel_base_dir is None:
+                raise NovelNotFoundError(
+                    f"Novel with Title {title} not found on base_novels_dir {cfg.base_novels_dir}"
+                )
+
+        try:
+            novel_data = NovelDataHelper.load_novel_data(novel_base_dir)
+
+        except NovelDataNotFoundError:
+            logger.debug(f"Novel Data File not found on {novel_base_dir}")
+            raise NovelNotFoundError(f"Novel data not found on {novel_base_dir}")
+
+        except LoadNovelDataError as e:
+            logger.debug("Traceback:", exc_info=True)
+            raise ScraperError(e) from e
+
         try:
             novel = cls.from_dict(novel_data)
         except KeyError as e:
-            msg = f'Error when loading novel with title "{title}". KeyError, check if the main.json is valid'
-            logger.error(msg, exc_info=e)
-            raise ValidationError(msg)
-        novel.set_config(cfg=cfg, novel_base_dir=novel_base_dir)
+            logger.debug("Traceback: ", exc_info=True)
+            raise ScraperError(
+                f"Invalid Novel Data on Novel Data File {novel_base_dir}."
+            ) from e
+
+        novel.cfg = cfg
+
+        novel.novel_data_helper = NovelDataHelper(novel_base_dir=novel_base_dir)
+
+        try:
+            novel.decoder = Decoder(
+                novel.host, novel.cfg.decode_guide_file, novel.cfg.get_request_config()
+            )
+
+        except DecodeGuideError as e:
+            logger.debug("Traceback: ", exc_info=True)
+            raise ScraperError(e) from e
+
         return novel
 
     @classmethod
     def new(
-        cls, title: str, cfg: ScraperConfig, toc_main_url: str, host: str = None
+        cls,
+        title: str,
+        cfg: ScraperConfig,
+        toc_main_url: str,
+        host: str = None,
+        novel_base_dir: str = None,
     ) -> "Novel":
         """Creates a new Novel instance.
 
@@ -151,45 +201,57 @@ class Novel:
         """
 
         novel = cls(title=title, host=host, toc_main_url=toc_main_url)
+        novel.config = cfg
+
         # If toc_main_url is provided and the host isn't, extract host from URL
         if toc_main_url and not host:
             host = utils.obtain_host(toc_main_url)
             novel.host = host
 
+        try:
+            Decoder(
+                host=novel.host,
+                decode_guide_file=novel.config.decode_guide_file,
+                request_config=novel.config.get_request_config(),
+            )
+        except DecodeGuideError as e:
+            logger.debug("Traceback:", exc_info=True)
+            raise ScraperError(e) from e
+
+        if novel_base_dir is None:
+            try:
+                novel_base_dir = NovelBaseDirHelper.get_novel_base_dir_from_meta(
+                    title=title, base_novels_dir=novel.config.base_novels_dir
+                )
+            except NovelBaseDirError as e:
+                logger.debug("Traceback:", exc_info=True)
+                raise ScraperError(e) from e
+
+        if novel_base_dir is None:
+            novel_base_dir = NovelBaseDirHelper.generate_novel_base_dir(
+                novel.title, novel.config.base_novels_dir
+            )
+            NovelBaseDirHelper.save_novel_dir_to_meta(
+                novel.title, novel_base_dir, novel.config.base_novels_dir
+            )
+
+        try:
+            novel.novel_data_helper = NovelDataHelper(novel_base_dir=novel_base_dir)
+        except NovelBaseDirError as e:
+            logger.debug("Traceback:", exc_info=True)
+            raise ScraperError(e) from e
+
         return novel
 
     # NOVEL PARAMETERS MANAGEMENT
 
-    def set_config(self, cfg: ScraperConfig, novel_base_dir: str | None = None) -> None:
-        """
-        Configures the novel with the provided scraper configuration and base directory.
-
-        Sets up the file manager and decoder for the novel based on the provided configuration.
-
-        Args:
-            cfg (ScraperConfig): The scraper configuration to use.
-            novel_base_dir (str | None, optional): Base directory for the novel files.
-                If None, it uses the default directory from configuration.
-
-        Raises:
-            FileManagerError: If there's an error when reading the config or decoding guide files.
-        """
+    def save_novel(self) -> None:
 
         try:
-            self.config = cfg
-            self.file_manager = FileManager(
-                title=self.title,
-                base_novels_dir=self.config.base_novels_dir,
-                novel_base_dir=novel_base_dir,
-            )
-            self.decoder = Decoder(
-                self.host,
-                self.config.decode_guide_file,
-                self.config.get_request_config(),
-            )
-        except FileManagerError as e:
-            logger.error("Could not set configuration. File Manager Error", exc_info=e)
-            raise
+            self.novel_data_helper.save_novel_data(self.to_dict())
+        except NovelDataError as e:
+            logger.error("Traceback", exc_info=e)
+            raise ScraperError(e) from e
 
     def set_scraper_behavior(self, **kwargs) -> None:
         """
@@ -261,17 +323,14 @@ class Novel:
 
         Args:
             cover_image_path (str): Path to the cover image file.
-
-        Raises:
-            FileManagerError: If there's an error when saving the cover image.
         """
 
         try:
-            self.file_manager.save_novel_cover(cover_image_path)
+            self.novel_data_helper.save_novel_cover(cover_image_path)
             logger.info("Cover image updated")
-        except FileManagerError as e:
-            logger.error("Could not update cover. File Manager Error", exc_info=e)
-            raise
+        except NovelDataError as e:
+            logger.debug("Traceback: ", exc_info=True)
+            raise ScraperError(e) from e
 
     def set_host(self, host: str) -> None:
         """
@@ -280,37 +339,15 @@ class Novel:
         Args:
             host (str): The host URL for the novel.
 
-        Raises:
-            DecodeError: If there's an error when setting up the decoder with the new host.
         """
 
         self.host = host
         try:
             self.decoder.set_host(host)
             logger.info(f'Host updated to "{self.host}"')
-        except DecodeError as e:
-            logger.error("Could not set host. Decode Error", exc_info=e)
-            raise
-
-    def save_novel(self) -> None:
-        """
-        Saves the current state of the novel to disk.
-
-        Persists all novel data including metadata, chapters, and configuration
-        to the novel's JSON file.
-
-        Raises:
-            FileManagerError: If there's an error when saving the novel data.
-        """
-
-        try:
-            self.file_manager.save_novel_data(self.to_dict())
-            logger.info(
-                f'Novel data saved to disk on file "{self.file_manager.novel_json_file}".'
-            )
-        except FileManagerError as e:
-            logger.error("Could not save novel. File Manager Error", exc_info=e)
-            raise
+        except DecodeGuideError as e:
+            logger.debug("Traceback: ", exc_info=True)
+            raise ScraperError(e) from e
 
     # TABLE OF CONTENTS MANAGEMENT
 
@@ -327,21 +364,13 @@ class Novel:
 
         Raises:
             ValidationError: If host extraction fails
-            FileManagerError: If TOC deletion fails
         """
 
         self.toc_main_url = toc_main_url
         logger.info(
             f'Main URL updated to "{self.toc_main_url}", TOCs already requested will be deleted.'
         )
-        try:
-            self.file_manager.delete_toc()
-        except FileManagerError as e:
-            logger.error("Could not delete TOCs. File Manager Error", exc_info=e)
-            raise
-
-        self.chapters_url_list = []
-        self.chapters = []
+        self.delete_toc()
 
         if update_host:
             new_host = utils.obtain_host(self.toc_main_url)
@@ -356,12 +385,13 @@ class Novel:
         - All TOC files from disk
         - Chapter list
         - Chapter URL list
-
-        Raises:
-            FileManagerError: If deletion of TOC files fails
         """
 
-        self.file_manager.delete_toc()
+        try:
+            self.novel_data_helper.delete_all_toc_fragments()
+        except NovelDataError as e:
+            logger.debug("Traceback", exc_info=True)
+            raise ScraperError(e) from e
         self.chapters = []
         self.chapters_url_list = []
         logger.info("TOC files deleted from disk.")
@@ -381,13 +411,12 @@ class Novel:
 
         Raises:
             ScraperError: If no TOC content is available
-            FileManagerError: If file operations fail
             DecodeError: If TOC parsing fails
             NetworkError: If remote content retrieval fails
             ValidationError: If chapter creation fails
         """
 
-        all_tocs_content = self.file_manager.get_all_toc()
+        all_tocs_content = self.novel_data_helper.get_all_toc_fragments()
 
         # Will reload files if:
         # reload_files is True
@@ -398,11 +427,6 @@ class Novel:
             logger.debug("Reloading TOC files.")
             try:
                 self._request_toc_files()
-            except FileManagerError as e:
-                logger.error(
-                    "Could not request TOC files. File Manager Error", exc_info=e
-                )
-                raise
             except DecodeError as e:
                 logger.error("Could not request TOC files. Decoder Error", exc_info=e)
                 raise
@@ -415,12 +439,6 @@ class Novel:
         except DecodeError as e:
             logger.error(
                 "Could not get chapter urls from TOC files. Decoder Error", exc_info=e
-            )
-            raise
-        except FileManagerError as e:
-            logger.error(
-                "Could not get chapter urls from TOC files. File Manager Error",
-                exc_info=e,
             )
             raise
 
@@ -535,7 +553,6 @@ class Novel:
             ValidationError: If there are issues with the values of the provided Chapter object
             DecodeError: If there are issues during content decoding
             NetworkError: If there are issues during HTML request
-            FileManagerError: If there are issues during file operations
         """
 
         logger.debug("Scraping Chapter...")
@@ -556,12 +573,7 @@ class Novel:
                 exc_info=e,
             )
             raise
-        except FileManagerError as e:
-            logger.error(
-                f'Could get chapter for URL "{chapter.chapter_url}" HTML content. File Manager Error',
-                exc_info=e,
-            )
-            raise
+
         except NetworkError as e:
             logger.error(
                 f'Could get chapter for URL "{chapter.chapter_url}" HTML content. Network Error',
@@ -621,7 +633,6 @@ class Novel:
             clean_chapters (bool, optional): If True, cleans the HTML content of the files
 
         Raises:
-            FileManagerError: If there are issues during file operations
             DecodeError: If there are issues during content decoding
             ValidationError: If there are issues during content decoding
 
@@ -651,8 +662,8 @@ class Novel:
                 )
                 request_chapter = True
             else:
-                chapter_file_exists = self.file_manager.chapter_file_exists(
-                    chapter_filename=self.chapters[i].chapter_html_filename
+                chapter_file_exists = self.novel_data_helper.chapter_file_exists(
+                    chapter_file=self.chapters[i].chapter_html_filename
                 )
                 if not chapter_file_exists:
                     logger.debug(
@@ -666,11 +677,6 @@ class Novel:
                     self.chapters[i] = self._load_or_request_chapter(
                         chapter=self.chapters[i], reload_file=reload_files
                     )
-                except FileManagerError:
-                    logger.warning(
-                        f"Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping..."
-                    )
-                    continue
                 except ValidationError:
                     logger.warning(
                         f"Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping..."
@@ -692,8 +698,10 @@ class Novel:
                     self._clean_chapter(self.chapters[i].chapter_html_filename)
                 try:
                     self.save_novel()
-                except FileManagerError:
-                    logger.warning("Error when trying to save novel data, Skipping...")
+                except NovelDataError as e:
+                    logger.warning(
+                        f"Error when trying to Save Novel Data: {str(e)}. Requests will continue anyway."
+                    )
             else:
                 logger.debug(
                     f"Chapter {i + 1} of {total_chapters} already requested, skipping..."
@@ -767,7 +775,7 @@ class Novel:
             self._clean_toc(hard_clean)
 
     def show_novel_dir(self) -> str:
-        return str(self.file_manager.novel_base_dir)
+        return str(self.novel_data_helper.novel_base_dir)
 
     ## PRIVATE HELPERS
 
@@ -775,19 +783,19 @@ class Novel:
         self, chapter_html_filename: str, hard_clean: bool = False
     ) -> None:
         hard_clean = hard_clean or self.scraper_behavior.hard_clean
-        chapter_html = self.file_manager.load_chapter_html(chapter_html_filename)
+        chapter_html = self.novel_data_helper.load_chapter_html(chapter_html_filename)
         if not chapter_html:
             logger.warning(f"No content found on file {chapter_html_filename}")
             return
         chapter_html = self.decoder.clean_html(chapter_html, hard_clean=hard_clean)
-        self.file_manager.save_chapter_html(chapter_html_filename, chapter_html)
+        self.novel_data_helper.save_chapter_html(chapter_html_filename, chapter_html)
 
     def _clean_toc(self, hard_clean: bool = False) -> None:
         hard_clean = hard_clean or self.scraper_behavior.hard_clean
-        tocs_content = self.file_manager.get_all_toc()
+        tocs_content = self.novel_data_helper.get_all_toc_fragments()
         for i, toc in enumerate(tocs_content):
             toc = self.decoder.clean_html(toc, hard_clean=hard_clean)
-            self.file_manager.update_toc(idx=i, html=toc)
+            self.novel_data_helper.update_toc(idx=i, html=toc)
 
     def _request_html_content(self, url: str) -> Optional[str]:
         """
@@ -838,7 +846,6 @@ class Novel:
             Chapter: The Chapter object updated with HTML content.
 
         Raises:
-            FileManagerError: If there's an error loading or saving the chapter file.
             ValidationError: If there's a validation error when requesting the chapter.
             NetworkError: If there's a network error when requesting the chapter.
 
@@ -859,7 +866,7 @@ class Novel:
         # 1. "Reload file" flag is True (requested by user)
         # 2. Chapter file does not exist
         # 3. The Chapter file does exist, but there is no content
-        reload_file = reload_file or not self.file_manager.chapter_file_exists(
+        reload_file = reload_file or not self.novel_data_helper.chapter_file_exists(
             chapter.chapter_html_filename
         )
         # Try loading from the disk first
@@ -868,15 +875,14 @@ class Novel:
                 logger.debug(
                     f'Loading chapter HTML from file: "{chapter.chapter_html_filename}"'
                 )
-                chapter.chapter_html = self.file_manager.load_chapter_html(
+                chapter.chapter_html = self.novel_data_helper.load_chapter_html(
                     chapter.chapter_html_filename
                 )
-            except FileManagerError as e:
-                logger.error(
-                    f"Error when trying to load chapter {chapter.chapter_title} from file",
-                    exc_info=e,
-                )
-                raise
+            except ChapterFileNotFoundError or ChapterFileIsEmptyError:
+                chapter.chapter_html = None
+            except NovelDataError as e:
+                logger.debug("Traceback:", exc_info=True)
+                raise ScraperError(e) from e
             if chapter.chapter_html is not None:
                 return chapter
 
@@ -905,15 +911,12 @@ class Novel:
             logger.info(
                 f'Saving chapter HTML to file: "{chapter.chapter_html_filename}"'
             )
-            self.file_manager.save_chapter_html(
+            self.novel_data_helper.save_chapter_html(
                 chapter.chapter_html_filename, chapter.chapter_html
             )
-        except FileManagerError as e:
+        except NovelDataError as e:
+            logger.warning(f"Error when trying to save chapter HTML to file: {str(e)}.")
             # We can pass this error and try again later
-            logger.warning(
-                f"Error when trying to save chapter {chapter.chapter_title} to file",
-                exc_info=e,
-            )
 
         return chapter
 
@@ -958,7 +961,11 @@ class Novel:
                 raise ValidationError(f'No content found on link "{toc_url}"')
 
             logger.debug("Saving new TOC file to disk.")
-            self.file_manager.add_toc(toc_content)
+            try:
+                self.novel_data_helper.add_toc_fragment(toc_content)
+            except NovelDataError as e:
+                logger.debug("Traceback", exc_info=True)
+                raise ScraperError(e) from e
 
             if get_next_page:
                 try:
@@ -969,7 +976,7 @@ class Novel:
                 return next_page
             return None
 
-        self.file_manager.delete_toc()
+        self.novel_data_helper.delete_all_toc_fragments()
         has_pagination = self.decoder.has_pagination()
         try:
             toc_main_url = self.decoder.toc_main_url_process(self.toc_main_url)
@@ -1000,10 +1007,10 @@ class Novel:
 
         # Get all TOC content at once
         try:
-            all_tocs = self.file_manager.get_all_toc()
-        except FileManagerError:
-            logger.error("Error when trying to load TOC files from disk.")
-            raise
+            all_tocs = self.novel_data_helper.get_all_toc_fragments()
+        except NovelDataError as e:
+            logger.debug("Traceback", exc_info=True)
+            raise ScraperError(e) from e
 
         # Extract URLs from all TOC fragments
         self.chapters_url_list = []
@@ -1247,10 +1254,12 @@ class Novel:
                 {"name": "calibre:series_index", "content": calibre_collection["idx"]},
             )
 
-        cover_image_content = self.file_manager.load_novel_cover()
-        if cover_image_content:
+        try:
+            cover_image_content = self.novel_data_helper.load_novel_cover()
             book.set_cover("cover.jpg", cover_image_content)
             book.spine += ["cover"]
+        except CoverImageNotFoundError:
+            logger.debug("No Cover Image was found.")
 
         book.spine.append("nav")
         return book
@@ -1308,9 +1317,9 @@ class Novel:
         book.add_item(epub.EpubNcx())
         book.add_item(epub.EpubNav())
         try:
-            self.file_manager.save_book(book, f"{book_title}.epub")
-        except FileManagerError:
-            logger.error(f"Error saving epub {book_title}")
-            raise
+            self.novel_data_helper.save_book(book, f"{book_title}.epub")
+        except NovelDataError as e:
+            logger.debug("Traceback:", exc_info=True)
+            raise ScraperError(e) from e
         self.save_novel()
         return True

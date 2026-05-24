@@ -5,14 +5,15 @@ from pathlib import Path
 
 from . import logger_manager
 from .custom_processor.custom_processor import ProcessorRegistry
-from .utils import (
-    FileOps,
+
+from web_novel_scraper.exceptions import (
     DecodeError,
     HTMLParseError,
     DecodeGuideError,
     ContentExtractionError,
-    HostNotExistsError,
+    LoadDecodeGuideError,
 )
+from web_novel_scraper.io_helpers.decode_io_helper import load_decode_guide
 from .utils import TitleInContentOption
 
 from bs4 import BeautifulSoup
@@ -35,10 +36,7 @@ class Decoder:
 
     def set_host(self, host: str) -> None:
         self.host = host
-        try:
-            self._set_decode_guide()
-        except HostNotExistsError:
-            raise
+        self._load_decode_guide()
 
         host_request_config = self.get_request_config()
         if host_request_config is not None:
@@ -398,12 +396,18 @@ class Decoder:
                     self.request_config.get(key, 0), new_value
                 )
 
-    def _set_decode_guide(self) -> None:
-        decode_guide = FileOps.read_json(self.decode_guide_file)
-        self.decode_guide = self._get_element_by_key(decode_guide, "host", self.host)
-        if self.decode_guide is None:
-            logger.debug(f"No decode guide found for host {self.host}")
-            raise HostNotExistsError(f"No decode guide found for host {self.host}")
+    def _load_decode_guide(self) -> None:
+        logger.debug(
+            f"Loading Decode Guide for Host {self.host} from File {self.decode_guide_file}"
+        )
+        try:
+            self.decode_guide = load_decode_guide(
+                path=self.decode_guide_file, host=self.host
+            )
+
+        except LoadDecodeGuideError as e:
+            logger.error(f"Error loading Decode Guide File: {str(e)}")
+            raise DecodeGuideError(e) from e
 
     @staticmethod
     def _find_elements(soup: BeautifulSoup, decoder: dict):

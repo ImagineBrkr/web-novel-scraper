@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 
 from .logger_manager import create_logger
-from .utils import ValidationError, NetworkError
+from web_novel_scraper.exceptions import ValidationError, NetworkError
 
 load_dotenv()
 

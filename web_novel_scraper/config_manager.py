@@ -1,26 +1,30 @@
 import os
 
-import platformdirs
 from dotenv import load_dotenv
 from pathlib import Path
 from typing import Optional, Any, Callable
 
 from .logger_manager import create_logger
-from .utils import FileOps, ValidationError
+from web_novel_scraper.io_helpers.config_io_helper import (
+    load_config,
+    get_default_decode_guide_file,
+    get_default_config_file,
+    get_default_base_novel_dirs,
+)
+from web_novel_scraper.exceptions import (
+    LoadConfigError,
+    EmptyConfigFileError,
+    ConfigFileNotFoundError,
+    ValidationError,
+)
+
 
 load_dotenv()
 
-CURRENT_DIR = Path(__file__).resolve().parent
-
-app_author = "web-novel-scraper"
-app_name = "web-novel-scraper"
-
 # DEFAULT VALUES
-SCRAPER_CONFIG_FILE = str(
-    Path(platformdirs.user_config_dir(app_name, app_author)) / "config.json"
-)
-SCRAPER_BASE_NOVELS_DIR = platformdirs.user_data_dir(app_name, app_author)
-SCRAPER_DECODE_GUIDE_FILE = str(CURRENT_DIR / "decode_guide/decode_guide.json")
+SCRAPER_CONFIG_FILE = get_default_config_file()
+SCRAPER_BASE_NOVELS_DIR = get_default_base_novel_dirs()
+SCRAPER_DECODE_GUIDE_FILE = get_default_decode_guide_file()
 DEFAULT_REQUEST_CONFIG = {
     "force_flaresolver": "False",
     "request_retries": "3",
@@ -56,8 +60,12 @@ class ScraperConfig:
             parameter_value=parameters.get("config_file"),
         )
 
-        config_file = Path(config_file)
-        logger.debug(f'Obtaining configuration from file "{config_file}"')
+        if config_file == SCRAPER_CONFIG_FILE:
+            logger.debug(
+                f"No Config File path provided, using default Config File path: {SCRAPER_CONFIG_FILE}."
+            )
+
+        logger.debug(f"Trying to load Config File from {config_file}")
         config = self._load_config(config_file)
 
         if config is None:
@@ -159,9 +167,22 @@ class ScraperConfig:
 
     @staticmethod
     def _load_config(config_file: Path) -> Optional[dict]:
-        config = FileOps.read_json(config_file)
-        if config is None:
-            logger.debug(
-                f'Could not load configuration from file "{config_file}". Skipping...'
-            )
+        try:
+            config = load_config(config_file)
+            logger.info(f"Custom configuration loaded from file {config_file}")
+
+        except EmptyConfigFileError:
+            logger.warning(f"Config File at {config_file} is empty.")
+            config = {}
+
+        # Don't trigger a warning since this may be something expected
+        except ConfigFileNotFoundError:
+            logger.debug(f"Config File not found at {config_file}.")
+            config = {}
+
+        except LoadConfigError as e:
+            logger.warning(f"Error loading config file from {config_file}.")
+            logger.warning(f"LoadConfigError - {e}", exc_info=e)
+            config = {}
+
         return config

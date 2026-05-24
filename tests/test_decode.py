@@ -3,8 +3,9 @@ import json
 
 from web_novel_scraper.decode import (
     Decoder,
-    HostNotExistsError,
     TitleInContentOption,
+)
+from web_novel_scraper.exceptions import (
     DecodeGuideError,
     ContentExtractionError,
 )
@@ -61,7 +62,7 @@ def test_set_host_behavior(guide_file, host, expect_error):
     Test that setting a valid host succeeds and invalid host raises HostNotExistsError.
     """
     if expect_error:
-        with pytest.raises(HostNotExistsError):
+        with pytest.raises(DecodeGuideError):
             Decoder(host=host, decode_guide_file=guide_file, request_config={})
     else:
         decoder = Decoder(host=host, decode_guide_file=guide_file, request_config={})

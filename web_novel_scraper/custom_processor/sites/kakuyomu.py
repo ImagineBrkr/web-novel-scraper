@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from typing import List, Optional
 from ..custom_processor import CustomProcessor, ProcessorRegistry
-from web_novel_scraper.utils import HTMLParseError, DecodeError
+from web_novel_scraper.exceptions import HTMLParseError, DecodeError
 
 import json
 

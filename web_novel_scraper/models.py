@@ -6,7 +6,8 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 import pprint
 
-from .utils import _always, ValidationError, TitleInContentOption
+from .utils import _always, TitleInContentOption
+from web_novel_scraper.exceptions import ValidationError
 
 
 def _pretty(obj, *, skip: set[str] | None = None) -> str:

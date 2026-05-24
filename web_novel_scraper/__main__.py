@@ -7,8 +7,12 @@ from .config_manager import ScraperConfig
 from .novel_scraper import Novel
 from .models import Chapter
 from .utils import (
-    ValidationError,
     TitleInContentOption,
+)
+from web_novel_scraper.exceptions import (
+    ValidationError,
+    ScraperError,
+    NovelNotFoundError,
 )
 from .version import __version__
 
@@ -76,11 +80,14 @@ def obtain_novel(title, ctx_opts, allow_missing=False):
     cfg = ScraperConfig(parameters=ctx_opts)
     try:
         return Novel.load(title, cfg, ctx_opts.get("novel_base_dir"))
-    except ValidationError:
+    except NovelNotFoundError:
         if allow_missing:
             return None
-        click.echo("Novel not found.", err=True)
-        exit(1)
+        click.echo(f"Novel {title} not found.", err=True)
+        raise SystemExit(1)
+    except ScraperError as e:
+        click.echo(f"Error: {e}", err=True)
+        raise SystemExit(1)
 
 
 def validate_date(ctx, param, value):
@@ -231,8 +238,18 @@ def create_novel(
 
     config = ScraperConfig(parameters=ctx.obj)
 
-    novel = Novel.new(title=title, cfg=config, host=host, toc_main_url=toc_main_url)
-    novel.set_config(cfg=config, novel_base_dir=ctx.obj.get("novel_base_dir"))
+    try:
+        novel = Novel.new(
+            title=title,
+            cfg=config,
+            host=host,
+            toc_main_url=toc_main_url,
+            novel_base_dir=ctx.obj.get("novel_base_dir"),
+        )
+    except ScraperError as e:
+        click.echo(f"Error creating novel: {e}", err=True)
+        raise SystemExit(1)
+
     novel.set_metadata(
         author=author,
         start_date=start_date,
@@ -253,7 +270,13 @@ def create_novel(
     if cover:
         if not novel.set_cover_image(cover):
             click.echo("Error saving the novel cover image.", err=True)
-    novel.save_novel()
+
+    try:
+        novel.save_novel()
+    except ScraperError as e:
+        click.echo(f"Error Saving Novel Data: {str(e)}", err=True)
+        raise SystemExit(1)
+
     click.echo("Novel saved successfully.")
 
 

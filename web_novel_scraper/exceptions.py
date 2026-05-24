@@ -171,6 +171,10 @@ class DecodeProcessorError(DecodeError):
     """Raised when there is an error in a decoder processor"""
 
 
+class HostNotExistsError(DecodeError):
+    """Raised when the host doesn't exist on the Decode Guide"""
+
+
 ## DECODE GUIDE EXCEPTIONS
 
 
