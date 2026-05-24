@@ -16,3 +16,4 @@ docs/build
 .idea
 .venv
 .ruff_cache
+.vscode
