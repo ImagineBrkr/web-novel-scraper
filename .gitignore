@@ -17,3 +17,4 @@ docs/build
 .venv
 .ruff_cache
 .vscode
+.pytest_cache
