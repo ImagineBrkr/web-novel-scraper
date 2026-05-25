@@ -229,11 +229,11 @@ class NovelDataHelper:
     ## TOC API
 
     def add_toc_fragment(self, html_content: str) -> None:
-        idx = self._next_toc_idx()
-        toc_path = self.novel_toc_dir / f"toc_{idx}.html"
+        next_idx = self._latest_toc_idx() + 1
+        toc_path = self.novel_toc_dir / f"toc_{next_idx}.html"
 
         self._add_toc_fragment_file(toc_path, html_content)
-        logger.debug(f"Added TOC Fragment #{idx} to file {toc_path}")
+        logger.debug(f"Added TOC Fragment #{next_idx} to file {toc_path}")
 
     def delete_toc_fragment(self, idx: int) -> None:
         toc_path = self.novel_toc_dir / f"toc_{idx}.html"
@@ -252,21 +252,21 @@ class NovelDataHelper:
         logger.debug(f"Deleted TOC Fragment #{idx} from file {toc_path}")
 
     def delete_all_toc_fragments(self) -> None:
-        next_idx = self._next_toc_idx()
+        latest_idx = self._latest_toc_idx()
 
-        if next_idx == 1:
+        if latest_idx == -1:
             logger.debug(f"No TOC Fragments to delete on {self.novel_toc_dir}")
             return
 
-        for idx in range(1, next_idx):
+        for idx in range(0, latest_idx + 1):
             self.delete_toc_fragment(idx=idx)
 
     def delete_latest_toc_fragment(self) -> None:
-        next_idx = self._next_toc_idx()
-        if next_idx == 1:
+        latest_idx = self._latest_toc_idx()
+        if latest_idx == -1:
             logger.debug(f"No TOC Fragments to delete on {self.novel_toc_dir}")
+            return
 
-        latest_idx = next_idx - 1
         self.delete_toc_fragment(idx=latest_idx)
 
     def get_toc_fragment(self, idx: int) -> str:
@@ -277,10 +277,13 @@ class NovelDataHelper:
     def get_all_toc_fragments(self) -> list[str]:
 
         contents: list[str] = []
-        toc_idx = self._all_toc_idx()
-        toc_files = [self.novel_toc_dir / f"toc_{i}.html" for i in toc_idx]
+        next_idx = self._latest_toc_idx() + 1
+        if next_idx == 0:
+            logger.debug(f"No TOC Fragments to retrieve on {self.novel_toc_dir}")
+            return contents
 
-        for toc_file in toc_files:
+        for idx in range(0, next_idx):
+            toc_file = self.novel_toc_dir / f"toc_{idx}.html"
             html = self._get_toc_fragment_content_from_file(toc_file)
             contents.append(html)
 
@@ -331,7 +334,7 @@ class NovelDataHelper:
 
         return toc_fragment_content
 
-    def _all_toc_idx(self) -> list[int]:
+    def _latest_toc_idx(self) -> int:
         try:
             toc_fragments = IOUtils.list_files_from_dir(
                 self.novel_toc_dir, "toc_*.html"
@@ -343,11 +346,9 @@ class NovelDataHelper:
                 f"Error accessing TOC directory {self.novel_toc_dir}"
             ) from e
 
-        return [int(p.stem.split("_")[1]) for p in toc_fragments]
+        toc_idx = [int(p.stem.split("_")[1]) for p in toc_fragments]
 
-    def _next_toc_idx(self) -> int:
-        toc_idx = self._all_toc_idx()
-        return max(toc_idx, default=0) + 1
+        return max(toc_idx, default=-1)
 
     def _update_toc_metadata(self) -> None:
         now_iso = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")

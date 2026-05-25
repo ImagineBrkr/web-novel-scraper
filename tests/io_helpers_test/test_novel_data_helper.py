@@ -307,7 +307,7 @@ class TestTOCFragmentOperations:
         """Test adding a TOC fragment successfully."""
         novel_helper.add_toc_fragment(sample_html_content)
 
-        toc_file = novel_helper.novel_toc_dir / "toc_1.html"
+        toc_file = novel_helper.novel_toc_dir / "toc_0.html"
         assert toc_file.exists()
         assert toc_file.read_text() == sample_html_content
 
@@ -316,14 +316,14 @@ class TestTOCFragmentOperations:
         for i in range(1, 4):
             novel_helper.add_toc_fragment(sample_html_content)
 
-        for i in range(1, 4):
+        for i in range(0, 3):
             toc_file = novel_helper.novel_toc_dir / f"toc_{i}.html"
             assert toc_file.exists()
 
     def test_get_toc_fragment_success(self, novel_helper, sample_html_content):
         """Test retrieving a TOC fragment successfully."""
         novel_helper.add_toc_fragment(sample_html_content)
-        retrieved_content = novel_helper.get_toc_fragment(1)
+        retrieved_content = novel_helper.get_toc_fragment(0)
 
         assert retrieved_content == sample_html_content
 
@@ -373,13 +373,13 @@ class TestTOCFragmentOperations:
 
         novel_helper.delete_latest_toc_fragment()
 
-        # The latest (toc_3) should be deleted
-        toc_file = novel_helper.novel_toc_dir / "toc_3.html"
+        # The latest (toc_2) should be deleted
+        toc_file = novel_helper.novel_toc_dir / "toc_2.html"
         assert not toc_file.exists()
 
         # Previous files should still exist
+        assert (novel_helper.novel_toc_dir / "toc_0.html").exists()
         assert (novel_helper.novel_toc_dir / "toc_1.html").exists()
-        assert (novel_helper.novel_toc_dir / "toc_2.html").exists()
 
     def test_delete_latest_toc_fragment_when_only_one_exists(
         self, novel_helper, sample_html_content
@@ -404,9 +404,9 @@ class TestTOCFragmentOperations:
         novel_helper.delete_all_toc_fragments()
 
         # All TOC files should be deleted
+        assert (novel_helper.novel_toc_dir / "toc_0.html").exists() is False
         assert (novel_helper.novel_toc_dir / "toc_1.html").exists() is False
         assert (novel_helper.novel_toc_dir / "toc_2.html").exists() is False
-        assert (novel_helper.novel_toc_dir / "toc_3.html").exists() is False
 
     def test_delete_all_toc_fragments_empty_dir(self, novel_helper):
         """Test delete_all_toc_fragments on empty directory doesn't raise."""
@@ -478,28 +478,28 @@ class TestEdgeCases:
         for i in range(1, 6):
             novel_helper.add_toc_fragment(sample_html_content)
 
-        for i in range(1, 6):
+        for i in range(0, 5):
             assert (novel_helper.novel_toc_dir / f"toc_{i}.html").exists()
 
     def test_toc_index_continues_after_deletion(
         self, novel_helper, sample_html_content
     ):
         """Test that TOC index continues incrementing even after deletions."""
+        novel_helper.add_toc_fragment(sample_html_content)  # toc_0
         novel_helper.add_toc_fragment(sample_html_content)  # toc_1
-        novel_helper.add_toc_fragment(sample_html_content)  # toc_2
-        novel_helper.delete_toc_fragment(1)
+        novel_helper.delete_toc_fragment(0)
 
-        novel_helper.add_toc_fragment(sample_html_content)  # Should be toc_3, not toc_2
+        novel_helper.add_toc_fragment(sample_html_content)  # Should be toc_2, not toc_1
 
-        assert (novel_helper.novel_toc_dir / "toc_3.html").exists()
-        assert not (novel_helper.novel_toc_dir / "toc_1.html").exists()
+        assert (novel_helper.novel_toc_dir / "toc_2.html").exists()
+        assert not (novel_helper.novel_toc_dir / "toc_0.html").exists()
 
     def test_large_html_content_in_toc(self, novel_helper):
         """Test handling large HTML content in TOC."""
         large_content = "<html>" + "<li><a href='#'>Item</a></li>" * 10000 + "</html>"
         novel_helper.add_toc_fragment(large_content)
 
-        retrieved = novel_helper.get_toc_fragment(1)
+        retrieved = novel_helper.get_toc_fragment(0)
         assert retrieved == large_content
 
     def test_special_characters_in_html(self, novel_helper):
@@ -514,7 +514,7 @@ class TestEdgeCases:
         """
         novel_helper.add_toc_fragment(special_content)
 
-        retrieved = novel_helper.get_toc_fragment(1)
+        retrieved = novel_helper.get_toc_fragment(0)
         assert retrieved == special_content
 
     def test_mixed_operations(
@@ -540,5 +540,5 @@ class TestEdgeCases:
         assert novel_helper.novel_cover_file.exists()
         assert novel_helper.chapter_file_exists("ch1.html")
         assert novel_helper.chapter_file_exists("ch2.html")
+        assert (novel_helper.novel_toc_dir / "toc_0.html").exists()
         assert (novel_helper.novel_toc_dir / "toc_1.html").exists()
-        assert (novel_helper.novel_toc_dir / "toc_2.html").exists()
