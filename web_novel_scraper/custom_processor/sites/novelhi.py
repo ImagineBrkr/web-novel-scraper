@@ -1,7 +1,10 @@
 import re
 from typing import List, Optional
-from ..custom_processor import CustomProcessor, ProcessorRegistry
-from web_novel_scraper.utils import DecodeProcessorError
+from web_novel_scraper.custom_processor.custom_processor import (
+    CustomProcessor,
+    ProcessorRegistry,
+)
+from web_novel_scraper.exceptions import DecodeProcessorError
 
 
 class NovelHiIndexProcessor(CustomProcessor):
@@ -11,13 +14,17 @@ class NovelHiIndexProcessor(CustomProcessor):
         match_novel_name = re.search(pattern_novel_name, html)
         match_chapters = re.findall(pattern_chapter, html, re.DOTALL)
         if match_novel_name is None:
-            raise DecodeProcessorError("Could not get Novel Name, check if the html is valid.")
+            raise DecodeProcessorError(
+                "Could not get Novel Name, check if the html is valid."
+            )
 
         if len(match_chapters) == 0:
             return None
 
-        return [f'https://novelhi.com/s/{match_novel_name.group(1)}/{chapter_index}' for chapter_index in
-                match_chapters]
+        return [
+            f"https://novelhi.com/s/{match_novel_name.group(1)}/{chapter_index}"
+            for chapter_index in match_chapters
+        ]
 
 
 class NovelHiTocMainUrlProcessor(CustomProcessor):
@@ -25,10 +32,12 @@ class NovelHiTocMainUrlProcessor(CustomProcessor):
         pattern_novel_id = r"novelhi.com/s/([^/?]+)"
         match = re.search(pattern_novel_id, toc_main_url)
         if match is None:
-            raise DecodeProcessorError("Could not get Novel Id, check if the toc_main_url has the correct format"
-                                       "(https://novelhi.com/s/{novel-id}).")
-        return f'https://novelhi.com/s/index/{match.group(1)}/'
+            raise DecodeProcessorError(
+                "Could not get Novel Id, check if the toc_main_url has the correct format"
+                "(https://novelhi.com/s/{novel-id})."
+            )
+        return f"https://novelhi.com/s/index/{match.group(1)}/"
 
 
-ProcessorRegistry.register('novelhi.com', 'index', NovelHiIndexProcessor())
-ProcessorRegistry.register('novelhi.com', 'toc_main_url', NovelHiTocMainUrlProcessor())
+ProcessorRegistry.register("novelhi.com", "index", NovelHiIndexProcessor())
+ProcessorRegistry.register("novelhi.com", "toc_main_url", NovelHiTocMainUrlProcessor())

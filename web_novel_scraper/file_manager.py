@@ -5,13 +5,19 @@ from ebooklib import epub
 from typing import Optional, Dict
 import unicodedata
 
-from .logger_manager import create_logger
-from .utils import _normalize_dirname, FileOps, now_iso, FileManagerError, ValidationError
+from web_novel_scraper.logger_manager import create_logger
+from web_novel_scraper.utils import (
+    _normalize_dirname,
+    FileOps,
+    now_iso,
+    FileManagerError,
+    ValidationError,
+)
 
-NOVEL_JSON_FILENAME = 'main.json'
-NOVEL_COVER_FILENAME = 'cover.jpg'
+NOVEL_JSON_FILENAME = "main.json"
+NOVEL_COVER_FILENAME = "cover.jpg"
 
-logger = create_logger('FILE MANAGER')
+logger = create_logger(__name__)
 
 
 class FileManager:
@@ -38,11 +44,13 @@ class FileManager:
     novel_json_file: Path
     novel_cover_file: Path = None
 
-    def __init__(self,
-                 title: str,
-                 base_novels_dir: Path,
-                 novel_base_dir: Path = None,
-                 read_only: bool = False):
+    def __init__(
+        self,
+        title: str,
+        base_novels_dir: Path,
+        novel_base_dir: Path = None,
+        read_only: bool = False,
+    ):
         """
         Initialize the file manager.
 
@@ -57,10 +65,12 @@ class FileManager:
         """
 
         try:
-            logger.debug(f'Initializing FileManager for novel: {title}')
-            self.novel_base_dir = self._get_novel_base_dir(title, base_novels_dir, novel_base_dir)
-            self.novel_data_dir = self.novel_base_dir / 'data'
-            self.novel_chapters_dir = self.novel_data_dir / 'chapters'
+            logger.debug(f"Initializing FileManager for novel: {title}")
+            self.novel_base_dir = self._get_novel_base_dir(
+                title, base_novels_dir, novel_base_dir
+            )
+            self.novel_data_dir = self.novel_base_dir / "data"
+            self.novel_chapters_dir = self.novel_data_dir / "chapters"
             self.novel_toc_dir = self.novel_data_dir / "toc"
             self.novel_json_file = self.novel_data_dir / NOVEL_JSON_FILENAME
             self.novel_cover_file = self.novel_data_dir / NOVEL_COVER_FILENAME
@@ -68,7 +78,9 @@ class FileManager:
             if not read_only:
                 FileOps.ensure_dir(self.novel_base_dir)
                 if novel_base_dir is None:
-                    self._store_novel_base_dir(title, self.novel_base_dir, base_novels_dir)
+                    self._store_novel_base_dir(
+                        title, self.novel_base_dir, base_novels_dir
+                    )
                 FileOps.ensure_dir(self.novel_data_dir)
                 FileOps.ensure_dir(self.novel_chapters_dir)
                 FileOps.ensure_dir(self.novel_toc_dir)
@@ -89,11 +101,13 @@ class FileManager:
 
         try:
             full_path = self.novel_chapters_dir / chapter_filename
-            logger.debug(f'Saving chapter to {full_path}')
-            content = unicodedata.normalize('NFKC', content)
+            logger.debug(f"Saving chapter to {full_path}")
+            content = unicodedata.normalize("NFKC", content)
             FileOps.save_text(full_path, content)
         except Exception as e:
-            raise FileManagerError(f"Error saving chapter {chapter_filename}: {str(e)}") from e
+            raise FileManagerError(
+                f"Error saving chapter {chapter_filename}: {str(e)}"
+            ) from e
 
     def chapter_file_exists(self, chapter_filename: str) -> bool:
         full_path = self.novel_chapters_dir / chapter_filename
@@ -115,13 +129,15 @@ class FileManager:
 
         try:
             full_path = self.novel_chapters_dir / chapter_filename
-            logger.debug(f'Loading chapter from {full_path}')
+            logger.debug(f"Loading chapter from {full_path}")
             chapter_content = FileOps.read_text(full_path)
             if not chapter_content:
-                logger.debug(f'Chapter content not found: {chapter_filename}')
+                logger.debug(f"Chapter content not found: {chapter_filename}")
             return chapter_content
         except Exception as e:
-            raise FileManagerError(f"Error loading chapter {chapter_filename}: {str(e)}") from e
+            raise FileManagerError(
+                f"Error loading chapter {chapter_filename}: {str(e)}"
+            ) from e
 
     def delete_chapter_html(self, chapter_filename: str) -> None:
         """
@@ -135,10 +151,12 @@ class FileManager:
         """
         try:
             full_path = self.novel_chapters_dir / chapter_filename
-            logger.debug(f'Attempting to delete chapter: {chapter_filename}')
+            logger.debug(f"Attempting to delete chapter: {chapter_filename}")
             FileOps.delete(full_path)
         except Exception as e:
-            raise FileManagerError(f"Error deleting chapter {chapter_filename}: {str(e)}") from e
+            raise FileManagerError(
+                f"Error deleting chapter {chapter_filename}: {str(e)}"
+            ) from e
 
     def save_novel_data(self, novel_data: dict) -> None:
         """
@@ -154,7 +172,7 @@ class FileManager:
             raise ValidationError("Novel data must be a dictionary")
 
         try:
-            logger.debug(f'Saving novel data to {self.novel_json_file}')
+            logger.debug(f"Saving novel data to {self.novel_json_file}")
             FileOps.save_json(self.novel_json_file, novel_data)
         except Exception as e:
             raise FileManagerError(f"Error saving novel JSON: {str(e)}") from e
@@ -170,16 +188,15 @@ class FileManager:
             FileManagerError: If there are errors reading the JSON file
         """
         try:
-            logger.debug(f'Loading novel data from {self.novel_json_file}')
+            logger.debug(f"Loading novel data from {self.novel_json_file}")
             novel_data = FileOps.read_json(self.novel_json_file)
-        except ValidationError as e:
-            logger.error(f'Could not read novel data file')
+        except ValidationError:
+            logger.error("Could not read novel data file")
             raise
 
         if novel_data is None:
-            logger.debug('Could not read novel JSON file')
+            logger.debug("Could not read novel JSON file")
         return novel_data
-
 
     def save_novel_cover(self, source_cover_path: str) -> None:
         """
@@ -194,10 +211,10 @@ class FileManager:
         """
         try:
             source_cover_path = Path(source_cover_path)
-            logger.debug(f'Attempting to save cover from {source_cover_path}')
+            logger.debug(f"Attempting to save cover from {source_cover_path}")
             if not source_cover_path.exists():
-                logger.critical(f'No cover found on {source_cover_path}')
-                raise ValidationError(f'No cover found on {source_cover_path}')
+                logger.critical(f"No cover found on {source_cover_path}")
+                raise ValidationError(f"No cover found on {source_cover_path}")
             FileOps.copy(source_cover_path, self.novel_cover_file)
         except ValidationError:
             raise
@@ -216,12 +233,12 @@ class FileManager:
         """
         try:
             if self.novel_cover_file is None:
-                logger.debug('No cover found')
+                logger.debug("No cover found")
                 return None
-            logger.debug(f'Loading cover from {self.novel_cover_file}')
+            logger.debug(f"Loading cover from {self.novel_cover_file}")
             cover = FileOps.read_binary(self.novel_cover_file)
             if cover is None:
-                logger.debug(f'Could not read cover from {self.novel_cover_file}')
+                logger.debug(f"Could not read cover from {self.novel_cover_file}")
             return cover
         except Exception as e:
             raise FileManagerError(f"Error loading novel cover: {str(e)}") from e
@@ -272,7 +289,7 @@ class FileManager:
         try:
             FileOps.save_text(toc_path, html)
         except FileManagerError:
-            logger.error(f'Could not update TOC fragment with index {idx}')
+            logger.error(f"Could not update TOC fragment with index {idx}")
             raise
 
         toc_index = self._load_toc_index()
@@ -302,7 +319,9 @@ class FileManager:
                     FileOps.delete(path)
                     logger.debug(f"Deleted {path}")
                 except Exception as e:
-                    raise FileManagerError(f"Failed to delete TOC file {path}: {str(e)}")
+                    raise FileManagerError(
+                        f"Failed to delete TOC file {path}: {str(e)}"
+                    )
 
             if idx is None:
                 logger.debug("Deleting all TOC fragments")
@@ -318,11 +337,14 @@ class FileManager:
                 ]
 
             self._store_toc_index(toc_index)
-            logger.info(f"Successfully deleted TOC {'fragments' if idx is None else f'fragment #{idx}'}")
+            logger.info(
+                f"Successfully deleted TOC {'fragments' if idx is None else f'fragment #{idx}'}"
+            )
 
         except Exception as e:
             raise FileManagerError(
-                f"Error deleting TOC {'fragments' if idx is None else f'fragment #{idx}'}: {str(e)}") from e
+                f"Error deleting TOC {'fragments' if idx is None else f'fragment #{idx}'}: {str(e)}"
+            ) from e
 
     def get_toc(self, idx: int) -> Optional[str]:
         """Return TOC HTML content or None."""
@@ -351,20 +373,20 @@ class FileManager:
 
     def save_book(self, book: epub.EpubBook, filename: str) -> bool:
         book_path = self.novel_base_dir / filename
-        logger.debug(f'Attempting to save book to {book_path}')
+        logger.debug(f"Attempting to save book to {book_path}")
         try:
             epub.write_epub(str(book_path), book)
-            logger.info(f'Book saved successfully to {book_path}')
+            logger.info(f"Book saved successfully to {book_path}")
             return True
 
         except PermissionError as e:
-            logger.error(f'Permission denied when saving book to {book_path}: {e}')
+            logger.error(f"Permission denied when saving book to {book_path}: {e}")
             return False
         except OSError as e:
-            logger.error(f'OS error when saving book to {book_path}: {e}')
+            logger.error(f"OS error when saving book to {book_path}: {e}")
             return False
         except Exception as e:
-            logger.critical(f'Unexpected error saving book to {book_path}: {e}')
+            logger.critical(f"Unexpected error saving book to {book_path}: {e}")
             raise
 
     def _load_toc_index(self) -> dict:
@@ -388,9 +410,7 @@ class FileManager:
 
     @staticmethod
     def _get_novel_base_dir(
-            title: str,
-            base_novels_dir: Path,
-            novel_base_dir: Path | None = None
+        title: str, base_novels_dir: Path, novel_base_dir: Path | None = None
     ) -> Path:
         """
         Resolve the base directory for *title* without creating any directories.
@@ -401,7 +421,9 @@ class FileManager:
         3. New path derived from a normalized title, recorded back to meta.json.
         """
         if not base_novels_dir.exists():
-            logger.info(f'{base_novels_dir} does not exist. Creating new base directory.')
+            logger.info(
+                f"{base_novels_dir} does not exist. Creating new base directory."
+            )
             FileOps.ensure_dir(base_novels_dir)
 
         # — 1. If the caller supplied a path, return it
@@ -425,9 +447,9 @@ class FileManager:
 
     @staticmethod
     def _store_novel_base_dir(
-            title: str,
-            resolved_path: Path,
-            base_novels_dir: Path,
+        title: str,
+        resolved_path: Path,
+        base_novels_dir: Path,
     ) -> None:
         """
         Persist <title, resolved_path> in <base_novels_dir>/meta.json.
@@ -445,12 +467,16 @@ class FileManager:
             # Skip write if up to date
             current = meta.get(title, {}).get("novel_base_dir")
             if current == str(resolved_path):
-                logger.debug(f"meta.json already has correct path for '{title}'; no update needed.")
+                logger.debug(
+                    f"meta.json already has correct path for '{title}'; no update needed."
+                )
                 return
 
             # Update and persist
             meta.setdefault(title, {})["novel_base_dir"] = str(resolved_path)
-            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+            meta_path.write_text(
+                json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             logger.info(f"Recorded/updated novel dir in {meta_path}: {resolved_path}")
 
         except Exception as exc:

@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+
 class CustomProcessor(ABC):
     @abstractmethod
     def process(self, html: str) -> Any:
         """Process the HTML content using custom logic"""
         pass
+
 
 class ProcessorRegistry:
     _processors: Dict[str, Dict[str, CustomProcessor]] = {}

@@ -1,18 +1,22 @@
 from bs4 import BeautifulSoup
-from typing import List, Optional
-from ..custom_processor import CustomProcessor, ProcessorRegistry
-from web_novel_scraper.utils import HTMLParseError, DecodeError
+from typing import Optional
+from web_novel_scraper.custom_processor.custom_processor import (
+    CustomProcessor,
+    ProcessorRegistry,
+)
+from web_novel_scraper.exceptions import HTMLParseError
 
 
 class SyosetuNextPageProcessor(CustomProcessor):
     def process(self, html: str) -> Optional[str]:
         try:
-            soup = BeautifulSoup(html, 'html.parser')
+            soup = BeautifulSoup(html, "html.parser")
         except Exception as e:
-            raise HTMLParseError(f'Error parsing HTML with BeautifulSoup: {e}')
-        next_page_path = soup.select_one('a.c-pager__item--next')
+            raise HTMLParseError(f"Error parsing HTML with BeautifulSoup: {e}")
+        next_page_path = soup.select_one("a.c-pager__item--next")
         if next_page_path is not None:
             return f"https://ncode.syosetu.com{next_page_path['href']}"
         return None
 
-ProcessorRegistry.register('ncode.syosetu.com', 'next_page', SyosetuNextPageProcessor())
+
+ProcessorRegistry.register("ncode.syosetu.com", "next_page", SyosetuNextPageProcessor())

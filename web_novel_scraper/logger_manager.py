@@ -9,20 +9,20 @@ logging_levels = {
     "WARNING": logging.WARNING,
     "ERROR": logging.ERROR,
     "CRITICAL": logging.CRITICAL,
-    "DEFAULT": logging.CRITICAL + 1
+    "DEFAULT": logging.CRITICAL + 1,
 }
-LOGGING_LEVEL = os.getenv('SCRAPER_LOGGING_LEVEL', 'INFO').upper()
-LOGGING_FILE = os.getenv('SCRAPER_LOGGING_FILE', None)
+LOGGING_LEVEL = os.getenv("SCRAPER_LOGGING_LEVEL", "INFO").upper()
+LOGGING_FILE = os.getenv("SCRAPER_LOGGING_FILE", None)
 
 if LOGGING_LEVEL in logging_levels:
     LOGGING_LEVEL = logging_levels[LOGGING_LEVEL]
 else:
-    LOGGING_LEVEL = logging_levels['DEFAULT']
+    LOGGING_LEVEL = logging_levels["DEFAULT"]
 
 process = "main"
 
-class CustomFormatter(logging.Formatter):
 
+class CustomFormatter(logging.Formatter):
     grey = "\x1b[38;20m"
     yellow = "\x1b[33;20m"
     red = "\x1b[31;20m"
@@ -36,12 +36,12 @@ class CustomFormatter(logging.Formatter):
         logging.INFO: green + format_str + reset,
         logging.WARNING: yellow + format_str + reset,
         logging.ERROR: red + format_str + reset,
-        logging.CRITICAL: bold_red + format_str + reset
+        logging.CRITICAL: bold_red + format_str + reset,
     }
 
     def format(self, record):
         if LOGGING_FILE:
-            log_fmt = self.format_str.replace(self.reset, '')
+            log_fmt = self.format_str.replace(self.reset, "")
         else:
             log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
@@ -54,14 +54,14 @@ def create_logger(operation):
 
     if not logger.handlers:
         if LOGGING_FILE:
-            lh = logging.FileHandler(LOGGING_FILE, encoding='utf-8')
+            lh = logging.FileHandler(LOGGING_FILE, encoding="utf-8")
         else:
             lh = logging.StreamHandler()
         lh.setLevel(LOGGING_LEVEL)
         lh.setFormatter(CustomFormatter())
         logger.addHandler(lh)
 
-    extra = {'operation': operation}
+    extra = {"operation": operation}
     logger = logging.LoggerAdapter(logger, extra)
 
     return logger

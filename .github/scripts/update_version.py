@@ -1,6 +1,7 @@
 import sys
 import re
 
+
 def update_version(file_path, increment):
     """
     Updates the version in the specified file.
@@ -36,12 +37,14 @@ def update_version(file_path, increment):
             raise ValueError("Increment type must be 'major', 'minor', or 'patch'.")
 
         # Generate the new version
-        new_version = f'{major}.{minor}.{patch}'
+        new_version = f"{major}.{minor}.{patch}"
 
         # Update the file content with the new version
-        updated_content = re.sub(r'__version__ = "(\d+)\.(\d+)\.(\d+)"',
-                                 f'__version__ = "{new_version}"',
-                                 content)
+        updated_content = re.sub(
+            r'__version__ = "(\d+)\.(\d+)\.(\d+)"',
+            f'__version__ = "{new_version}"',
+            content,
+        )
 
         # Write the updated content back to the file
         with open(file_path, "w", encoding="utf-8") as file:
