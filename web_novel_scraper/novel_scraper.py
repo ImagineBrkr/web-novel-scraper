@@ -33,7 +33,6 @@ from web_novel_scraper.exceptions import (
     CoverImageNotFoundError,
 )
 
-
 logger = logger_manager.create_logger(__name__)
 
 
