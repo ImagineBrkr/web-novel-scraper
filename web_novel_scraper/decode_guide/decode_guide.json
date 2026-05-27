@@ -684,5 +684,45 @@
         "key": "href"
       }
     }
+  },
+  {
+    "host": "69shuba.com",
+    "has_pagination": false,
+    "title_in_content": "NO",
+    "toc_main_url_processor": true,
+    "request_config": {
+      "force_flaresolver": true
+    },
+    "title": {
+      "element": "h1",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": false,
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.txtnav",
+      "attributes": null,
+      "array": false
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.catalog#catalog ul li a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
   }
 ]
