@@ -14,7 +14,7 @@ class ShubaTocMainUrlProcessor(CustomProcessor):
                 "https://www.69shuba.com/book/{novel-id}.htm"
             )
 
-        path = toc_main_url[len(base) :].rstrip("/").rstrip('.htm')
+        path = toc_main_url[len(base) :].rstrip("/").rstrip(".htm")
         if "/" in path or not path:
             raise DecodeProcessorError(
                 "The original url doesn't have the correct format."
@@ -24,6 +24,4 @@ class ShubaTocMainUrlProcessor(CustomProcessor):
         return f"{base}{path}/"
 
 
-ProcessorRegistry.register(
-    "69shuba.com", "toc_main_url", ShubaTocMainUrlProcessor()
-)
+ProcessorRegistry.register("69shuba.com", "toc_main_url", ShubaTocMainUrlProcessor())

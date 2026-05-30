@@ -23,14 +23,16 @@ def load_decode_guide(path: str, host: str) -> dict:
         decode_guide = IOUtils.read_json_file(path=path, type=list)
 
     except EmptyFileError as e:
-        raise DecodeGuideIsEmptyError(f"Decode Guide File at {path} is empty.") from e
+        raise DecodeGuideIsEmptyError(f"Decode Guide File '{path}' is empty.") from e
 
     except FileNotFoundCustomError as e:
-        raise DecodeGuideNotFoundError(f"Decode Guide File not found at {path}.") from e
+        raise DecodeGuideNotFoundError(
+            f"Decode Guide File not found at '{path}'."
+        ) from e
 
     except IOUtilsError as e:
         raise LoadDecodeGuideError(
-            f"Couldn't load Decode Guide File at {path}: {e}"
+            f"Couldn't load Decode Guide File '{path}': {e}"
         ) from e
 
     try:

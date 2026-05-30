@@ -27,37 +27,14 @@ class Decoder:
     host: str
     decode_guide_file: Path
     decode_guide: json
-    request_config: dict
 
-    def __init__(self, host: str, decode_guide_file: Path, request_config: dict):
+    def __init__(self, host: str, decode_guide_file: Path):
         self.decode_guide_file = decode_guide_file
-        self.request_config = request_config
         self.set_host(host)
 
     def set_host(self, host: str) -> None:
         self.host = host
         self._load_decode_guide()
-
-        host_request_config = self.get_request_config()
-        if host_request_config is not None:
-            self._set_request_config(host_request_config)
-
-    def get_request_config(self) -> Optional[dict]:
-        """
-        Retrieves the request configuration for the current host.
-
-        Returns:
-            dict: Request configuration parameters for the current host.
-        """
-
-        request_config = self.decode_guide.get("request_config")
-        if request_config:
-            logger.debug(
-                f'Host "{self.host}" has a custom request configuration on the Decode Guide file.'
-            )
-            return request_config
-
-        return None
 
     def is_index_inverted(self) -> bool:
         """
@@ -371,31 +348,6 @@ class Decoder:
             return " ".join(elements)
         return elements
 
-    def _set_request_config(self, request_config: dict) -> None:
-        if self.request_config is None:
-            self.request_config = request_config
-            return None
-
-        for key in [
-            "force_flaresolver",
-            "request_retries",
-            "request_timeout",
-            "request_time_between_retries",
-            "request_cookies",
-        ]:
-            new_value = request_config.get(key)
-            if new_value is None:
-                continue
-
-            if key == "force_flaresolver":
-                self.request_config[key] = self.request_config.get(key) or new_value
-            elif key == "request_cookies":
-                self.request_config[key] = new_value
-            else:
-                self.request_config[key] = max(
-                    self.request_config.get(key, 0), new_value
-                )
-
     def _load_decode_guide(self) -> None:
         logger.debug(
             f"Loading Decode Guide for Host {self.host} from File {self.decode_guide_file}"
@@ -406,7 +358,6 @@ class Decoder:
             )
 
         except LoadDecodeGuideError as e:
-            logger.error(f"Error loading Decode Guide File: {str(e)}")
             raise DecodeGuideError(e) from e
 
     @staticmethod

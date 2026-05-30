@@ -79,10 +79,6 @@
   {
     "host": "novelbin.me",
     "title_in_content": "YES",
-    "request_config": {
-      "force_flaresolver": true,
-      "request_timeout": 50
-    },
     "has_pagination": false,
     "toc_main_url_processor": true,
     "title": {
@@ -268,13 +264,6 @@
   {
     "host": "scribblehub.com",
     "title_in_content": "YES",
-    "request_config": {
-      "force_flaresolver": true,
-      "request_timeout": 60,
-      "request_cookies": {
-        "toc_show": "10000"
-      }
-    },
     "has_pagination": true,
     "title": {
       "selector": "div.chapter-title",
@@ -356,10 +345,6 @@
   {
     "host": "foxaholic.com",
     "has_pagination": false,
-    "request_config": {
-      "force_flaresolver": true,
-      "request_timeout": 30
-    },
     "title_in_content": "YES",
     "title": {
       "element": "li",
@@ -481,10 +466,6 @@
     "host": "empirenovel.com",
     "title_in_content": "NO",
     "has_pagination": true,
-    "request_config": {
-      "force_flaresolver": true,
-      "request_timeout": 50
-    },
     "title": {
       "use_custom_processor": true
     },
@@ -576,10 +557,6 @@
     "has_pagination": true,
     "title_in_content": "YES",
     "add_host_to_chapter": true,
-    "request_config": {
-      "force_flaresolver": true,
-      "request_timeout": 50
-    },
     "title": {
       "element": "h1",
       "extract": {
@@ -613,10 +590,6 @@
   {
     "host": "kakuyomu.jp",
     "title_in_content": "YES",
-    "request_config": {
-      "force_flaresolver": true,
-      "request_timeout": 50
-    },
     "title": {
       "selector": "h2 span",
       "extract": {
@@ -639,9 +612,6 @@
     "host": "noveltrust.com",
     "has_pagination": true,
     "title_in_content": "SEARCH",
-    "request_config": {
-      "force_flaresolver": true
-    },
     "title": {
       "element": "span",
       "id": null,
@@ -690,9 +660,6 @@
     "has_pagination": false,
     "title_in_content": "NO",
     "toc_main_url_processor": true,
-    "request_config": {
-      "force_flaresolver": true
-    },
     "title": {
       "element": "h1",
       "id": null,

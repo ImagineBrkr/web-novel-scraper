@@ -29,5 +29,5 @@ __all__ = [
     "kakuyomu",
     "CustomProcessor",
     "ProcessorRegistry",
-    "69shuba",
+    "shuba",
 ]

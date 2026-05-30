@@ -1,0 +1,57 @@
+{
+    "novelbin.me": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
+    },
+    "novelbin.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
+    },
+    "scribblehub.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 60,
+            "request_cookies": {
+                "toc_show": "10000"
+            }
+        }
+    },
+    "foxaholic.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 30
+        }
+    },
+    "empirenovel.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
+    },
+    "ncode.syosetu.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
+    },
+    "kakuyomu.jp": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
+    },
+    "noveltrust.com": {
+        "request_config": {
+            "force_flaresolver": true
+        }
+    },
+    "69shuba.com": {
+        "request_config": {
+            "force_flaresolver": true
+        }
+    }
+}
