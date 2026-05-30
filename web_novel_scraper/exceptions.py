@@ -140,7 +140,19 @@ class ConfigError(ScraperError):
     pass
 
 
+class InvalidTypeConfigError(ConfigError):
+    pass
+
+
 class LoadConfigError(ConfigError):
+    pass
+
+
+class LoadHostConfigError(ConfigError):
+    pass
+
+
+class HostNotInHostConfigFileError(LoadHostConfigError):
     pass
 
 
@@ -150,6 +162,34 @@ class EmptyConfigFileError(LoadConfigError):
 
 class ConfigFileNotFoundError(LoadConfigError):
     pass
+
+
+class ParseConfigOptionError(ConfigError):
+    pass
+
+
+class ConfigKeyConflictError(ParseConfigOptionError):
+    pass
+
+
+class ParametersParseError(ConfigError):
+    pass
+
+
+class InvalidParameterStructureError(ParametersParseError):
+    """Exception raised when parameter structure is invalid"""
+
+
+class ParameterKeyConflictError(ParametersParseError):
+    """Exception raised when parameter keys conflict"""
+
+
+class ParameterKeyFormatError(ParametersParseError):
+    """Exception raised when parameter key format is invalid"""
+
+
+class ParameterValueFormatError(ParametersParseError):
+    """Exception raised when parameter key format is invalid"""
 
 
 ## DECODE EXCEPTIONS

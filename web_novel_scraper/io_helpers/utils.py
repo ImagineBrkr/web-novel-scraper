@@ -69,7 +69,7 @@ class IOUtils:
 
         if path.suffix.lower() != expected_extension.lower():
             raise InvalidFileTypeError(
-                f"Expected '{expected_extension}' file, got '{path.suffix}'"
+                f"Expected File to have '{expected_extension}' Extension, got '{path.suffix}'"
             )
 
     @staticmethod

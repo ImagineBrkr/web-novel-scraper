@@ -63,9 +63,9 @@ def test_set_host_behavior(guide_file, host, expect_error):
     """
     if expect_error:
         with pytest.raises(DecodeGuideError):
-            Decoder(host=host, decode_guide_file=guide_file, request_config={})
+            Decoder(host=host, decode_guide_file=guide_file)
     else:
-        decoder = Decoder(host=host, decode_guide_file=guide_file, request_config={})
+        decoder = Decoder(host=host, decode_guide_file=guide_file)
         assert decoder.host == host
 
 
@@ -73,7 +73,7 @@ def test_is_index_inverted(guide_file):
     """
     Verify is_index_inverted returns False when not set in Decode Guide.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     assert decoder.is_index_inverted() is False
 
 
@@ -92,9 +92,7 @@ def test_title_in_content_variations(
     """
     Verify title_in_content returns the correct enum for each host configuration.
     """
-    decoder = Decoder(
-        host=host, decode_guide_file=guide_file_title_in_content, request_config={}
-    )
+    decoder = Decoder(host=host, decode_guide_file=guide_file_title_in_content)
     assert decoder.title_in_content() == expected_option
 
 
@@ -103,9 +101,7 @@ def test_title_in_content_wrong_option(guide_file_title_in_content):
     Verify title_in_content returns the correct enum for each host configuration.
     """
     decoder = Decoder(
-        host="example_wrong.com",
-        decode_guide_file=guide_file_title_in_content,
-        request_config={},
+        host="example_wrong.com", decode_guide_file=guide_file_title_in_content
     )
     with pytest.raises(DecodeGuideError):
         decoder.title_in_content()
@@ -115,7 +111,7 @@ def test_get_chapter_urls(guide_file):
     """
     Test extraction of chapter URLs using get_chapter_urls.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     html = (
         '<div class="eplister"><ul>'
         '<li><a href="url1">Link1</a></li>'
@@ -130,7 +126,7 @@ def test_get_chapter_title(guide_file):
     """
     Test extraction of the chapter title using get_chapter_title.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     html = "<h2>My Chapter Title</h2>"
     title = decoder.get_chapter_title(html)
     assert title == "My Chapter Title"
@@ -140,7 +136,7 @@ def test_no_chapter_title(guide_file):
     """
     Test extraction of the chapter title using get_chapter_title when there is no title.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     html = "<h3>My Chapter Title</h3>"
     title = decoder.get_chapter_title(html)
     assert title is None
@@ -177,7 +173,7 @@ def test_get_chapter_content_variations(
     """
     Parametrized test for get_chapter_content covering NO, YES, and SEARCH options.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     content = decoder.get_chapter_content(html, title_option, "Chapter")
     assert content.startswith(expected_startswith)
     assert "This is the content" in content
@@ -187,7 +183,7 @@ def test_get_chapter_content_no_content_raises(guide_file):
     """
     Should raise ContentExtractionError when no content is found.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     with pytest.raises(ContentExtractionError):
         decoder.get_chapter_content(
             "<div>No epcontent here</div>", TitleInContentOption.NO, "Chapter"
@@ -198,7 +194,7 @@ def test_toc_main_url_process_returns_input_by_default(guide_file):
     """
     When no custom processor is configured, toc_main_url_process should return the input URL.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     test_url = "https://test.com/test"
     assert decoder.toc_main_url_process(test_url) == test_url
 
@@ -207,7 +203,7 @@ def test_has_pagination_default_false(guide_file):
     """
     Verify that has_pagination returns False when not set in the Decode Guide.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file, request_config={})
+    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     assert decoder.has_pagination() is False
 
 

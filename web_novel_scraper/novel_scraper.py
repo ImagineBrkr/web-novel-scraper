@@ -72,7 +72,7 @@ class Novel:
     decoder: Optional[Decoder] = field(
         default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
-    config: Optional[ScraperConfig] = field(
+    scraper_config: Optional[ScraperConfig] = field(
         default=None, repr=False, compare=False, metadata=config(exclude=_always)
     )
 
@@ -111,27 +111,14 @@ class Novel:
 
     @classmethod
     def load(
-        cls, title: str, cfg: ScraperConfig, novel_base_dir: Path = None
+        cls, title: str, scraper_config: ScraperConfig, novel_base_dir: Path = None
     ) -> "Novel":
-        """
-        Loads a novel from stored JSON data.
-
-        Args:
-            title (str): Title of the novel to load.
-            cfg (ScraperConfig): Scraper configuration.
-            novel_base_dir (Path, optional): Base directory for the novel data.
-
-        Returns:
-            Novel: A new Novel instance loaded from stored data.
-
-        Raises:
-            ValidationError: If the novel with the given title is not found.
-        """
 
         if novel_base_dir is None:
             try:
                 novel_base_dir = NovelBaseDirHelper.get_novel_base_dir_from_meta(
-                    title=title, base_novels_dir=cfg.base_novels_dir
+                    title=title,
+                    base_novels_dir=scraper_config.config_options["base_novels_dir"],
                 )
             except NovelBaseDirError as e:
                 logger.debug("Traceback:", exc_info=True)
@@ -139,7 +126,7 @@ class Novel:
 
             if novel_base_dir is None:
                 raise NovelNotFoundError(
-                    f"Novel with Title {title} not found on base_novels_dir {cfg.base_novels_dir}"
+                    f"Novel with Title {title} not found on base_novels_dir {scraper_config.config_options['base_novels_dir']}"
                 )
 
         try:
@@ -161,13 +148,14 @@ class Novel:
                 f"Invalid Novel Data on Novel Data File {novel_base_dir}."
             ) from e
 
-        novel.cfg = cfg
+        novel.scraper_config = scraper_config
+        novel.scraper_config.set_host(host=novel.host)
 
         novel.novel_data_helper = NovelDataHelper(novel_base_dir=novel_base_dir)
 
         try:
             novel.decoder = Decoder(
-                novel.host, novel.cfg.decode_guide_file, novel.cfg.get_request_config()
+                novel.host, novel.scraper_config.config_options["decode_guide_file"]
             )
 
         except DecodeGuideError as e:
@@ -180,39 +168,26 @@ class Novel:
     def new(
         cls,
         title: str,
-        cfg: ScraperConfig,
+        scraper_config: ScraperConfig,
         toc_main_url: str,
         host: str = None,
         novel_base_dir: str = None,
     ) -> "Novel":
-        """Creates a new Novel instance.
-
-        Args:
-            title: Title of the novel (required)
-            cfg: Scraper configuration (required)
-            host: Host URL for the novel content (optional)
-            toc_main_url: URL for the table of contents (optional)
-
-        Note:
-            - Host will be extracted from toc_main_url it if not explicitly provided
-
-        Returns:
-            Novel: A new Novel instance
-        """
 
         novel = cls(title=title, host=host, toc_main_url=toc_main_url)
-        novel.config = cfg
+        novel.scraper_config = scraper_config
 
         # If toc_main_url is provided and the host isn't, extract host from URL
         if toc_main_url and not host:
             host = utils.obtain_host(toc_main_url)
             novel.host = host
-
+        novel.scraper_config.set_host(host=novel.host)
         try:
             Decoder(
                 host=novel.host,
-                decode_guide_file=novel.config.decode_guide_file,
-                request_config=novel.config.get_request_config(),
+                decode_guide_file=novel.scraper_config.config_options[
+                    "decode_guide_file"
+                ],
             )
         except DecodeGuideError as e:
             logger.debug("Traceback:", exc_info=True)
@@ -221,7 +196,10 @@ class Novel:
         if novel_base_dir is None:
             try:
                 novel_base_dir = NovelBaseDirHelper.get_novel_base_dir_from_meta(
-                    title=title, base_novels_dir=novel.config.base_novels_dir
+                    title=title,
+                    base_novels_dir=novel.scraper_config.config_options[
+                        "base_novels_dir"
+                    ],
                 )
             except NovelBaseDirError as e:
                 logger.debug("Traceback:", exc_info=True)
@@ -229,10 +207,12 @@ class Novel:
 
         if novel_base_dir is None:
             novel_base_dir = NovelBaseDirHelper.generate_novel_base_dir(
-                novel.title, novel.config.base_novels_dir
+                novel.title, novel.scraper_config.config_options["base_novels_dir"]
             )
             NovelBaseDirHelper.save_novel_dir_to_meta(
-                novel.title, novel_base_dir, novel.config.base_novels_dir
+                novel.title,
+                novel_base_dir,
+                novel.scraper_config.config_options["base_novels_dir"],
             )
 
         try:
@@ -809,11 +789,11 @@ class Novel:
                           None otherwise
 
         Note:
-            This method uses the decoder configuration and scraper behavior
+            This method uses the Configuration Options and scraper behavior
             to handle HTTP requests, including retries and timeouts.
         """
 
-        request_config = self.decoder.request_config
+        request_config = self.scraper_config.config_options["request_config"]
         force_flaresolver = (
             request_config.get("force_flaresolver")
             or self.scraper_behavior.force_flaresolver

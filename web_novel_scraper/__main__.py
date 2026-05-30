@@ -10,9 +10,11 @@ from web_novel_scraper.utils import (
     TitleInContentOption,
 )
 from web_novel_scraper.exceptions import (
+    InvalidTypeConfigError,
     ValidationError,
     ScraperError,
     NovelNotFoundError,
+    ParametersParseError,
 )
 from web_novel_scraper.version import __version__
 
@@ -76,10 +78,43 @@ def cli(ctx, **kwargs):
     ctx.obj = kwargs
 
 
-def obtain_novel(title, ctx_opts, allow_missing=False):
-    cfg = ScraperConfig(parameters=ctx_opts)
+def load_scraper_config(ctx_opts):
+    # TO BE MIGRATED TO NEW CONFIG LOGIC IN THE FUTURE
+    config_option_abbreviatures_helper = {
+        "force_flaresolver": "request_config.force_flaresolver",
+        "request_timeout": "request_config.request_timeout",
+        "request_retries": "request_config.request_retries",
+        "request_time_between_retries": "request_config.request_time_between_retries",
+    }
+    parameters = []
+    for key, value in ctx_opts.items():
+        if value is None:
+            continue
+        if key in config_option_abbreviatures_helper:
+            # Force Flaresolver is a flag and will be False when it is not present
+            # This will be fixed when we migrate to the new logic
+            if key == "force_flaresolver" and value is False:
+                continue
+            parameters.append({config_option_abbreviatures_helper[key]: value})
+            continue
+        parameters.append({key: value})
+
     try:
-        return Novel.load(title, cfg, ctx_opts.get("novel_base_dir"))
+        return ScraperConfig(parameters=parameters)
+    except ParametersParseError as e:
+        click.echo(f"Error with the Configuration Parameters: {str(e)}", err=True)
+        raise SystemExit(1)
+    except InvalidTypeConfigError as e:
+        click.echo(f"Error: {str(e)}", err=True)
+        raise SystemExit(1)
+
+
+def obtain_novel(title, ctx_opts, allow_missing=False):
+    cfg = load_scraper_config(ctx_opts=ctx_opts)
+    try:
+        return Novel.load(
+            title, scraper_config=cfg, novel_base_dir=ctx_opts.get("novel_base_dir")
+        )
     except NovelNotFoundError:
         if allow_missing:
             return None
@@ -236,12 +271,12 @@ def create_novel(
         )
         novel.delete_toc()
 
-    config = ScraperConfig(parameters=ctx.obj)
+    config = load_scraper_config(ctx_opts=ctx.obj)
 
     try:
         novel = Novel.new(
             title=title,
-            cfg=config,
+            scraper_config=config,
             host=host,
             toc_main_url=toc_main_url,
             novel_base_dir=ctx.obj.get("novel_base_dir"),
