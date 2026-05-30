@@ -1,5 +1,8 @@
 [build-system]
-requires = ["hatchling"]
+requires = [
+    "hatchling",
+    "hatch-vcs"
+]
 build-backend = "hatchling.build"
 
 [project]
@@ -39,7 +42,7 @@ Documentation = "https://web-novel-scraper.readthedocs.io"
 Repository = "https://github.com/ImagineBrkr/web-novel-scraper.git"
 
 [tool.hatch.version]
-path = "web_novel_scraper/version.py"
+source = "vcs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["web_novel_scraper"]

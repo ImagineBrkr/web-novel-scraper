@@ -1,8 +1,7 @@
 name: Build Artifacts
-on:
-    [workflow_call, workflow_dispatch]
+on: [workflow_call, workflow_dispatch]
 permissions:
-    contents: read
+  contents: read
 
 jobs:
   release-build:
@@ -18,6 +17,7 @@ jobs:
 
       - name: Build release distributions
         run: |
+          git fetch --tags
           python -m pip install build hatchling
           python -m build
 

@@ -9,7 +9,9 @@
 import sys
 
 sys.path.append("../..")
-from web_novel_scraper.version import __version__
+from importlib.metadata import version
+
+__version__ = version("web-novel-scraper")
 
 project = "Web Novel Scraper"
 copyright = "2025, ImagineBrkr"
