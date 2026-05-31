@@ -16,6 +16,7 @@ from web_novel_scraper.exceptions import (
     NovelNotFoundError,
     ParametersParseError,
 )
+from web_novel_scraper.export import NovelExporter
 from importlib.metadata import version
 
 __version__ = version("web-novel-scraper")
@@ -653,6 +654,64 @@ def save_novel_to_epub(
     if sync_toc:
         novel.sync_toc()
     novel.save_novel_to_epub(
+        start_chapter=start_chapter,
+        end_chapter=end_chapter,
+        chapters_by_book=chapters_by_book,
+    )
+    click.echo("All books saved.")
+
+
+@cli.command()
+@click.pass_context
+@title_option
+@sync_toc_option
+@click.option(
+    "--start-chapter",
+    type=int,
+    default=1,
+    show_default=True,
+    help="The start chapter for the books (position in the TOC, may differ from the actual number).",
+)
+@click.option(
+    "--end-chapter",
+    type=int,
+    default=None,
+    show_default=True,
+    help="The end chapter for the books (if not defined, every chapter will be saved).",
+)
+@click.option(
+    "--chapters-by-book",
+    type=int,
+    default=100,
+    show_default=True,
+    help="The number of chapters each book will have.",
+)
+def save_novel_to_html(
+    ctx, title, sync_toc, start_chapter, end_chapter, chapters_by_book
+):
+    """Save the novel to HTML format."""
+    if start_chapter <= 0:
+        raise click.BadParameter(
+            "Should be a positive number.", param_hint="--start-chapter"
+        )
+    if end_chapter is not None:
+        if end_chapter < start_chapter or end_chapter <= 0:
+            raise click.BadParameter(
+                "Should be a positive number and bigger than the start chapter.",
+                param_hint="--end-chapter",
+            )
+    if chapters_by_book is not None:
+        if chapters_by_book <= 0:
+            raise click.BadParameter(
+                "Should be a positive number.", param_hint="--chapters-by-book"
+            )
+
+    novel = obtain_novel(title, ctx.obj)
+    if sync_toc:
+        novel.sync_toc()
+    NovelExporter.export_novel_to_format(
+        novel=novel,
+        format="html",
         start_chapter=start_chapter,
         end_chapter=end_chapter,
         chapters_by_book=chapters_by_book,

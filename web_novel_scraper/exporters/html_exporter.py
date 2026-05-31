@@ -1,5 +1,6 @@
 from web_novel_scraper.novel_scraper import Novel
 from web_novel_scraper.models import Chapter
+from web_novel_scraper.exporters.exporter import BaseExporter
 from html import escape
 from pathlib import Path
 
@@ -167,95 +168,67 @@ HTML_TEMPLATE = """
 """
 
 
-def chapter_to_html(
-    chapter: Chapter,
-    active: bool = False,
-) -> str:
-    return f"""
-    <div class="chapter {"active" if active else ""}">
-        <h2>{escape(chapter.chapter_title)}</h2>
-        <p>{escape(chapter.chapter_content)}</p>
-    </div>
-    """
+class HTMLExporter(BaseExporter):
+    def export_novel(
+        novel: Novel,
+        chapters: list[Chapter],
+        output_path: str | Path,
+    ) -> None:
+        output_path = Path(str(output_path) + ".html")
 
-
-def generate_novel_html(
-    novel: Novel,
-    chapters: list[Chapter],
-) -> str:
-    chapters_html = "\n".join(
-        chapter_to_html(
-            chapter,
-            active=(i == 0),
-        )
-        for i, chapter in enumerate(chapters)
-    )
-
-    description_html = ""
-
-    if novel.metadata.description:
-        description_html = (
-            f"<div><strong>Descripción:</strong> {escape(novel.description)}</div>"
+        html = HTMLExporter._generate_novel_html(
+            novel=novel,
+            chapters=chapters,
         )
 
-    author_html = ""
-    if novel.metadata.author:
-        author_html = (f"<div><strong>Autor:</strong> {escape(novel.metadata.author)}</div>")
+        output_path.write_text(
+            html,
+            encoding="utf-8",
+        )
 
-    return HTML_TEMPLATE.format(
-        title=escape(novel.title),
-        author_html=author_html,
-        description_html=description_html,
-        chapters_html=chapters_html,
-    )
+        return output_path
 
+    @staticmethod
+    def _chapter_to_html(
+        chapter: Chapter,
+        active: bool = False,
+    ) -> str:
+        return f"""
+        <div class="chapter {"active" if active else ""}">
+            <h2>{escape(chapter.chapter_title)}</h2>
+            <p>{escape(chapter.chapter_content)}</p>
+        </div>
+        """
 
-def save_novel_html(
-    novel: Novel,
-    chapters: list[Chapter],
-    output_path: str | Path,
-) -> Path:
-    output_path = Path(output_path)
+    @staticmethod
+    def _generate_novel_html(
+        novel: Novel,
+        chapters: list[Chapter],
+    ) -> str:
+        chapters_html = "\n".join(
+            HTMLExporter._chapter_to_html(
+                chapter,
+                active=(i == 0),
+            )
+            for i, chapter in enumerate(chapters)
+        )
 
-    html = generate_novel_html(
-        novel=novel,
-        chapters=chapters,
-    )
+        description_html = ""
 
-    output_path.write_text(
-        html,
-        encoding="utf-8",
-    )
+        if novel.metadata.description:
+            description_html = (
+                f"<div><strong>Descripción:</strong> {escape(novel.description)}</div>"
+            )
 
-    return output_path
+        author_html = ""
+        if novel.metadata.author:
+            author_html = (
+                f"<div><strong>Autor:</strong> {escape(novel.metadata.author)}</div>"
+            )
 
-
-if __name__ == "__main__":
-    novel = Novel(
-        title="Mi Novela",
-        author="Autor Ejemplo",
-        description="Una novela de prueba.",
-    )
-
-    chapters = [
-        Chapter(
-            title="Capítulo 1",
-            content=("Aquí empieza la historia.\n\nEl protagonista despierta."),
-        ),
-        Chapter(
-            title="Capítulo 2",
-            content=("El viaje continúa.\n\nAparece un nuevo conflicto."),
-        ),
-        Chapter(
-            title="Capítulo 3",
-            content=("La situación empeora.\n\nTodo parece perdido."),
-        ),
-    ]
-
-    path = save_novel_html(
-        novel=novel,
-        chapters=chapters,
-        output_path="novela.html",
-    )
-
-    print(f"HTML generado en: {path.resolve()}")
+        return HTML_TEMPLATE.format(
+            title=escape(novel.title),
+            author_html=author_html,
+            description_html=description_html,
+            chapters_html=chapters_html,
+        )
