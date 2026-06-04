@@ -12,7 +12,7 @@ def update_version(current_version, increment):
     """
     try:
         # Find the current version using regex
-        match = re.search(r'(\d+)\.(\d+)\.(\d+)', current_version)
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", current_version)
         if not match:
             raise ValueError("Could not parse version")
 

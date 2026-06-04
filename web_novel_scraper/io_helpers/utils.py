@@ -177,6 +177,8 @@ class IOUtils:
     def get_path_in_dir(directory: Path | str, file_or_dir: str) -> Path:
         """Returns Path object for a file or directory inside a directory."""
         normalized_path = IOUtils._normalize_path(directory)
+        if normalized_path.exists():
+            IOUtils._validate_is_dir(normalized_path)
 
         return normalized_path / file_or_dir
 

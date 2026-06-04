@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field, replace
 
 from dataclasses_json import dataclass_json, Undefined, config
-from ebooklib import epub
 from typing import Optional
 from pathlib import Path
 
@@ -30,7 +29,6 @@ from web_novel_scraper.exceptions import (
     NovelDataError,
     ChapterFileNotFoundError,
     ChapterFileIsEmptyError,
-    CoverImageNotFoundError,
 )
 
 
@@ -1181,125 +1179,3 @@ class Novel:
 
         logger.debug("Chapter title and content successfully decoded from HTML")
         return chapter
-
-    def _create_epub_book(
-        self, book_title: str = None, calibre_collection: dict = None
-    ) -> epub.EpubBook:
-        book = epub.EpubBook()
-        if not book_title:
-            book_title = self.title
-        book.set_title(book_title)
-        book.set_language(self.metadata.language)
-        book.add_metadata("DC", "description", self.metadata.description)
-        book.add_metadata("DC", "subject", "Novela Web")
-        book.add_metadata("DC", "subject", "Scrapped")
-        if self.metadata.tags:
-            for tag in self.metadata.tags:
-                book.add_metadata("DC", "subject", tag)
-
-        if self.metadata.author:
-            book.add_author(self.metadata.author)
-
-        date_metadata = ""
-        if self.metadata.start_date:
-            date_metadata += self.metadata.start_date
-        # Calibre specification doesn't use end_date.
-        # For now, we use a custom metadata
-        # https://idpf.org/epub/31/spec/epub-packages.html#sec-opf-dcdate
-        # if self.metadata.end_date:
-        #     date_metadata += f'/{self.metadata.end_date}'
-        if self.metadata.end_date:
-            book.add_metadata(
-                "OPF",
-                "meta",
-                self.metadata.end_date,
-                {"name": "end_date", "content": self.metadata.end_date},
-            )
-        if date_metadata:
-            logger.debug(f"Using date_metadata {date_metadata}")
-            book.add_metadata("DC", "date", date_metadata)
-
-        # Collections with calibre
-        if calibre_collection:
-            book.add_metadata(
-                "OPF",
-                "meta",
-                "",
-                {"name": "calibre:series", "content": calibre_collection["title"]},
-            )
-            book.add_metadata(
-                "OPF",
-                "meta",
-                "",
-                {"name": "calibre:series_index", "content": calibre_collection["idx"]},
-            )
-
-        try:
-            cover_image_content = self.novel_data_helper.load_novel_cover()
-            book.set_cover("cover.jpg", cover_image_content)
-            book.spine += ["cover"]
-        except CoverImageNotFoundError:
-            logger.debug("No Cover Image was found.")
-
-        book.spine.append("nav")
-        return book
-
-    def _add_chapter_to_epub_book(self, chapter: Chapter, book: epub.EpubBook):
-        chapter = self.scrap_chapter(chapter)
-        if chapter is None:
-            logger.warning("Error reading chapter")
-            return None
-        self._add_or_update_chapter_data(chapter=chapter, save_in_file=False)
-        file_name = utils.generate_epub_file_name_from_title(chapter.chapter_title)
-
-        chapter_epub = epub.EpubHtml(title=chapter.chapter_title, file_name=file_name)
-        chapter_epub.set_content(chapter.chapter_content)
-        book.add_item(chapter_epub)
-        link = epub.Link(file_name, chapter.chapter_title, file_name.rstrip(".xhtml"))
-        toc = book.toc
-        toc.append(link)
-        book.toc = toc
-        book.spine.append(chapter_epub)
-        return book
-
-    def _save_chapters_to_epub(
-        self, start_chapter: int, end_chapter: int = None, collection_idx: int = None
-    ):
-        if start_chapter > len(self.chapters):
-            logger.error("start_chapter out of range")
-            return None
-        # If end_chapter is not set, we set it to idx_start + chapters_num - 1
-        if not end_chapter:
-            end_chapter = len(self.chapters)
-        # If end_chapter is out of range, we set it to the last chapter
-        if end_chapter > len(self.chapters):
-            end_chapter = len(self.chapters)
-
-        # We use a slice so every chapter starting from idx_start and before idx_end
-        idx_start = start_chapter - 1
-        idx_end = end_chapter
-        # We create the epub book
-        book_title = f"{self.title} Chapters {start_chapter} - {end_chapter}"
-        calibre_collection = None
-        # If collection_idx is set, we create a Calibre collection
-        if collection_idx:
-            calibre_collection = {"title": self.title, "idx": str(collection_idx)}
-        book = self._create_epub_book(book_title, calibre_collection)
-
-        for chapter in self.chapters[idx_start:idx_end]:
-            book = self._add_chapter_to_epub_book(chapter=chapter, book=book)
-            if book is None:
-                logger.critical(
-                    f"Error saving epub {book_title}, could not decode chapter {chapter} using host {self.host}"
-                )
-                return False
-
-        book.add_item(epub.EpubNcx())
-        book.add_item(epub.EpubNav())
-        try:
-            self.novel_data_helper.save_book(book, f"{book_title}.epub")
-        except NovelDataError as e:
-            logger.debug("Traceback:", exc_info=True)
-            raise ScraperError(e) from e
-        self.save_novel()
-        return True
