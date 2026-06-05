@@ -105,11 +105,9 @@ class ScraperConfig:
         self._env_variables_config_options = (
             ScraperConfig._parse_config_options_from_env_variables()
         )
-        print(self._env_variables_config_options)
         self._parameters_config_options = (
             ScraperConfig._parse_config_options_from_parameters(parameters)
         )
-        print(self._parameters_config_options)
 
         ## LOADING CONFIG FILE
 
