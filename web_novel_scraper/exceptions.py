@@ -255,3 +255,54 @@ class InvalidNovelBaseDirError(NovelBaseDirError):
 
 class InvalidMetaFileError(NovelBaseDirError):
     """Exception raised for invalid metadata file"""
+
+
+## EXPORT EXCEPTIONS
+
+
+class ExportError(ScraperError):
+    pass
+
+
+class ExportFormatNotSupportedError(ExportError):
+    pass
+
+
+class InvalidChapterRangeError(ExportError):
+    pass
+
+
+class InvalidStartChapterFromChapterRangeError(InvalidChapterRangeError):
+    pass
+
+
+class InvalidEndChapterFromChapterRangeError(InvalidChapterRangeError):
+    pass
+
+
+class InvalidChapterByBookFromChapterRangeError(InvalidChapterRangeError):
+    pass
+
+
+class InvalidOutputDirectoryError(ExportError):
+    pass
+
+
+class ExporterError(ExportError):
+    pass
+
+
+class SaveBookError(ExporterError):
+    pass
+
+
+class ExportChapterError(ExporterError):
+    pass
+
+
+class ChapterContentNotFoundError(ExportChapterError):
+    pass
+
+
+class ChapterTitleNotFoundError(ExportChapterError):
+    pass

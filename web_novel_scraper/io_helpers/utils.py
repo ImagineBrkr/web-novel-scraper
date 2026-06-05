@@ -2,6 +2,7 @@ import json
 import re
 
 from pathlib import Path
+import shutil
 from typing import Any
 
 from web_novel_scraper.logger_manager import create_logger
@@ -177,6 +178,8 @@ class IOUtils:
     def get_path_in_dir(directory: Path | str, file_or_dir: str) -> Path:
         """Returns Path object for a file or directory inside a directory."""
         normalized_path = IOUtils._normalize_path(directory)
+        if normalized_path.exists():
+            IOUtils._validate_is_dir(normalized_path)
 
         return normalized_path / file_or_dir
 
@@ -355,7 +358,7 @@ class IOUtils:
 
         try:
             normalized_dst_path.parent.mkdir(parents=True, exist_ok=True)
-            normalized_src_path.copy(normalized_dst_path)
+            shutil.copy(normalized_src_path,normalized_dst_path)
         except OSError as e:
             raise OSCustomError(
                 f"Failed to copy file from '{normalized_src_path}' to '{normalized_dst_path}'"

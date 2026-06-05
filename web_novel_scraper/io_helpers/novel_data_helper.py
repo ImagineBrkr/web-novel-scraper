@@ -1,5 +1,4 @@
 from pathlib import Path
-from ebooklib import epub
 from datetime import datetime, timezone
 # import unicodedata
 
@@ -203,28 +202,6 @@ class NovelDataHelper:
             ) from e
 
         return cover_image
-
-    # EPUB
-
-    def save_book(self, book: epub.EpubBook, filename: str) -> None:
-        book_path = self.novel_base_dir / filename
-        logger.debug(f"Attempting to save book to {book_path}")
-        try:
-            epub.write_epub(str(book_path), book)
-            logger.info(f"Book saved successfully to {book_path}")
-
-        except PermissionError as e:
-            raise SaveNovelDataError(
-                f"Permission denied when saving book to {book_path}: {e}"
-            ) from e
-        except OSError as e:
-            raise SaveNovelDataError(
-                f"OS error when saving book to {book_path}: {e}"
-            ) from e
-        except Exception as e:
-            raise SaveNovelDataError(
-                f"Unexpected error saving book to {book_path}: {e}"
-            ) from e
 
     ## TOC API
 
