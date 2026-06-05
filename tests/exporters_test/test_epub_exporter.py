@@ -347,7 +347,8 @@ class TestEPUBExporterSaveEpubBook:
         exporter.epub_book = epub.EpubBook()
         exporter.epub_book.set_title("Test Book")
 
-        with tempfile.TemporaryFile() as tmpfile:
+        with tempfile.NamedTemporaryFile() as tmpfile:
+            Path(tmpfile.name).write_text("test")
             invalid_path = Path(tmpfile.name) / "test_book.epub"
             with pytest.raises(SaveBookError):
                 exporter._save_epub_book(invalid_path)

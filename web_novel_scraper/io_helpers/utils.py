@@ -2,6 +2,7 @@ import json
 import re
 
 from pathlib import Path
+import shutil
 from typing import Any
 
 from web_novel_scraper.logger_manager import create_logger
@@ -357,7 +358,7 @@ class IOUtils:
 
         try:
             normalized_dst_path.parent.mkdir(parents=True, exist_ok=True)
-            normalized_src_path.copy(normalized_dst_path)
+            shutil.copy(normalized_src_path,normalized_dst_path)
         except OSError as e:
             raise OSCustomError(
                 f"Failed to copy file from '{normalized_src_path}' to '{normalized_dst_path}'"

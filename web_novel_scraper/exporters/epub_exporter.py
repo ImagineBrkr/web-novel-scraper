@@ -159,9 +159,14 @@ class EPUBExporter(BaseExporter):
                 f"The file '{output_path}' already exists and will be overwritten."
             )
         try:
-            epub.write_epub(
+            result = epub.write_epub(
                 str(output_path), self.epub_book, {"raise_exceptions": True}
             )
-            logger.info(f"Book '{self.book_title}' saved to file '{output_path}'.")
+            if result is True:
+                logger.info(f"Book '{self.book_title}' saved to file '{output_path}'.")
+            else:
+                raise SaveBookError(
+                    f"An unknown error ocurred while saving the book to '{output_path}'."
+                )
         except OSError or PermissionError as e:
             raise SaveBookError(f"Could not Save Book to {output_path}: {e}") from e

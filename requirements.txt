@@ -1,7 +1,7 @@
 python-dotenv==1.0.1
 requests==2.32.3
 bs4==0.0.2
-ebooklib==0.18
+ebooklib==0.20
 click==8.1.8
 platformdirs==4.3.6
 dataclasses_json==0.6.7

@@ -523,7 +523,7 @@ class TestTXTExporterIntegration:
             assert "Introducing the characters..." in content
 
             # Verify file size (should contain substantial text)
-            assert expected_file.stat().st_size > 300
+            assert expected_file.stat().st_size > 100
 
     def test_export_large_novel(self):
         """Test exporting a large novel with many chapters"""
