@@ -1,4 +1,5 @@
 from web_novel_scraper.exporters.html_exporter import HTMLExporter
+from web_novel_scraper.exporters.txt_exporter import TXTExporter
 from web_novel_scraper.novel_scraper import Novel
 from web_novel_scraper.logger_manager import create_logger
 from web_novel_scraper.exceptions import (
@@ -16,7 +17,7 @@ logger = create_logger(__name__)
 
 # HTML
 
-EXPORTERS = {"epub": EPUBExporter, "html": HTMLExporter}
+EXPORTERS = {"epub": EPUBExporter, "html": HTMLExporter, "txt": TXTExporter}
 
 
 class NovelExporter:
