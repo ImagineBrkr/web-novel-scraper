@@ -188,7 +188,7 @@ class IOUtils:
     @staticmethod
     def sanitize_name_to_valid_path(name: str) -> str:
         """Replace invalid file name characters with underscores (Windows compatibility).
-        
+
         Characters replaced: \ / : * ? " < > |
         """
         # Windows forbidden characters: \ / : * ? " < > |
@@ -360,7 +360,7 @@ class IOUtils:
 
         try:
             normalized_dst_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(normalized_src_path,normalized_dst_path)
+            shutil.copy(normalized_src_path, normalized_dst_path)
         except OSError as e:
             raise OSCustomError(
                 f"Failed to copy file from '{normalized_src_path}' to '{normalized_dst_path}'"

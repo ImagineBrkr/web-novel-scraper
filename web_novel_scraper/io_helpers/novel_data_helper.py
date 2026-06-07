@@ -80,9 +80,7 @@ class NovelDataHelper:
     @staticmethod
     def load_novel_data(novel_base_dir: Path | str) -> dict:
         try:
-            novel_data_dir_path = IOUtils.get_path_in_dir(
-                novel_base_dir, "data"
-            )
+            novel_data_dir_path = IOUtils.get_path_in_dir(novel_base_dir, "data")
             novel_data_file_path = IOUtils.get_path_in_dir(
                 novel_data_dir_path, "main.json"
             )

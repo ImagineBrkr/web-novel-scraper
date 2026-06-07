@@ -145,7 +145,9 @@ class EPUBExporter(BaseExporter):
         chapter_epub.set_content(chapter.chapter_content)
         self.epub_book.add_item(chapter_epub)
 
-        link = epub.Link(file_name, chapter.chapter_title, file_name.removesuffix(".xhtml"))
+        link = epub.Link(
+            file_name, chapter.chapter_title, file_name.removesuffix(".xhtml")
+        )
         toc = self.epub_book.toc
         toc.append(link)
         self.epub_book.toc = toc

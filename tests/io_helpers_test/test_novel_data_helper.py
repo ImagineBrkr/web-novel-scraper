@@ -171,7 +171,7 @@ class TestLoadNovelData:
         novel_data_path = temp_novel_dir / "data"
         novel_data_path.mkdir(parents=True, exist_ok=True)
         json_data_path = novel_data_path / "main.json"
-        
+
         json_data_path.write_text(json.dumps(sample_novel_data))
 
         # Load the data using the static method
