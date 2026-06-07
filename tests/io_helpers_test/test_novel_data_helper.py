@@ -165,6 +165,19 @@ class TestLoadNovelData:
         loaded_data = NovelDataHelper.load_novel_data(temp_novel_dir)
         assert loaded_data == sample_novel_data
 
+    def test_load_novel_from_existent_file(self, temp_novel_dir, sample_novel_data):
+        """Test loading novel data from existing file successfully."""
+        # Create the data directory structure and save some data
+        novel_data_path = temp_novel_dir / "data"
+        novel_data_path.mkdir(parents=True, exist_ok=True)
+        json_data_path = novel_data_path / "main.json"
+        
+        json_data_path.write_text(json.dumps(sample_novel_data))
+
+        # Load the data using the static method
+        loaded_data = NovelDataHelper.load_novel_data(temp_novel_dir)
+        assert loaded_data == sample_novel_data
+
     def test_load_novel_data_nonexistent_raises_error(self, temp_novel_dir):
         """Test loading novel data from nonexistent file raises NovelDataNotFoundError."""
         with pytest.raises(NovelDataNotFoundError):

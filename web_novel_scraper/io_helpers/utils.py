@@ -181,16 +181,18 @@ class IOUtils:
         if normalized_path.exists():
             IOUtils._validate_is_dir(normalized_path)
 
+        file_or_dir = IOUtils.sanitize_name_to_valid_path(file_or_dir)
+
         return normalized_path / file_or_dir
 
     @staticmethod
-    def sanitize_dirname(name: str) -> str:
-        """Replace invalid directory name characters with underscores, preserving spaces."""
-        # Collapse multiple spaces into a single space (optional; comment out if not desired)
-        name = re.sub(r"\s+", " ", name.strip())
-
-        # Replace any char that is *not* letter, digit, underscore, hyphen, or space.
-        return re.sub(r"[^\w\-\s]", "_", name)
+    def sanitize_name_to_valid_path(name: str) -> str:
+        """Replace invalid file name characters with underscores (Windows compatibility).
+        
+        Characters replaced: \ / : * ? " < > |
+        """
+        # Windows forbidden characters: \ / : * ? " < > |
+        return re.sub(r'[\\/:\*\?"<>\|]', "_", name)
 
     @staticmethod
     def list_files_from_dir(dir: Path | str, glob: str = "*") -> list[Path]:
