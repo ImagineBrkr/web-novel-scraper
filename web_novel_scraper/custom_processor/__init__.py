@@ -14,6 +14,7 @@ from web_novel_scraper.custom_processor.sites import (
     syosetu,
     kakuyomu,
     shuba,
+    botitranslation,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "CustomProcessor",
     "ProcessorRegistry",
     "shuba",
+    "botitranslation",
 ]
