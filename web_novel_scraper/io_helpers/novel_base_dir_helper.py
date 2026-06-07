@@ -71,7 +71,7 @@ class NovelBaseDirHelper:
 
     @staticmethod
     def generate_novel_base_dir(title: str, base_novels_dir: str) -> str:
-        clean_title = IOUtils.sanitize_dirname(title)
+        clean_title = IOUtils.sanitize_name_to_valid_path(title)
         try:
             novel_base_dir = str(IOUtils.get_path_in_dir(base_novels_dir, clean_title))
         except IOUtilsError as e:

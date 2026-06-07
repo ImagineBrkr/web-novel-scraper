@@ -57,12 +57,12 @@ class EPUBExporter(BaseExporter):
 
         self.epub_book.add_item(epub.EpubNcx())
         self.epub_book.add_item(epub.EpubNav())
-        self.epub_book.spine.append("nav")
 
         self._save_epub_book(output_path)
 
     def _create_epub_book(self) -> None:
         self.epub_book = epub.EpubBook()
+        self.epub_book.spine.append("nav")
         self.epub_book.set_title(self.book_title)
 
     def _add_metadata(self) -> None:
@@ -139,13 +139,13 @@ class EPUBExporter(BaseExporter):
                 f'Chapter with url "{chapter.chapter_url} has no title or has not been scrapped yet.'
             )
 
-        file_name = chapter.chapter_html_filename.replace(".html", "xhtml")
+        file_name = chapter.chapter_html_filename.replace(".html", ".xhtml")
 
         chapter_epub = epub.EpubHtml(title=chapter.chapter_title, file_name=file_name)
         chapter_epub.set_content(chapter.chapter_content)
         self.epub_book.add_item(chapter_epub)
 
-        link = epub.Link(file_name, chapter.chapter_title, file_name.rstrip(".xhtml"))
+        link = epub.Link(file_name, chapter.chapter_title, file_name.removesuffix(".xhtml"))
         toc = self.epub_book.toc
         toc.append(link)
         self.epub_book.toc = toc

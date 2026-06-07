@@ -654,64 +654,52 @@ class TestGetPathInDir:
 
 
 # ============================================================================
-# sanitize_dirname tests
+# sanitize_name_to_valid_path tests
 # ============================================================================
 
 
 class TestSanitizeDirname:
-    """Tests for IOUtils.sanitize_dirname()"""
+    """Tests for IOUtils.sanitize_name_to_valid_path()"""
 
     def test_valid_dirname_unchanged(self):
         """Test that valid dirname is not changed"""
         name = "my_folder-123"
-        assert IOUtils.sanitize_dirname(name) == name
+        assert IOUtils.sanitize_name_to_valid_path(name) == name
 
     def test_remove_special_characters(self):
         """Test removing special characters"""
-        name = "folder@#$%name"
-        result = IOUtils.sanitize_dirname(name)
-        assert result == "folder____name"
+        name = 'folder"<>name'
+        result = IOUtils.sanitize_name_to_valid_path(name)
+        assert result == "folder___name"
 
     def test_keep_spaces(self):
         """Test keeping spaces"""
         name = "folder with spaces"
-        result = IOUtils.sanitize_dirname(name)
+        result = IOUtils.sanitize_name_to_valid_path(name)
         assert result == "folder with spaces"
-
-    def test_collapse_multiple_spaces(self):
-        """Test collapsing multiple spaces"""
-        name = "folder   with   multiple   spaces"
-        result = IOUtils.sanitize_dirname(name)
-        assert result == "folder with multiple spaces"
 
     def test_keep_hyphens_and_underscores(self):
         """Test keeping hyphens and underscores"""
         name = "folder-name_test"
-        result = IOUtils.sanitize_dirname(name)
+        result = IOUtils.sanitize_name_to_valid_path(name)
         assert result == "folder-name_test"
 
     def test_keep_digits_and_letters(self):
         """Test keeping digits and letters"""
         name = "folder123ABC"
-        result = IOUtils.sanitize_dirname(name)
+        result = IOUtils.sanitize_name_to_valid_path(name)
         assert result == "folder123ABC"
-
-    def test_strip_leading_trailing_spaces(self):
-        """Test stripping leading and trailing spaces"""
-        name = "  folder name  "
-        result = IOUtils.sanitize_dirname(name)
-        assert result == "folder name"
 
     def test_empty_string(self):
         """Test with empty string"""
         name = ""
-        result = IOUtils.sanitize_dirname(name)
+        result = IOUtils.sanitize_name_to_valid_path(name)
         assert result == ""
 
     def test_only_special_chars(self):
         """Test string with only special characters"""
-        name = "@#$%^&*()"
-        result = IOUtils.sanitize_dirname(name)
+        name = '/\\:*?"<>|'
+        result = IOUtils.sanitize_name_to_valid_path(name)
         assert result == "_________"
 
 

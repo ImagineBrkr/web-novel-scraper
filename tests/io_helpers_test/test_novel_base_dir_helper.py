@@ -285,14 +285,13 @@ class TestGenerateNovelBaseDir:
     def test_generate_title_with_special_chars(self, tmp_path):
         """Test generating directory name sanitizes special characters."""
         result = NovelBaseDirHelper.generate_novel_base_dir(
-            "My Novel @#$% [Special]", str(tmp_path)
+            "My Novel <>| [Special]", str(tmp_path)
         )
 
         # Should not contain invalid path characters
-        assert "@" not in result
-        assert "#" not in result
-        assert "$" not in result
-        assert "%" not in result
+        assert "<" not in result
+        assert ">" not in result
+        assert "|" not in result
 
     def test_generate_title_returns_path_string(self, tmp_path):
         """Test that result is a valid path string."""
