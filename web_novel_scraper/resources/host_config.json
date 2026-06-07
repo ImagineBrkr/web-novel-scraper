@@ -53,5 +53,12 @@
         "request_config": {
             "force_flaresolver": true
         }
+    },
+    "botitranslation.com": {
+        "request_config": {
+            "force_flaresolver": false,
+            "request_retries": 6,
+            "request_time_between_retries": 6
+        }
     }
 }

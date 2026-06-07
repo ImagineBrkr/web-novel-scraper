@@ -691,5 +691,20 @@
         "key": "href"
       }
     }
+  },
+  {
+    "host": "botitranslation.com",
+    "has_pagination": false,
+    "title_in_content": "YES",
+    "toc_main_url_processor": true,
+    "title": {
+      "use_custom_processor": true
+    },
+    "content": {
+      "use_custom_processor": true
+    },
+    "index": {
+      "use_custom_processor": true
+    }
   }
 ]
