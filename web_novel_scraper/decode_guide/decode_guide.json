@@ -5,11 +5,9 @@
     "title_in_content": "YES",
     "title": {
       "element": "h4",
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": false
+      "extract": {
+        "type": "text"
+      }
     },
     "content": {
       "element": "p",
@@ -37,7 +35,11 @@
       "class": null,
       "selector": "div.page > a.index-container-btn[href*='novellive']:nth-last-of-type(2)",
       "attributes": null,
-      "array": true
+      "array": false,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
     }
   },
   {
@@ -253,7 +255,7 @@
       }
     },
     "next_page": {
-      "selector": "a:has(span:contains('Next'))",
+      "selector": "a:has(span:-soup-contains('Next'))",
       "array": false,
       "extract": {
         "type": "attr",
@@ -264,7 +266,7 @@
   {
     "host": "scribblehub.com",
     "title_in_content": "YES",
-    "has_pagination": true,
+    "has_pagination": false,
     "title": {
       "selector": "div.chapter-title",
       "extract": {
@@ -283,14 +285,6 @@
         "type": "attr",
         "key": "href"
       }
-    },
-    "next_page": {
-      "selector": "div ul#pagination-mesh-toc li a.next",
-      "array": false,
-      "extract": {
-        "type": "attr",
-        "key": "href"
-      }
     }
   },
   {
@@ -299,6 +293,7 @@
     "has_pagination": false,
     "title": {
       "element": "h2",
+      "class": "chapter-title",
       "extract": {
         "type": "text"
       }
@@ -467,7 +462,10 @@
     "title_in_content": "NO",
     "has_pagination": true,
     "title": {
-      "use_custom_processor": true
+      "element": "h3",
+      "extract": {
+        "type": "text"
+      }
     },
     "content": {
       "element": "div",
