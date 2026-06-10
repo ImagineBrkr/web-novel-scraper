@@ -200,37 +200,6 @@
     }
   },
   {
-    "host": "genesistudio.com",
-    "has_pagination": false,
-    "title_in_content": "YES",
-    "title": {
-      "element": null,
-      "id": null,
-      "class": null,
-      "selector": "p.leading-none span",
-      "attributes": null,
-      "array": true,
-      "extract": {
-        "type": "text",
-        "key": "text"
-      }
-    },
-    "content": {
-      "use_custom_processor": true
-    },
-    "index": {
-      "use_custom_processor": true
-    },
-    "next_page": {
-      "element": null,
-      "id": null,
-      "class": null,
-      "selector": null,
-      "attributes": null,
-      "array": true
-    }
-  },
-  {
     "host": "hostednovel.com",
     "has_pagination": true,
     "title_in_content": "YES",
