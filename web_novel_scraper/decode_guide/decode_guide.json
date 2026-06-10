@@ -410,31 +410,6 @@
     }
   },
   {
-    "host": "mtlnovels.com",
-    "toc_main_url_processor": true,
-    "title_in_content": "YES",
-    "title": {
-      "element": "h1",
-      "extract": {
-        "type": "text"
-      }
-    },
-    "content": {
-      "element": "div",
-      "class": "par"
-    },
-    "index": {
-      "element": "a",
-      "class": "ch-link",
-      "array": true,
-      "inverted": true,
-      "extract": {
-        "type": "attr",
-        "key": "href"
-      }
-    }
-  },
-  {
     "host": "empirenovel.com",
     "title_in_content": "NO",
     "has_pagination": true,
