@@ -410,29 +410,6 @@
     }
   },
   {
-    "host": "pandamtl.com",
-    "title_in_content": "NO",
-    "title": {
-      "element": "h2",
-      "extract": {
-        "type": "text"
-      }
-    },
-    "content": {
-      "element": "div",
-      "class": "epcontent"
-    },
-    "index": {
-      "selector": "div.eplister ul li a",
-      "inverted": true,
-      "array": true,
-      "extract": {
-        "type": "attr",
-        "key": "href"
-      }
-    }
-  },
-  {
     "host": "mtlnovels.com",
     "toc_main_url_processor": true,
     "title_in_content": "YES",
