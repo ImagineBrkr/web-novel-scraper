@@ -4,13 +4,10 @@ from web_novel_scraper.custom_processor.custom_processor import (
 )
 from web_novel_scraper.custom_processor.sites import (
     royalroad,
-    genesis,
     fanmtl,
-    novelhi,
     novelbin,
     mtlnovels,
     novelingua,
-    empirenovel,
     syosetu,
     kakuyomu,
     shuba,
@@ -19,13 +16,10 @@ from web_novel_scraper.custom_processor.sites import (
 
 __all__ = [
     "royalroad",
-    "genesis",
     "fanmtl",
-    "novelhi",
     "novelbin",
     "mtlnovels",
     "novelingua",
-    "empirenovel",
     "syosetu",
     "kakuyomu",
     "CustomProcessor",
