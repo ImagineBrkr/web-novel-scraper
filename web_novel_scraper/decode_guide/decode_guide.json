@@ -332,26 +332,6 @@
     }
   },
   {
-    "host": "novelhi.com",
-    "has_pagination": false,
-    "title_in_content": "YES",
-    "toc_main_url_processor": true,
-    "title": {
-      "element": "h1",
-      "extract": {
-        "type": "text"
-      }
-    },
-    "content": {
-      "element": "div",
-      "class": "readBox",
-      "array": true
-    },
-    "index": {
-      "use_custom_processor": true
-    }
-  },
-  {
     "host": "fanmtl.com",
     "has_pagination": true,
     "add_host_to_chapter": true,
