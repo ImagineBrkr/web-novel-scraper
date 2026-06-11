@@ -773,42 +773,42 @@ def save_novel_to_txt(
 # UTILS
 
 
-@cli.command()
-@click.pass_context
-@title_option
-@click.option(
-    "--clean-chapters",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="If the chapters HTML files are cleaned.",
-)
-@click.option(
-    "--clean-toc",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="If the TOC files are cleaned.",
-)
-@click.option(
-    "--hard-clean",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="If the files are more deeply cleaned.",
-)
-def clean_files(ctx, title, clean_chapters, clean_toc, hard_clean):
-    """Clean files of a novel."""
-    if not clean_chapters and not clean_toc:
-        click.echo(
-            "You must choose at least one of the options: --clean-chapters, --clean-toc.",
-            err=True,
-        )
-        return
-    novel = obtain_novel(title, ctx.obj)
-    novel.clean_files(
-        clean_chapters=clean_chapters, clean_toc=clean_toc, hard_clean=hard_clean
-    )
+# @cli.command()
+# @click.pass_context
+# @title_option
+# @click.option(
+#     "--clean-chapters",
+#     is_flag=True,
+#     default=False,
+#     show_default=True,
+#     help="If the chapters HTML files are cleaned.",
+# )
+# @click.option(
+#     "--clean-toc",
+#     is_flag=True,
+#     default=False,
+#     show_default=True,
+#     help="If the TOC files are cleaned.",
+# )
+# @click.option(
+#     "--hard-clean",
+#     is_flag=True,
+#     default=False,
+#     show_default=True,
+#     help="If the files are more deeply cleaned.",
+# )
+# def clean_files(ctx, title, clean_chapters, clean_toc, hard_clean):
+#     """Clean files of a novel."""
+#     if not clean_chapters and not clean_toc:
+#         click.echo(
+#             "You must choose at least one of the options: --clean-chapters, --clean-toc.",
+#             err=True,
+#         )
+#         return
+#     novel = obtain_novel(title, ctx.obj)
+#     novel.clean_files(
+#         clean_chapters=clean_chapters, clean_toc=clean_toc, hard_clean=hard_clean
+#     )
 
 
 @cli.command()
