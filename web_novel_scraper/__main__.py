@@ -606,7 +606,6 @@ def show_chapters(ctx, title):
     """Show chapters of a novel."""
     novel = obtain_novel(title, ctx.obj)
     click.echo(novel.show_chapters())
-    click.echo(f"Config file: {ctx.obj['CONFIG_FILE']}")
 
 
 @cli.command()
