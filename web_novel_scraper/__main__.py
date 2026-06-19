@@ -501,15 +501,15 @@ def set_toc_main_url(ctx, title, toc_main_url):
 def sync_toc(ctx, title, reload_files):
     """Sync the TOC of a novel."""
     novel = obtain_novel(title, ctx.obj)
-    if novel.sync_toc(reload_files=reload_files):
-        click.echo(
-            "Table of Contents synced with files, to see the new TOC use the command show-toc."
-        )
-    else:
-        click.echo(
-            "Error with the TOC syncing, please check the TOC files and decoding options.",
-            err=True,
-        )
+    try:
+        novel.sync_toc(reload_files=reload_files)
+    except ScraperError as e:
+        click.echo(f"Error: {str(e)}", err=True)
+        raise SystemExit(1)
+    click.echo(
+        "Table of Contents synced with files, to see the new TOC use the command show-toc."
+    )
+
     novel.save_novel()
 
 
@@ -593,7 +593,11 @@ def request_all_chapters(ctx, title, sync_toc, update_html, clean_chapters):
     """Request all chapters of a novel."""
     novel = obtain_novel(title, ctx.obj)
     if sync_toc:
-        novel.sync_toc(reload_files=update_html)
+        try:
+            novel.sync_toc()
+        except ScraperError as e:
+            click.echo(f"Error: {str(e)}", err=True)
+            raise SystemExit(1)
     novel.request_all_chapters(reload_files=update_html, clean_chapters=clean_chapters)
     novel.save_novel()
     click.echo("All chapters requested and saved.")
@@ -606,7 +610,6 @@ def show_chapters(ctx, title):
     """Show chapters of a novel."""
     novel = obtain_novel(title, ctx.obj)
     click.echo(novel.show_chapters())
-    click.echo(f"Config file: {ctx.obj['CONFIG_FILE']}")
 
 
 @cli.command()
@@ -641,7 +644,11 @@ def save_novel_to_epub(
 
     novel = obtain_novel(title, ctx.obj)
     if sync_toc:
-        novel.sync_toc()
+        try:
+            novel.sync_toc()
+        except ScraperError as e:
+            click.echo(f"Error: {str(e)}", err=True)
+            raise SystemExit(1)
     try:
         NovelExporter.export_novel_to_format(
             novel=novel,
@@ -695,7 +702,11 @@ def save_novel_to_html(
 
     novel = obtain_novel(title, ctx.obj)
     if sync_toc:
-        novel.sync_toc()
+        try:
+            novel.sync_toc()
+        except ScraperError as e:
+            click.echo(f"Error: {str(e)}", err=True)
+            raise SystemExit(1)
     try:
         NovelExporter.export_novel_to_format(
             novel=novel,
@@ -749,7 +760,11 @@ def save_novel_to_txt(
 
     novel = obtain_novel(title, ctx.obj)
     if sync_toc:
-        novel.sync_toc()
+        try:
+            novel.sync_toc()
+        except ScraperError as e:
+            click.echo(f"Error: {str(e)}", err=True)
+            raise SystemExit(1)
     try:
         NovelExporter.export_novel_to_format(
             novel=novel,
@@ -774,42 +789,42 @@ def save_novel_to_txt(
 # UTILS
 
 
-@cli.command()
-@click.pass_context
-@title_option
-@click.option(
-    "--clean-chapters",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="If the chapters HTML files are cleaned.",
-)
-@click.option(
-    "--clean-toc",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="If the TOC files are cleaned.",
-)
-@click.option(
-    "--hard-clean",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="If the files are more deeply cleaned.",
-)
-def clean_files(ctx, title, clean_chapters, clean_toc, hard_clean):
-    """Clean files of a novel."""
-    if not clean_chapters and not clean_toc:
-        click.echo(
-            "You must choose at least one of the options: --clean-chapters, --clean-toc.",
-            err=True,
-        )
-        return
-    novel = obtain_novel(title, ctx.obj)
-    novel.clean_files(
-        clean_chapters=clean_chapters, clean_toc=clean_toc, hard_clean=hard_clean
-    )
+# @cli.command()
+# @click.pass_context
+# @title_option
+# @click.option(
+#     "--clean-chapters",
+#     is_flag=True,
+#     default=False,
+#     show_default=True,
+#     help="If the chapters HTML files are cleaned.",
+# )
+# @click.option(
+#     "--clean-toc",
+#     is_flag=True,
+#     default=False,
+#     show_default=True,
+#     help="If the TOC files are cleaned.",
+# )
+# @click.option(
+#     "--hard-clean",
+#     is_flag=True,
+#     default=False,
+#     show_default=True,
+#     help="If the files are more deeply cleaned.",
+# )
+# def clean_files(ctx, title, clean_chapters, clean_toc, hard_clean):
+#     """Clean files of a novel."""
+#     if not clean_chapters and not clean_toc:
+#         click.echo(
+#             "You must choose at least one of the options: --clean-chapters, --clean-toc.",
+#             err=True,
+#         )
+#         return
+#     novel = obtain_novel(title, ctx.obj)
+#     novel.clean_files(
+#         clean_chapters=clean_chapters, clean_toc=clean_toc, hard_clean=hard_clean
+#     )
 
 
 @cli.command()

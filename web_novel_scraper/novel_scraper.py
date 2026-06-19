@@ -9,7 +9,7 @@ from web_novel_scraper.io_helpers.novel_base_dir_helper import NovelBaseDirHelpe
 from web_novel_scraper.io_helpers.novel_data_helper import NovelDataHelper
 from web_novel_scraper.decode import Decoder
 from web_novel_scraper import utils
-from web_novel_scraper.request_manager import get_html_content
+from web_novel_scraper.request_helper import RequestHelper
 from web_novel_scraper.config_manager import ScraperConfig
 from web_novel_scraper.models import ScraperBehavior, Metadata, Chapter
 from web_novel_scraper.utils import (
@@ -17,8 +17,8 @@ from web_novel_scraper.utils import (
     TitleInContentOption,
 )
 from web_novel_scraper.exceptions import (
+    RequestError,
     ScraperError,
-    NetworkError,
     ValidationError,
     DecodeError,
     DecodeGuideError,
@@ -403,13 +403,11 @@ class Novel:
         reload_files = reload_files or all_tocs_content is None
         if reload_files:
             logger.debug("Reloading TOC files.")
+
             try:
                 self._request_toc_files()
             except DecodeError as e:
                 logger.error("Could not request TOC files. Decoder Error", exc_info=e)
-                raise
-            except NetworkError as e:
-                logger.error("Could not request TOC files. Network Error", exc_info=e)
                 raise
 
         try:
@@ -544,28 +542,19 @@ class Novel:
             logger.debug("Reload file Flag present, HTML will be requested...")
 
         try:
-            chapter = self._load_or_request_chapter(chapter, reload_file=reload_file)
+            with self._initialize_request_helper() as self.request_helper:
+                chapter = self._load_or_request_chapter(
+                    chapter, reload_file=reload_file
+                )
         except ValidationError as e:
             logger.error(
                 f'Could get chapter for URL "{chapter.chapter_url}" HTML content. Validation Error',
                 exc_info=e,
             )
             raise
-
-        except NetworkError as e:
-            logger.error(
-                f'Could get chapter for URL "{chapter.chapter_url}" HTML content. Network Error',
-                exc_info=e,
-            )
-            raise
-
-        if not chapter.chapter_html:
-            logger.error(
-                f'Could not get HTML content for chapter with URL "{chapter.chapter_url}"'
-            )
-            raise ScraperError(
-                f'Could not get HTML content for chapter with URL "{chapter.chapter_url}"'
-            )
+        except RequestError as e:
+            logger.debug("Traceback: ", exc_info=True)
+            raise ScraperError(e) from e
 
         # We get the chapter title and content
         # We pass an index so we can autogenerate a Title
@@ -621,120 +610,68 @@ class Novel:
         """
 
         logger.debug("Requesting all chapters...")
-
         if len(self.chapters_url_list) == 0:
             logger.warning("No chapters in TOC, returning without requesting any...")
             return None
 
-        # We request the HTML files of all the chapters
-        # The chapter will be requested again if:
-        # 1. Reload files flag is True (Requested by user)
-        # 2. Chapter doesn't have a chapter_html_filename, or the HTML file does not exist
-        chapters_obtained = 0
-        total_chapters = len(self.chapters)
-        for i in range(len(self.chapters)):
-            request_chapter = reload_files
-            if self.chapters[i].chapter_html_filename is None:
-                logger.debug(
-                    f"No HTML file name for chapter {i + 1} of {total_chapters}, requesting..."
-                )
-                request_chapter = True
-            else:
-                chapter_file_exists = self.novel_data_helper.chapter_file_exists(
-                    chapter_file=self.chapters[i].chapter_html_filename
-                )
-                if not chapter_file_exists:
+        with self._initialize_request_helper() as self.request_helper:
+            # We request the HTML files of all the chapters
+            # The chapter will be requested again if:
+            # 1. Reload files flag is True (Requested by user)
+            # 2. Chapter doesn't have a chapter_html_filename, or the HTML file does not exist
+            chapters_obtained = 0
+            total_chapters = len(self.chapters)
+            for i in range(len(self.chapters)):
+                request_chapter = reload_files
+                if self.chapters[i].chapter_html_filename is None:
                     logger.debug(
-                        f"File for chapter {i + 1} of {total_chapters} does not exist, requesting..."
+                        f"No HTML file name for chapter {i + 1} of {total_chapters}, requesting..."
                     )
                     request_chapter = True
+                else:
+                    chapter_file_exists = self.novel_data_helper.chapter_file_exists(
+                        chapter_file=self.chapters[i].chapter_html_filename
+                    )
+                    if not chapter_file_exists:
+                        logger.debug(
+                            f"File for chapter {i + 1} of {total_chapters} does not exist, requesting..."
+                        )
+                        request_chapter = True
 
-            if request_chapter:
-                logger.info(f"Requesting chapter {i + 1} of {total_chapters}")
-                try:
-                    self.chapters[i] = self._load_or_request_chapter(
-                        chapter=self.chapters[i], reload_file=reload_files
-                    )
-                except ValidationError:
-                    logger.warning(
-                        f"Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping..."
-                    )
-                    continue
-                except NetworkError:
-                    logger.warning(
-                        f"Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping..."
-                    )
-                    continue
+                if request_chapter:
+                    logger.info(f"Requesting chapter {i + 1} of {total_chapters}")
+                    try:
+                        self.chapters[i] = self._load_or_request_chapter(
+                            chapter=self.chapters[i], reload_file=reload_files
+                        )
+                    except ValidationError:
+                        logger.warning(
+                            f"Error validating chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping..."
+                        )
+                        continue
+                    except RequestError:
+                        logger.warning(
+                            f"Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}, Skipping..."
+                        )
+                        continue
 
-                if not self.chapters[i].chapter_html:
-                    logger.warning(
-                        f"Error requesting chapter {i + 1} with url {self.chapters[i].chapter_url}"
+                    if clean_chapters:
+                        self._clean_chapter(self.chapters[i].chapter_html_filename)
+                    try:
+                        self.save_novel()
+                    except NovelDataError as e:
+                        logger.warning(
+                            f"Error when trying to Save Novel Data: {str(e)}. Requests will continue anyway."
+                        )
+                else:
+                    logger.debug(
+                        f"Chapter {i + 1} of {total_chapters} already requested, skipping..."
                     )
-                    continue
-
-                if clean_chapters:
-                    self._clean_chapter(self.chapters[i].chapter_html_filename)
-                try:
-                    self.save_novel()
-                except NovelDataError as e:
-                    logger.warning(
-                        f"Error when trying to Save Novel Data: {str(e)}. Requests will continue anyway."
-                    )
-            else:
-                logger.debug(
-                    f"Chapter {i + 1} of {total_chapters} already requested, skipping..."
-                )
-            chapters_obtained += 1
+                chapters_obtained += 1
         logger.info(
             f"Successfully requested {chapters_obtained} of {total_chapters} chapters."
         )
         return None
-
-    # EPUB CREATION
-
-    def save_novel_to_epub(
-        self,
-        start_chapter: int = 1,
-        end_chapter: int = None,
-        chapters_by_book: int = 100,
-    ) -> None:
-        logger.debug("Saving novel to epub...")
-
-        if start_chapter < 1:
-            logger.error("Start chapter is invalid.")
-            raise ValidationError("Start chapter is invalid.")
-
-        if start_chapter > len(self.chapters):
-            logger.error(
-                f"The start chapter is bigger than the number of chapters saved ({len(self.chapters)})"
-            )
-            raise ValidationError(
-                f"The start chapter is bigger than the number of chapters saved ({len(self.chapters)})"
-            )
-
-        if not end_chapter:
-            end_chapter = len(self.chapters)
-        elif end_chapter > len(self.chapters):
-            end_chapter = len(self.chapters)
-            logger.info(
-                f"The end chapter is bigger than the number of chapters, "
-                f"automatically setting it to {end_chapter}."
-            )
-
-        idx = 1
-        start = start_chapter
-        while start <= end_chapter:
-            end = min(start + chapters_by_book - 1, end_chapter)
-            result = self._save_chapters_to_epub(
-                start_chapter=start, end_chapter=end, collection_idx=idx
-            )
-            if not result:
-                logger.critical(
-                    f"Error with saving novel to epub, with start chapter: "
-                    f"{start_chapter} and end chapter: {end_chapter}"
-                )
-            start = start + chapters_by_book
-            idx = idx + 1
 
     ## UTILS
 
@@ -757,6 +694,27 @@ class Novel:
 
     ## PRIVATE HELPERS
 
+    def _initialize_request_helper(self) -> RequestHelper:
+        request_config = self.scraper_config.config_options["request_config"]
+        request_helper = RequestHelper(
+            retries_number=request_config.get("request_retries"),
+            request_timeout=request_config.get("request_timeout"),
+            time_between_retries=request_config.get("request_time_between_retries"),
+            cookies=request_config.get("request_cookies"),
+        )
+
+        use_flaresolver = (
+            request_config.get("force_flaresolver")
+            or self.scraper_behavior.force_flaresolver
+        )
+
+        if use_flaresolver:
+            request_helper.enable_flaresolverr(
+                flaresolverr_url=request_config.get("flaresolver_url")
+            )
+
+        return request_helper
+
     def _clean_chapter(
         self, chapter_html_filename: str, hard_clean: bool = False
     ) -> None:
@@ -774,37 +732,6 @@ class Novel:
         for i, toc in enumerate(tocs_content):
             toc = self.decoder.clean_html(toc, hard_clean=hard_clean)
             self.novel_data_helper.update_toc(idx=i, html=toc)
-
-    def _request_html_content(self, url: str) -> Optional[str]:
-        """
-        Performs an HTTP request to retrieve HTML content from a URL.
-
-        Args:
-            url (str): The URL of the webpage to request
-
-        Returns:
-            Optional[str]: The HTML content of the webpage if the request is successful,
-                          None otherwise
-
-        Note:
-            This method uses the Configuration Options and scraper behavior
-            to handle HTTP requests, including retries and timeouts.
-        """
-
-        request_config = self.scraper_config.config_options["request_config"]
-        force_flaresolver = (
-            request_config.get("force_flaresolver")
-            or self.scraper_behavior.force_flaresolver
-        )
-        html_content = get_html_content(
-            url,
-            retries=request_config.get("request_retries"),
-            timeout=request_config.get("request_timeout"),
-            time_between_retries=request_config.get("request_time_between_retries"),
-            force_flaresolver=force_flaresolver,
-            cookies=request_config.get("request_cookies"),
-        )
-        return html_content
 
     def _load_or_request_chapter(
         self, chapter: Chapter, reload_file: bool = False
@@ -864,25 +791,11 @@ class Novel:
             if chapter.chapter_html is not None:
                 return chapter
 
+        logger.debug(
+            f'Chapter HTML not found locally, requesting from URL "{chapter.chapter_url}"'
+        )
         # Fetch fresh content
-        try:
-            logger.debug(f'Requesting chapter HTML from URL: "{chapter.chapter_url}"')
-            chapter.chapter_html = self._request_html_content(chapter.chapter_url)
-        except ValidationError:
-            logger.error(
-                f"Error when trying to request chapter {chapter.chapter_title} from url: {chapter.chapter_url}"
-            )
-            raise
-        except NetworkError:
-            logger.error(
-                f"Error when trying to request chapter {chapter.chapter_title} from url: {chapter.chapter_url}"
-            )
-            raise
-
-        # If the requests failed, we will let the higher methods decide if they throw an error.
-        if not chapter.chapter_html:
-            logger.error(f"No content found on link {chapter.chapter_url}")
-            return chapter
+        chapter.chapter_html = self.request_helper.get_url_content(chapter.chapter_url)
 
         # Save content
         try:
@@ -929,14 +842,10 @@ class Novel:
             # Fetch fresh content
             logger.debug(f'Requesting TOC from link: "{toc_url}"')
             try:
-                toc_content = self._request_html_content(toc_url)
-            except NetworkError as E:
-                logger.error(f"Error with network, error: {E}")
-                raise
-
-            if not toc_content:
-                logger.error(f'No content found on link "{toc_url}"')
-                raise ValidationError(f'No content found on link "{toc_url}"')
+                toc_content = self.request_helper.get_url_content(toc_url)
+            except RequestError as e:
+                logger.debug("Traceback: ", exc_info=True)
+                raise ScraperError(e) from e
 
             logger.debug("Saving new TOC file to disk.")
             try:
@@ -961,14 +870,15 @@ class Novel:
         except DecodeError:
             logger.debug("Error when trying to preprocess toc main url")
             raise
-        if not has_pagination:
-            logger.debug("TOC does not have pagination, requesting only one file.")
-            _get_toc(toc_main_url, get_next_page=False)
-        else:
-            logger.debug("TOC has pagination, requesting all files.")
-            next_page_url = toc_main_url
-            while next_page_url:
-                next_page_url = _get_toc(next_page_url, get_next_page=True)
+        with self._initialize_request_helper() as self.request_helper:
+            if not has_pagination:
+                logger.debug("TOC does not have pagination, requesting only one file.")
+                _get_toc(toc_main_url, get_next_page=False)
+            else:
+                logger.debug("TOC has pagination, requesting all files.")
+                next_page_url = toc_main_url
+                while next_page_url:
+                    next_page_url = _get_toc(next_page_url, get_next_page=True)
 
     def _load_or_request_chapter_urls_from_toc(self) -> None:
         """

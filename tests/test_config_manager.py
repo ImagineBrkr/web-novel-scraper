@@ -470,6 +470,7 @@ class TestValidateConfig:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -486,6 +487,7 @@ class TestValidateConfig:
             "decode_guide_file": Path("/guide.json"),
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -503,6 +505,7 @@ class TestValidateConfig:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": "invalid",
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -519,6 +522,7 @@ class TestValidateConfig:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": "invalid",
                 "request_time_between_retries": 3,
@@ -535,6 +539,7 @@ class TestValidateConfig:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": 0,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -551,6 +556,7 @@ class TestValidateConfig:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": "0",
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": "20",
                 "request_retries": "3",
                 "request_time_between_retries": "3",
@@ -737,6 +743,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -754,6 +761,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -773,6 +781,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -789,6 +798,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": "true",
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -805,6 +815,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": "false",
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -821,6 +832,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": 1,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -837,6 +849,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": 0,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -853,6 +866,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": "invalid_bool",
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -869,6 +883,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": "30",
                 "request_retries": "5",
                 "request_time_between_retries": "2",
@@ -887,6 +902,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "guide_value",
             "request_config": {
                 "force_flaresolver": True,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 25,
                 "request_retries": 4,
                 "request_time_between_retries": 2,
@@ -905,6 +921,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,
@@ -921,6 +938,7 @@ class TestValidateConfigWithSchema:
             "decode_guide_file": "/guide.json",
             "request_config": {
                 "force_flaresolver": False,
+                "flaresolver_url": "http://localhost:81910",
                 "request_timeout": 20,
                 "request_retries": 3,
                 "request_time_between_retries": 3,

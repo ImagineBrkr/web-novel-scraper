@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 from web_novel_scraper.decode import Decoder
 from web_novel_scraper.config_manager import ScraperConfig
-from web_novel_scraper.request_manager import get_html_content
+from web_novel_scraper.request_helper import RequestHelper
 
 # Path to the decode_guide.json
 DECODE_GUIDE_PATH = (
@@ -301,45 +301,42 @@ def decoder(host):
 
 
 @pytest.fixture(scope="class")
-def request_config(host):
-    """Get the request configuration for the specified host"""
-    """Create a ScraperConfig instance for the specified host"""
+def request_helper(host):
     config = ScraperConfig()
     config.set_host(host)
+
     request_config = config.config_options["request_config"]
-    request_config["request_timeout"] = 120
-    request_config["request_time_between_retries"] = 10
-    request_config["request_retries"] = 6
-    return request_config
+
+    helper = RequestHelper(
+        request_timeout=120,
+        time_between_retries=10,
+        retries_number=6,
+        cookies=request_config.get("request_cookies"),
+    )
+
+    if request_config.get("force_flaresolver"):
+        helper.enable_flaresolverr(
+            flaresolverr_url=request_config.get("flaresolver_url")
+        )
+
+    yield helper
+
+    helper._post_cleanup()
 
 
 @pytest.fixture(scope="class")
-def toc_html(host, request_config, decoder):
+def toc_html(host, request_helper, decoder):
     """Fetch and cache HTML content from the TOC"""
     test_data = HOSTS_TEST_DATA[host]
     toc_main_url = decoder.toc_main_url_process(test_data["sample_novel_url"])
-    return get_html_content(
-        toc_main_url,
-        retries=request_config.get("request_retries"),
-        timeout=request_config.get("request_timeout"),
-        time_between_retries=request_config.get("request_time_between_retries"),
-        force_flaresolver=request_config.get("force_flaresolver"),
-        cookies=request_config.get("request_cookies"),
-    )
+    return request_helper.get_url_content(url=toc_main_url)
 
 
 @pytest.fixture(scope="class")
-def chapter_html(host, request_config):
+def chapter_html(host, request_helper):
     """Fetch and cache HTML content from the chapter"""
     test_data = HOSTS_TEST_DATA[host]
-    return get_html_content(
-        test_data["sample_chapter_url"],
-        retries=request_config.get("request_retries"),
-        timeout=request_config.get("request_timeout"),
-        time_between_retries=request_config.get("request_time_between_retries"),
-        force_flaresolver=request_config.get("force_flaresolver"),
-        cookies=request_config.get("request_cookies"),
-    )
+    return request_helper.get_url_content(url=test_data["sample_chapter_url"])
 
 
 @pytest.mark.host_validation

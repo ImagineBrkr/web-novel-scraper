@@ -56,6 +56,7 @@ CONFIG_SCHEMA = {
     "decode_guide_file": str,
     "request_config": {
         "force_flaresolver": BoolField,
+        "flaresolver_url": str,
         "request_timeout": int,
         "request_retries": int,
         "request_time_between_retries": int,
@@ -69,6 +70,7 @@ DEFAULT_CONFIG_OPTIONS = {
     "decode_guide_file": get_default_decode_guide_file(),
     "request_config": {
         "force_flaresolver": False,
+        "flaresolver_url": "http://localhost:8191",
         "request_retries": 3,
         "request_timeout": 20,
         "request_time_between_retries": 3,
@@ -82,6 +84,7 @@ ENV_MAPPING = {
     "SCRAPER_BASE_NOVELS_DIR": "base_novels_dir",
     "SCRAPER_DECODE_GUIDE_FILE": "decode_guide_file",
     "SCRAPER_FORCE_FLARESOLVER": "request_config.force_flaresolver",
+    "SCRAPER_FLARESOLVER_URL": "request_config.flaresolver_url",
     "SCRAPER_REQUEST_TIMEOUT": "request_config.request_timeout",
     "SCRAPER_REQUEST_RETRIES": "request_config.request_retries",
     "SCRAPER_REQUEST_TIME_BETWEEN_RETRIES": "request_config.request_time_between_retries",

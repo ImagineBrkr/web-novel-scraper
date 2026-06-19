@@ -18,8 +18,40 @@ class NovelNotFoundError(ScraperError):
 ## NETWORK & REQUEST EXCEPTIONS
 
 
-class NetworkError(ScraperError):
+class RequestError(ScraperError):
     """Exception raised for any exception for request operations"""
+
+
+class FlaresolverrError(RequestError):
+    pass
+
+
+class FlaresolverrConnectionError(FlaresolverrError):
+    pass
+
+
+class CommonGetRequestError(RequestError):
+    pass
+
+
+class FlaresolverrRequestError(RequestError):
+    pass
+
+
+class InvalidURLError(RequestError):
+    pass
+
+
+class ResponseError(RequestError):
+    pass
+
+
+class InvalidFlaresolverrResponseError(ResponseError):
+    pass
+
+
+class ResponseIsEmptyError(ResponseError):
+    pass
 
 
 ## FILE & I/O OPERATIONS EXCEPTIONS
