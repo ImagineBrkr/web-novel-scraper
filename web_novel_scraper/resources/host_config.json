@@ -5,6 +5,12 @@
             "request_timeout": 50
         }
     },
+    "novellive.net": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
+    },
     "novelbin.me": {
         "request_config": {
             "force_flaresolver": true,
