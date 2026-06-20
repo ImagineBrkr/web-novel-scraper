@@ -114,12 +114,12 @@ def test_get_chapter_urls(guide_file):
     decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     html = (
         '<div class="eplister"><ul>'
-        '<li><a href="url1">Link1</a></li>'
-        '<li><a href="url2">Link2</a></li>'
+        '<li><a href="https://url1">Link1</a></li>'
+        '<li><a href="https://url2">Link2</a></li>'
         "</ul></div>"
     )
     urls = decoder.get_chapter_urls(html)
-    assert urls == ["url1", "url2"]
+    assert urls == ["https://url1", "https://url2"]
 
 
 def test_get_chapter_title(guide_file):

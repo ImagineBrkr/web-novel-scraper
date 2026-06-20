@@ -85,6 +85,11 @@ def create_volume_id(n: int):
     return f"v{n:02}"
 
 
+def is_valid_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return all([parsed.scheme, parsed.netloc])
+
+
 def check_incomplete_url(url: str) -> bool:
     if url.startswith("?") or url.startswith("#"):
         return True

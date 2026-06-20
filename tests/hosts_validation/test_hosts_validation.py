@@ -26,21 +26,19 @@ DECODE_GUIDE_PATH = (
 # TODO 1: TOCs with inverted order return the last chapter at the first index
 # This will be refactored so the expected values will change at that time
 
-# TODO 2: Chapter URLs will be refactored to return always to complete URL instead of a Path
-# Expected values will also change at that time
 
 HOSTS_TEST_DATA = {
     "fanmtl.com": {
         "enabled": True,
         "sample_novel_url": "https://www.fanmtl.com/novel/shadow-slave.html",
-        "sample_chapter_url": "https://www.fanmtl.com/novel/shadow-slave_30.html",
+        "sample_chapter_url": "https://fanmtl.com/novel/shadow-slave_30.html",
         "fixed_chapter_index": 30,
         "expected": {
             "chapter_title": "30 Starless Void",
             "chapter_content_sample": "<p>With a soft sigh, he habitually looked for his shadow. However, due to the total darkness that surrounded him, it couldn't really be seen. He just barely felt its presence. </p>",
             "chapter_urls_count": 100,
-            "first_chapter_url": "/novel/shadow-slave_1.html",  # TODO 2
-            "fixed_chapter_url": "/novel/shadow-slave_31.html",
+            "first_chapter_url": "https://fanmtl.com/novel/shadow-slave_1.html",
+            "fixed_chapter_url": "https://fanmtl.com/novel/shadow-slave_31.html",
             "next_toc_page_url": "https://www.fanmtl.com/e/extend/fy.php?page=1&wjm=shadow-slave",
         },
     },
@@ -53,8 +51,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Chapter 40: Weak Point",
             "chapter_content_sample": "Sunny counted the monsters: one, two, three... five...",
             "chapter_urls_count_threshold": 3024,
-            "first_chapter_url": "/novel/shadow-slave/chapter-1",
-            "fixed_chapter_url": "/novel/shadow-slave/chapter-67",
+            "first_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-1",
+            "fixed_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-67",
         },
     },
     "novellive.net": {
@@ -225,8 +223,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "静寂への依存",
             "chapter_content_sample": "計算も打算もない、驚くほど自然な距離感。",
             "chapter_urls_count": 100,
-            "first_chapter_url": "/n0301hw/1/",  # TODO 2
-            "fixed_chapter_url": "/n0301hw/13/",  # TODO 2
+            "first_chapter_url": "https://ncode.syosetu.com/n0301hw/1/",
+            "fixed_chapter_url": "https://ncode.syosetu.com/n0301hw/13/",
             "next_toc_page_url": "https://ncode.syosetu.com/n0301hw/?p=2",
         },
     },

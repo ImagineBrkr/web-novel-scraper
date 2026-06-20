@@ -45,7 +45,7 @@ class ScraperBehavior:
         ),
     )
     # Some novels have the toc link without the host
-    auto_add_host: bool = False
+    auto_add_host: bool = False  # DEPRECATED
     # Some hosts return 403 when scrapping, this will force the use of FlareSolver
     # to save time
     force_flaresolver: bool = False

@@ -889,9 +889,6 @@ class Novel:
         """
         # Get configuration
         is_inverted = self.decoder.is_index_inverted()
-        add_host_to_chapter = (
-            self.scraper_behavior.auto_add_host or self.decoder.add_host_to_chapter()
-        )
 
         # Get all TOC content at once
         try:
@@ -917,15 +914,8 @@ class Novel:
             logger.debug("Inverting chapter URLs order")
             self.chapters_url_list.reverse()
 
-            # Add host if needed
-        if add_host_to_chapter:
-            logger.debug("Adding host to chapter URLs")
-            self.chapters_url_list = [
-                f"https://{self.host}{url}" for url in self.chapters_url_list
-            ]
-
-            # Remove duplicates while preserving order
-            # self.chapters_url_list = utils.delete_duplicates(self.chapters_url_list)
+        # Remove duplicates while preserving order
+        # self.chapters_url_list = utils.delete_duplicates(self.chapters_url_list)
 
         logger.info(
             f"Successfully extracted {len(self.chapters_url_list)} unique chapter URLs"
