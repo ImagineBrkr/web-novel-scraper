@@ -235,8 +235,9 @@
   {
     "host": "scribblehub.com",
     "title_in_content": "YES",
-    "has_pagination": false,
+    "has_pagination": true,
     "chapters_in_descending_order": true,
+    "pagination_in_descending_order": true,
     "title": {
       "selector": "div.chapter-title",
       "extract": {
@@ -250,6 +251,14 @@
     "index": {
       "selector": "div.toc ol li a",
       "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    },
+    "next_page": {
+      "selector": "ul#pagination-mesh-toc a.page-link.next",
+      "array": false,
       "extract": {
         "type": "attr",
         "key": "href"

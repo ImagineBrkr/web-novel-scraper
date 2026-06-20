@@ -136,13 +136,14 @@ HOSTS_TEST_DATA = {
         "enabled": True,
         "sample_novel_url": "https://www.scribblehub.com/series/622545/rapturous-rhapsody/",
         "sample_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/1024720/",
-        "fixed_chapter_index": 105,
+        "fixed_chapter_index": 6,
         "expected": {
             "chapter_title": "Dream 7",
             "chapter_content_sample": "Hell, even Worm had a few.",
-            "chapter_urls_count_threshold": 113,
-            "first_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/622554/",
-            "fixed_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/1065614/",
+            "chapter_urls_count": 50,
+            "first_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/778136/",
+            "fixed_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/813143/",
+            "next_toc_page_url": "?toc=2#content1",  # TODO - Decoder should return an absolute URL
         },
     },
     "novelcool.com": {
@@ -301,12 +302,14 @@ def request_helper(host):
     config.set_host(host)
 
     request_config = config.config_options["request_config"]
-
+    request_cookies = request_config.get("request_cookies", {})
+    if host == "scribblehub.com":
+        request_cookies = {"toc_show": "50"}
     helper = RequestHelper(
         request_timeout=120,
         time_between_retries=10,
         retries_number=6,
-        cookies=request_config.get("request_cookies"),
+        cookies=request_cookies,
     )
 
     if request_config.get("force_flaresolver"):
