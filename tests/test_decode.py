@@ -69,14 +69,6 @@ def test_set_host_behavior(guide_file, host, expect_error):
         assert decoder.host == host
 
 
-def test_is_index_inverted(guide_file):
-    """
-    Verify is_index_inverted returns False when not set in Decode Guide.
-    """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
-    assert decoder.is_index_inverted() is False
-
-
 @pytest.mark.parametrize(
     "host,expected_option",
     [
@@ -114,12 +106,12 @@ def test_get_chapter_urls(guide_file):
     decoder = Decoder(host="test.com", decode_guide_file=guide_file)
     html = (
         '<div class="eplister"><ul>'
-        '<li><a href="url1">Link1</a></li>'
-        '<li><a href="url2">Link2</a></li>'
+        '<li><a href="https://url1">Link1</a></li>'
+        '<li><a href="https://url2">Link2</a></li>'
         "</ul></div>"
     )
     urls = decoder.get_chapter_urls(html)
-    assert urls == ["url1", "url2"]
+    assert urls == ["https://url1", "https://url2"]
 
 
 def test_get_chapter_title(guide_file):

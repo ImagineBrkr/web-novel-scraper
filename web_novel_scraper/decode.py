@@ -14,7 +14,7 @@ from web_novel_scraper.exceptions import (
     LoadDecodeGuideError,
 )
 from web_novel_scraper.io_helpers.decode_io_helper import load_decode_guide
-from web_novel_scraper.utils import TitleInContentOption
+from web_novel_scraper.utils import TitleInContentOption, is_valid_url
 
 from bs4 import BeautifulSoup
 
@@ -36,16 +36,11 @@ class Decoder:
         self.host = host
         self._load_decode_guide()
 
-    def is_index_inverted(self) -> bool:
-        """
-        Checks if the index order should be inverted for the current host.
+    def chapters_in_descending_order(self) -> bool:
+        return self.decode_guide.get("chapters_in_descending_order", False)
 
-        Returns:
-            bool: True if the index should be processed in reverse order, False otherwise.
-        """
-
-        inverted = self.decode_guide.get("index", {}).get("inverted", False)
-        return inverted
+    def pagination_in_descending_order(self) -> bool:
+        return self.decode_guide.get("pagination_in_descending_order", False)
 
     def toc_main_url_process(self, toc_main_url: str) -> str:
         if self.decode_guide.get("toc_main_url_processor", False):
@@ -97,41 +92,48 @@ class Decoder:
         return self.decode_guide.get("add_host_to_chapter", False)
 
     def get_chapter_urls(self, html: str) -> list[str]:
-        """
-        Extracts chapter URLs from the table of contents HTML.
-
-        Args:
-            html (str): The HTML content of the table of contents
-
-        Returns:
-            list[str]: List of chapter URLs found in the HTML
-
-        Raises:
-            ContentExtractionError: If chapter URLs cannot be extracted.
-            HTMLParseError: If HTML parsing fails.
-        """
+        logger.debug("Obtaining chapter URLs...")
         try:
-            logger.debug("Obtaining chapter URLs...")
             chapter_urls = self.decode_html(html, "index")
-
-            if chapter_urls is None:
-                msg = f"Failed to obtain chapter URLs for {self.host}"
-                logger.error(msg)
-                raise ContentExtractionError(msg)
-
-            if isinstance(chapter_urls, str):
-                logger.warning(
-                    "Expected List of URLs but got String, converting to single-item list"
-                )
-                chapter_urls = [chapter_urls]
-
-            return chapter_urls
         except DecodeError:
             raise
         except Exception as e:
             msg = f"Error extracting chapter URLs: {e}"
             logger.error(msg)
             raise ContentExtractionError(msg) from e
+
+        if chapter_urls is None:
+            msg = f"Failed to obtain chapter URLs for {self.host}"
+            logger.error(msg)
+            raise ContentExtractionError(msg)
+
+        if isinstance(chapter_urls, str):
+            logger.warning(
+                "Expected List of URLs but got String, converting to single-item list"
+            )
+            chapter_urls = [chapter_urls]
+
+        add_host = self.add_host_to_chapter()
+        base_url = f"https://{self.host}"
+        normalized_urls: list[str] = []
+
+        for raw_url in chapter_urls:
+            chapter_url = str(raw_url).strip()
+            if add_host:
+                chapter_url = f"{base_url}{chapter_url}"
+
+            if not is_valid_url(chapter_url):
+                raise ContentExtractionError(
+                    f'Chapter URL extracted from TOC "{chapter_url}" is not a valid URL.'
+                )
+
+            normalized_urls.append(chapter_url)
+
+        if self.chapters_in_descending_order():
+            logger.debug("Chapters are in descending order, reversing the list...")
+            normalized_urls.reverse()
+
+        return normalized_urls
 
     def get_toc_next_page_url(self, html: str) -> Optional[str]:
         """

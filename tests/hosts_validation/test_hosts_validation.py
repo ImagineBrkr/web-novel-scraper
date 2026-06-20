@@ -23,24 +23,19 @@ DECODE_GUIDE_PATH = (
 # - If the novel does not have pagination:
 # -- A minimum amount of chapter URLs (may have increased)
 
-# TODO 1: TOCs with inverted order return the last chapter at the first index
-# This will be refactored so the expected values will change at that time
-
-# TODO 2: Chapter URLs will be refactored to return always to complete URL instead of a Path
-# Expected values will also change at that time
 
 HOSTS_TEST_DATA = {
     "fanmtl.com": {
         "enabled": True,
         "sample_novel_url": "https://www.fanmtl.com/novel/shadow-slave.html",
-        "sample_chapter_url": "https://www.fanmtl.com/novel/shadow-slave_30.html",
+        "sample_chapter_url": "https://fanmtl.com/novel/shadow-slave_30.html",
         "fixed_chapter_index": 30,
         "expected": {
             "chapter_title": "30 Starless Void",
             "chapter_content_sample": "<p>With a soft sigh, he habitually looked for his shadow. However, due to the total darkness that surrounded him, it couldn't really be seen. He just barely felt its presence. </p>",
             "chapter_urls_count": 100,
-            "first_chapter_url": "/novel/shadow-slave_1.html",  # TODO 2
-            "fixed_chapter_url": "/novel/shadow-slave_31.html",
+            "first_chapter_url": "https://fanmtl.com/novel/shadow-slave_1.html",
+            "fixed_chapter_url": "https://fanmtl.com/novel/shadow-slave_31.html",
             "next_toc_page_url": "https://www.fanmtl.com/e/extend/fy.php?page=1&wjm=shadow-slave",
         },
     },
@@ -53,8 +48,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Chapter 40: Weak Point",
             "chapter_content_sample": "Sunny counted the monsters: one, two, three... five...",
             "chapter_urls_count_threshold": 3024,
-            "first_chapter_url": "/novel/shadow-slave/chapter-1",
-            "fixed_chapter_url": "/novel/shadow-slave/chapter-67",
+            "first_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-1",
+            "fixed_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-67",
         },
     },
     "novellive.net": {
@@ -119,8 +114,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Chapter 40 - 26th, Multiple Choice Question",
             "chapter_content_sample": "Since there are a certain number of nobles in vestments who do not own lands in the capital, several families are of higher rank.",
             "chapter_urls_count_threshold": 22,
-            "first_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-50/",  # TODO 1
-            "fixed_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-46/",
+            "first_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-29/",
+            "fixed_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-33/",
         },
     },
     "hostednovel.com": {
@@ -141,13 +136,14 @@ HOSTS_TEST_DATA = {
         "enabled": True,
         "sample_novel_url": "https://www.scribblehub.com/series/622545/rapturous-rhapsody/",
         "sample_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/1024720/",
-        "fixed_chapter_index": 105,
+        "fixed_chapter_index": 6,
         "expected": {
             "chapter_title": "Dream 7",
             "chapter_content_sample": "Hell, even Worm had a few.",
-            "chapter_urls_count_threshold": 113,
-            "first_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/2105180/",  # TODO 1
-            "fixed_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/622765/",
+            "chapter_urls_count": 50,
+            "first_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/778136/",
+            "fixed_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/813143/",
+            "next_toc_page_url": "?toc=2#content1",  # TODO - Decoder should return an absolute URL
         },
     },
     "novelcool.com": {
@@ -159,8 +155,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Shadow Slave  Chapter 2493– White Walls",
             "chapter_content_sample": "Morgan was not taking in the darkly stunning landscape, though. ",
             "chapter_urls_count_threshold": 2497,
-            "first_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-2500-Her-Reflection/13649828/",  # TODO 1
-            "fixed_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-2298-Recollection-Path/13449766/",
+            "first_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-1/7332148/",
+            "fixed_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-201/7364433/",
         },
     },
     "foxaholic.com": {
@@ -172,8 +168,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Extra 1 - Three Years Later Part I",
             "chapter_content_sample": "One such creature was the yellow sheep-like monster, classified as an E-rank, the weakest. It quietly lived at the base of the silvery white mountains.",
             "chapter_urls_count_threshold": 229,
-            "first_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/extra-5/",  # TODO 1
-            "fixed_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/209/",
+            "first_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/0-1/",
+            "fixed_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/23/",
         },
     },
     "empirenovel.com": {
@@ -185,8 +181,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Chapter 745: Huang Seeks Feng",
             "chapter_content_sample": "Li Shishi showed a bit of interest. The graceful woman’s legs stepped into the air, her phoenix brilliant as she took flight with her wings. Her slender waist seemed to dance. The true killing move was emerging, like a phoenix’s arrogant wings. Purple Thunder was immediately smashed. ",
             "chapter_urls_count": 30,
-            "first_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/767",  # TODO 1
-            "fixed_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/755",
+            "first_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/738",
+            "fixed_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/750",
             "next_toc_page_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny?page=2",
         },
     },
@@ -225,8 +221,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "静寂への依存",
             "chapter_content_sample": "計算も打算もない、驚くほど自然な距離感。",
             "chapter_urls_count": 100,
-            "first_chapter_url": "/n0301hw/1/",  # TODO 2
-            "fixed_chapter_url": "/n0301hw/13/",  # TODO 2
+            "first_chapter_url": "https://ncode.syosetu.com/n0301hw/1/",
+            "fixed_chapter_url": "https://ncode.syosetu.com/n0301hw/13/",
             "next_toc_page_url": "https://ncode.syosetu.com/n0301hw/?p=2",
         },
     },
@@ -306,12 +302,14 @@ def request_helper(host):
     config.set_host(host)
 
     request_config = config.config_options["request_config"]
-
+    request_cookies = request_config.get("request_cookies", {})
+    if host == "scribblehub.com":
+        request_cookies = {"toc_show": "50"}
     helper = RequestHelper(
         request_timeout=120,
         time_between_retries=10,
         retries_number=6,
-        cookies=request_config.get("request_cookies"),
+        cookies=request_cookies,
     )
 
     if request_config.get("force_flaresolver"):
