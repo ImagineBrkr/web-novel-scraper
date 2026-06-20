@@ -887,8 +887,6 @@ class Novel:
         Raises:
             DecodeError: If fails to decode chapter URLs from TOC content
         """
-        # Get configuration
-        is_inverted = self.decoder.is_index_inverted()
 
         # Get all TOC content at once
         try:
@@ -899,6 +897,12 @@ class Novel:
 
         # Extract URLs from all TOC fragments
         self.chapters_url_list = []
+        if self.decoder.pagination_in_descending_order():
+            logger.debug(
+                "TOC pagination is in descending order, reversing TOC Fragments list."
+            )
+            all_tocs.reverse()
+
         for toc_content in all_tocs:
             try:
                 urls = self.decoder.get_chapter_urls(toc_content)
@@ -908,11 +912,6 @@ class Novel:
                     "Failed to decode chapter URLs from TOC content", exc_info=e
                 )
                 raise
-
-        # Handle inversion if needed
-        if is_inverted:
-            logger.debug("Inverting chapter URLs order")
-            self.chapters_url_list.reverse()
 
         # Remove duplicates while preserving order
         # self.chapters_url_list = utils.delete_duplicates(self.chapters_url_list)

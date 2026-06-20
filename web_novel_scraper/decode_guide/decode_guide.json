@@ -178,6 +178,7 @@
     "host": "hiraethtranslation.com",
     "has_pagination": false,
     "title_in_content": "YES",
+    "chapters_in_descending_order": true,
     "title": {
       "element": "li",
       "class": "active",
@@ -192,7 +193,6 @@
     "index": {
       "element": "li.free-chap a",
       "array": true,
-      "inverted": true,
       "extract": {
         "type": "attr",
         "key": "href"
@@ -236,6 +236,7 @@
     "host": "scribblehub.com",
     "title_in_content": "YES",
     "has_pagination": false,
+    "chapters_in_descending_order": true,
     "title": {
       "selector": "div.chapter-title",
       "extract": {
@@ -249,7 +250,6 @@
     "index": {
       "selector": "div.toc ol li a",
       "array": true,
-      "inverted": true,
       "extract": {
         "type": "attr",
         "key": "href"
@@ -260,6 +260,7 @@
     "host": "novelcool.com",
     "title_in_content": "YES",
     "has_pagination": false,
+    "chapters_in_descending_order": true,
     "title": {
       "element": "h2",
       "class": "chapter-title",
@@ -274,7 +275,6 @@
     "index": {
       "selector": "div.chp-item a",
       "array": true,
-      "inverted": true,
       "extract": {
         "type": "attr",
         "key": "href"
@@ -310,6 +310,7 @@
     "host": "foxaholic.com",
     "has_pagination": false,
     "title_in_content": "YES",
+    "chapters_in_descending_order": true,
     "title": {
       "element": "li",
       "class": "active",
@@ -323,7 +324,6 @@
     },
     "index": {
       "selector": "li.free-chap a",
-      "inverted": true,
       "array": true,
       "extract": {
         "type": "attr",
@@ -362,6 +362,8 @@
     "host": "empirenovel.com",
     "title_in_content": "NO",
     "has_pagination": true,
+    "pagination_in_descending_order": true,
+    "chapters_in_descending_order": true,
     "title": {
       "element": "h3",
       "extract": {
@@ -376,7 +378,6 @@
       "element": "a",
       "class": "chapter_link",
       "array": true,
-      "inverted": true,
       "extract": {
         "type": "attr",
         "key": "href"

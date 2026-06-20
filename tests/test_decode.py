@@ -69,14 +69,6 @@ def test_set_host_behavior(guide_file, host, expect_error):
         assert decoder.host == host
 
 
-def test_is_index_inverted(guide_file):
-    """
-    Verify is_index_inverted returns False when not set in Decode Guide.
-    """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
-    assert decoder.is_index_inverted() is False
-
-
 @pytest.mark.parametrize(
     "host,expected_option",
     [

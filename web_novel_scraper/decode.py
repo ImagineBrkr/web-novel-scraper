@@ -36,16 +36,11 @@ class Decoder:
         self.host = host
         self._load_decode_guide()
 
-    def is_index_inverted(self) -> bool:
-        """
-        Checks if the index order should be inverted for the current host.
+    def chapters_in_descending_order(self) -> bool:
+        return self.decode_guide.get("chapters_in_descending_order", False)
 
-        Returns:
-            bool: True if the index should be processed in reverse order, False otherwise.
-        """
-
-        inverted = self.decode_guide.get("index", {}).get("inverted", False)
-        return inverted
+    def pagination_in_descending_order(self) -> bool:
+        return self.decode_guide.get("pagination_in_descending_order", False)
 
     def toc_main_url_process(self, toc_main_url: str) -> str:
         if self.decode_guide.get("toc_main_url_processor", False):
@@ -133,6 +128,10 @@ class Decoder:
                 )
 
             normalized_urls.append(chapter_url)
+
+        if self.chapters_in_descending_order():
+            logger.debug("Chapters are in descending order, reversing the list...")
+            normalized_urls.reverse()
 
         return normalized_urls
 

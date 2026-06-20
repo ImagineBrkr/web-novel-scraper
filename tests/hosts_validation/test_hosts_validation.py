@@ -23,9 +23,6 @@ DECODE_GUIDE_PATH = (
 # - If the novel does not have pagination:
 # -- A minimum amount of chapter URLs (may have increased)
 
-# TODO 1: TOCs with inverted order return the last chapter at the first index
-# This will be refactored so the expected values will change at that time
-
 
 HOSTS_TEST_DATA = {
     "fanmtl.com": {
@@ -117,8 +114,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Chapter 40 - 26th, Multiple Choice Question",
             "chapter_content_sample": "Since there are a certain number of nobles in vestments who do not own lands in the capital, several families are of higher rank.",
             "chapter_urls_count_threshold": 22,
-            "first_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-50/",  # TODO 1
-            "fixed_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-46/",
+            "first_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-29/",
+            "fixed_chapter_url": "https://hiraethtranslation.com/novel/survival-strategy-for-weak-territories/chapter-33/",
         },
     },
     "hostednovel.com": {
@@ -144,8 +141,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Dream 7",
             "chapter_content_sample": "Hell, even Worm had a few.",
             "chapter_urls_count_threshold": 113,
-            "first_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/2105180/",  # TODO 1
-            "fixed_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/622765/",
+            "first_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/622554/",
+            "fixed_chapter_url": "https://www.scribblehub.com/read/622545-rapturous-rhapsody/chapter/1065614/",
         },
     },
     "novelcool.com": {
@@ -157,8 +154,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Shadow Slave  Chapter 2493– White Walls",
             "chapter_content_sample": "Morgan was not taking in the darkly stunning landscape, though. ",
             "chapter_urls_count_threshold": 2497,
-            "first_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-2500-Her-Reflection/13649828/",  # TODO 1
-            "fixed_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-2298-Recollection-Path/13449766/",
+            "first_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-1/7332148/",
+            "fixed_chapter_url": "https://www.novelcool.com/chapter/Shadow-Slave-Chapter-201/7364433/",
         },
     },
     "foxaholic.com": {
@@ -170,8 +167,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Extra 1 - Three Years Later Part I",
             "chapter_content_sample": "One such creature was the yellow sheep-like monster, classified as an E-rank, the weakest. It quietly lived at the base of the silvery white mountains.",
             "chapter_urls_count_threshold": 229,
-            "first_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/extra-5/",  # TODO 1
-            "fixed_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/209/",
+            "first_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/0-1/",
+            "fixed_chapter_url": "https://www.foxaholic.com/novel/until-i-become-_____-in-the-game-world-i-reincarnated-into/23/",
         },
     },
     "empirenovel.com": {
@@ -183,8 +180,8 @@ HOSTS_TEST_DATA = {
             "chapter_title": "Chapter 745: Huang Seeks Feng",
             "chapter_content_sample": "Li Shishi showed a bit of interest. The graceful woman’s legs stepped into the air, her phoenix brilliant as she took flight with her wings. Her slender waist seemed to dance. The true killing move was emerging, like a phoenix’s arrogant wings. Purple Thunder was immediately smashed. ",
             "chapter_urls_count": 30,
-            "first_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/767",  # TODO 1
-            "fixed_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/755",
+            "first_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/738",
+            "fixed_chapter_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny/750",
             "next_toc_page_url": "https://www.empirenovel.com/novel/108-maidens-of-destiny?page=2",
         },
     },
