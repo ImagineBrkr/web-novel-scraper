@@ -42,7 +42,7 @@ class BOTITranslationIndexProcessor(CustomProcessor):
         return [
             f"https://api.mystorywave.com/story-wave-backend/api/v1/content/chapters/{chapter['id']}"
             for chapter in chapters_list
-            if chapter["paywallStatus"] == "free"
+            if chapter["tier"] == 0
         ]
 
 
