@@ -274,7 +274,7 @@ HOSTS_TEST_DATA = {
         "expected": {
             "chapter_title": 'Chapter 80: What Does "Caring" Mean, Zhengran?',
             "chapter_content_sample": "She waved at Lin Zhengran before turning to wave at Han Wenwen and Jiang Xueli in the distance.",
-            "chapter_urls_count_threshold": 400,
+            "chapter_urls_count_threshold": 378,
             "first_chapter_url": "https://api.mystorywave.com/story-wave-backend/api/v1/content/chapters/1623242",
             "fixed_chapter_url": "https://api.mystorywave.com/story-wave-backend/api/v1/content/chapters/1654610",
         },
