@@ -6,18 +6,16 @@
 Web Novel Scraper
 ================================
    
-This tool allows you to scrape web novels from various sources. I made it because my hands hurt from scrolling too much.
+Download web novels from supported websites and export them as EPUB, HTML or any other 
+supported formats for offline reading.
 
 .. toctree::
    :glob:
    :includehidden:
    :maxdepth: 2
 
-   tutorial
-   concepts
-   commands/index
-   config_options
-
-.. .. click:: web_novel_scraper.__main__:cli
-..    :prog: web-novel-scraper
-..    :nested: full
+   installation
+   quickstart
+   basic_usage
+   advanced_usage/index
+   reference/index
