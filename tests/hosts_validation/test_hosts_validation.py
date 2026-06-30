@@ -286,11 +286,11 @@ HOSTS_TEST_DATA = {
         "sample_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0502",
         "fixed_chapter_index": 182,
         "expected": {
-            "chapter_title": 'Chapter 499',
+            "chapter_title": "Chapter 502",
             "chapter_content_sample": "At those words, the corners of Frey’s lips curled into his usual arrogant smirk.",
-            "chapter_urls_count_threshold": 527,
+            "chapter_urls_count_threshold": 526,
             "first_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0001",
-            "fixed_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0294",
+            "fixed_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0183",
         },
     },
 }
@@ -324,6 +324,7 @@ def request_helper(host):
         time_between_retries=10,
         retries_number=6,
         cookies=request_cookies,
+        time_between_requests=request_config.get("request_time_between_requests"),
     )
 
     if request_config.get("force_flaresolver"):
