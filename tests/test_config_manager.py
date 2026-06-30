@@ -1,3 +1,4 @@
+import copy
 import pytest
 import os
 import tempfile
@@ -9,7 +10,10 @@ from web_novel_scraper.config_manager import (
     ENV_MAPPING,
     BoolField,
     CONFIG_SCHEMA,
+    DEFAULT_CONFIG_OPTIONS,
 )
+
+
 from web_novel_scraper.exceptions import (
     ConfigKeyConflictError,
     InvalidTypeConfigError,
@@ -19,6 +23,12 @@ from web_novel_scraper.exceptions import (
     LoadConfigError,
     ConfigFileNotFoundError,
 )
+
+
+@pytest.fixture
+def base_config():
+    """Returns a deep copy of DEFAULT_CONFIG_OPTIONS to use as a base in tests."""
+    return copy.deepcopy(DEFAULT_CONFIG_OPTIONS)
 
 
 class TestScraperConfigInit:
@@ -463,107 +473,42 @@ class TestParseConfigOptionFromAbbreviation:
 class TestValidateConfig:
     """Tests for _validate_config static method"""
 
-    def test_validate_config_valid(self):
+    def test_validate_config_valid(self, base_config):
         """Test validating valid configuration"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {"test": "test"},
-            },
-        }
         # Should not raise
-        ScraperConfig._validate_config(config)
+        ScraperConfig._validate_config(base_config)
 
-    def test_validate_config_string_values(self):
+    def test_validate_config_string_values(self, base_config):
         """Test that string values are converted correctly"""
-        config = {
-            "base_novels_dir": Path("/path"),
-            "decode_guide_file": Path("/guide.json"),
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {"test": "test"},
-            },
-        }
-        config = ScraperConfig._validate_config(config)
+        base_config["base_novels_dir"] = Path("/path")
+        base_config["decode_guide_file"] = Path("/guide.json")
+        config = ScraperConfig._validate_config(base_config)
         assert isinstance(config["base_novels_dir"], str)
         assert isinstance(config["decode_guide_file"], str)
 
-    def test_validate_config_invalid_timeout(self):
+    def test_validate_config_invalid_timeout(self, base_config):
         """Test validation with invalid timeout value"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": "invalid",
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {"test": "test"},
-            },
-        }
+        base_config["request_config"]["request_timeout"] = "invalid"
         with pytest.raises(InvalidTypeConfigError):
-            ScraperConfig._validate_config(config)
+            ScraperConfig._validate_config(base_config)
 
-    def test_validate_config_invalid_retries(self):
+    def test_validate_config_invalid_retries(self, base_config):
         """Test validation with invalid retries value"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": "invalid",
-                "request_time_between_retries": 3,
-                "request_cookies": {"test": "test"},
-            },
-        }
+        base_config["request_config"]["request_retries"] = "invalid"
         with pytest.raises(InvalidTypeConfigError):
-            ScraperConfig._validate_config(config)
+            ScraperConfig._validate_config(base_config)
 
-    def test_validate_config_bool_conversion(self):
+    def test_validate_config_bool_conversion(self, base_config):
         """Test boolean conversion in validation"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": 0,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {"test": "test"},
-            },
-        }
-        config = ScraperConfig._validate_config(config)
+        base_config["request_config"]["force_flaresolver"] = 0
+        config = ScraperConfig._validate_config(base_config)
         assert isinstance(config["request_config"]["force_flaresolver"], bool)
 
-    def test_validate_config_numeric_string_values(self):
+    def test_validate_config_numeric_string_values(self, base_config):
         """Test validation with numeric strings that can be converted"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": "0",
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": "20",
-                "request_retries": "3",
-                "request_time_between_retries": "3",
-                "request_cookies": {"test": "test"},
-            },
-        }
-        config = ScraperConfig._validate_config(config)
+        base_config["request_config"]["request_timeout"] = "20"
+        base_config["request_config"]["request_retries"] = "3"
+        config = ScraperConfig._validate_config(base_config)
         assert config["request_config"]["request_timeout"] == 20
         assert config["request_config"]["request_retries"] == 3
 
@@ -736,214 +681,89 @@ class TestBoolField:
 class TestValidateConfigWithSchema:
     """Tests for _validate_config with new schema and request_cookies"""
 
-    def test_validate_config_with_schema(self):
+    def test_validate_config_with_schema(self, base_config):
         """Test validating config with CONFIG_SCHEMA"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert isinstance(result, dict)
         assert result["request_config"]["request_cookies"] == {}
 
-    def test_validate_config_request_cookies_dict(self):
+    def test_validate_config_request_cookies_dict(self, base_config):
         """Test that request_cookies is validated as dict"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {"cookie1": "value1", "cookie2": "value2"},
-            },
+        base_config["request_config"]["request_cookies"] = {
+            "cookie1": "value1",
+            "cookie2": "value2",
         }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert result["request_config"]["request_cookies"] == {
             "cookie1": "value1",
             "cookie2": "value2",
         }
 
-    def test_validate_config_request_cookies_invalid_type(self):
+    def test_validate_config_request_cookies_invalid_type(self, base_config):
         """Test that invalid request_cookies type raises error"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": "not_a_dict",
-            },
-        }
+        base_config["request_config"]["request_cookies"] = "not_a_dict"
         with pytest.raises(InvalidTypeConfigError):
-            ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+            ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
 
-    def test_validate_config_bool_field_true_string(self):
+    def test_validate_config_bool_field_true_string(self, base_config):
         """Test BoolField validation with string 'true'"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": "true",
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        base_config["request_config"]["force_flaresolver"] = "true"
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert result["request_config"]["force_flaresolver"] is True
 
-    def test_validate_config_bool_field_false_string(self):
+    def test_validate_config_bool_field_false_string(self, base_config):
         """Test BoolField validation with string 'false'"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": "false",
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        base_config["request_config"]["force_flaresolver"] = "false"
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert result["request_config"]["force_flaresolver"] is False
 
-    def test_validate_config_bool_field_int_1(self):
+    def test_validate_config_bool_field_int_1(self, base_config):
         """Test BoolField validation with integer 1"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": 1,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        base_config["request_config"]["force_flaresolver"] = 1
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert result["request_config"]["force_flaresolver"] is True
 
-    def test_validate_config_bool_field_int_0(self):
+    def test_validate_config_bool_field_int_0(self, base_config):
         """Test BoolField validation with integer 0"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": 0,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        base_config["request_config"]["force_flaresolver"] = 0
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert result["request_config"]["force_flaresolver"] is False
 
-    def test_validate_config_bool_field_invalid(self):
+    def test_validate_config_bool_field_invalid(self, base_config):
         """Test BoolField validation with invalid value"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": "invalid_bool",
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": {},
-            },
-        }
+        base_config["request_config"]["force_flaresolver"] = "invalid_bool"
         with pytest.raises(InvalidTypeConfigError):
-            ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+            ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
 
-    def test_validate_config_type_conversion_string_to_int(self):
+    def test_validate_config_type_conversion_string_to_int(self, base_config):
         """Test that numeric strings are converted to int"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": "30",
-                "request_retries": "5",
-                "request_time_between_retries": "2",
-                "request_cookies": {},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        base_config["request_config"]["request_timeout"] = "30"
+        base_config["request_config"]["request_retries"] = "5"
+        base_config["request_config"]["request_time_between_retries"] = "2"
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert result["request_config"]["request_timeout"] == 30
         assert result["request_config"]["request_retries"] == 5
         assert result["request_config"]["request_time_between_retries"] == 2
 
-    def test_validate_config_nested_schema(self):
+    def test_validate_config_nested_schema(self, base_config):
         """Test validation of nested schema structure"""
-        config = {
-            "base_novels_dir": "path_value",
-            "decode_guide_file": "guide_value",
-            "request_config": {
-                "force_flaresolver": True,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 25,
-                "request_retries": 4,
-                "request_time_between_retries": 2,
-                "request_cookies": {"session": "abc123"},
-            },
-        }
-        result = ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+        base_config["request_config"]["force_flaresolver"] = True
+        base_config["request_config"]["request_timeout"] = 25
+        base_config["request_config"]["request_retries"] = 4
+        base_config["request_config"]["request_cookies"] = {"session": "abc123"}
+        result = ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
         assert isinstance(result, dict)
         assert "request_config" in result
         assert isinstance(result["request_config"], dict)
 
-    def test_validate_config_invalid_dict_type(self):
+    def test_validate_config_invalid_dict_type(self, base_config):
         """Test that non-dict value for dict type raises error"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": "not_a_dict",
-            },
-        }
+        base_config["request_config"]["request_cookies"] = "not_a_dict"
         with pytest.raises(InvalidTypeConfigError):
-            ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+            ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)
 
-    def test_validate_config_invalid_dict_type_list(self):
+    def test_validate_config_invalid_dict_type_list(self, base_config):
         """Test that list value for dict type raises error"""
-        config = {
-            "base_novels_dir": "/path",
-            "decode_guide_file": "/guide.json",
-            "request_config": {
-                "force_flaresolver": False,
-                "flaresolver_url": "http://localhost:81910",
-                "request_timeout": 20,
-                "request_retries": 3,
-                "request_time_between_retries": 3,
-                "request_cookies": [1, 2, 3],
-            },
-        }
+        base_config["request_config"]["request_cookies"] = [1, 2, 3]
         with pytest.raises(InvalidTypeConfigError):
-            ScraperConfig._validate_config(config, CONFIG_SCHEMA)
+            ScraperConfig._validate_config(base_config, CONFIG_SCHEMA)

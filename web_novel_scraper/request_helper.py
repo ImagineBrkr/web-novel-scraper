@@ -29,10 +29,12 @@ class RequestHelper:
     request_timeout: int
     time_between_retries: int
     retries_number: int
+    time_between_requests: int
     request_cookies: dict
     use_flaresolverr: bool = False
     flaresolverr_url: str = None
     flaresolverr_session_id: str = None
+    _last_request_time: float = None
 
     def __init__(
         self,
@@ -40,11 +42,14 @@ class RequestHelper:
         time_between_retries: int,
         retries_number: int,
         cookies: dict,
+        time_between_requests: int,
     ):
         self.request_timeout = request_timeout
         self.time_between_retries = time_between_retries
         self.retries_number = retries_number
         self.request_cookies = cookies
+        self.time_between_requests = time_between_requests
+        self._last_request_time = None
 
     def __enter__(self):
         return self
@@ -60,6 +65,7 @@ class RequestHelper:
 
     def get_url_content(self, url: str) -> str:
         RequestHelper._validate_url(url=url)
+        self._throttle_request()
 
         for attempt in range(self.retries_number):
             last_exception = None
@@ -88,7 +94,20 @@ class RequestHelper:
             raise last_exception
 
         logger.info(f"Succesfully received HTML Content from URL {url}.")
+        self._last_request_time = time.monotonic()
         return response_content
+
+    def _throttle_request(self) -> None:
+        if self.time_between_requests <= 0:
+            return
+        if self._last_request_time is not None:
+            elapsed = time.monotonic() - self._last_request_time
+            remaining = self.time_between_requests - elapsed
+            if remaining > 0:
+                logger.debug(
+                    f"Waiting {remaining:.2f} seconds before making the next request..."
+                )
+                time.sleep(remaining)
 
     # This method will actually create the Session of FlareSolverr if it's activated
     def _initialize_flaresolverr(self) -> None:

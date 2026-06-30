@@ -701,6 +701,7 @@ class Novel:
             request_timeout=request_config.get("request_timeout"),
             time_between_retries=request_config.get("request_time_between_retries"),
             cookies=request_config.get("request_cookies"),
+            time_between_requests=request_config.get("request_time_between_requests"),
         )
 
         use_flaresolver = (
