@@ -292,8 +292,9 @@
   },
   {
     "host": "freewebnovel.com",
-    "has_pagination": false,
+    "has_pagination": true,
     "add_host_to_chapter": true,
+    "toc_main_url_processor": true,
     "title_to_content": "YES",
     "title": {
       "element": "span",
@@ -307,12 +308,10 @@
       "array": true
     },
     "index": {
-      "selector": "ul#idData a",
-      "array": true,
-      "extract": {
-        "type": "attr",
-        "key": "href"
-      }
+      "use_custom_processor": true
+    },
+    "next_page": {
+      "use_custom_processor": true
     }
   },
   {
