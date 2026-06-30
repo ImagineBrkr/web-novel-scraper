@@ -14,15 +14,13 @@ from importlib.metadata import version
 __version__ = version("web-novel-scraper")
 
 project = "Web Novel Scraper"
-copyright = "2025, ImagineBrkr"
+copyright = "2026, ImagineBrkr"
 author = "ImagineBrkr"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = [
-    "sphinx_click",
-]
+extensions = ["sphinx_click", "sphinx_rtd_dark_mode"]
 
 templates_path = ["_templates"]
 exclude_patterns = []

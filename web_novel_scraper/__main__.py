@@ -98,7 +98,7 @@ def load_scraper_config(ctx_opts):
         "request_timeout": "request_config.request_timeout",
         "request_retries": "request_config.request_retries",
         "request_time_between_retries": "request_config.request_time_between_retries",
-        "request_time_between_requests": "request_config.request_time_between_requests"
+        "request_time_between_requests": "request_config.request_time_between_requests",
     }
     parameters = []
     for key, value in ctx_opts.items():
