@@ -74,6 +74,12 @@ def global_options(f):
         required=False,
         help="Number of seconds that will pass between retries for every request.",
     )(f)
+    f = click.option(
+        "--request-time-between-requests",
+        type=int,
+        required=False,
+        help="Number of seconds that will pass between requests (useful to avoid Rate Limits).",
+    )(f)
     return f
 
 
@@ -92,6 +98,7 @@ def load_scraper_config(ctx_opts):
         "request_timeout": "request_config.request_timeout",
         "request_retries": "request_config.request_retries",
         "request_time_between_retries": "request_config.request_time_between_retries",
+        "request_time_between_requests": "request_config.request_time_between_requests"
     }
     parameters = []
     for key, value in ctx_opts.items():
