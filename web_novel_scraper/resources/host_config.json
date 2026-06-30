@@ -74,5 +74,11 @@
             "request_retries": 6,
             "request_time_between_retries": 6
         }
+    },
+    "fucknovelpia.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
     }
 }

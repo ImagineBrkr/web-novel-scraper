@@ -615,5 +615,43 @@
     "index": {
       "use_custom_processor": true
     }
+  },
+  {
+    "host": "fucknovelpia.com",
+    "has_pagination": false,
+    "title_in_content": "NO",
+    "add_host_to_chapter": true,
+    "toc_main_url_processor": true,
+    "title": {
+      "element": "h1",
+      "id": null,
+      "class": null,
+      "selector": null,
+      "attributes": null,
+      "array": false,
+      "extract": {
+        "type": "text"
+      }
+    },
+    "content": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "div.txtnav",
+      "attributes": null,
+      "array": false
+    },
+    "index": {
+      "element": null,
+      "id": null,
+      "class": null,
+      "selector": "ul.chapter-list li a",
+      "attributes": null,
+      "array": true,
+      "extract": {
+        "type": "attr",
+        "key": "href"
+      }
+    }
   }
 ]
