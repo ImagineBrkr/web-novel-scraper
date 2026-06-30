@@ -80,7 +80,7 @@ HOSTS_TEST_DATA = {
         },
     },
     "novelbin.me": {
-        "enabled": True,
+        "enabled": False,
         "sample_novel_url": "https://novelbin.me/novel-book/shadow-slave",
         "sample_chapter_url": "https://novelbin.me/novel-book/shadow-slave/chapter-1332-splinters",
         "fixed_chapter_index": 56,
@@ -93,7 +93,7 @@ HOSTS_TEST_DATA = {
         },
     },
     "novelbin.com": {
-        "enabled": True,
+        "enabled": False,
         "sample_novel_url": "https://novelbin.com/novel-book/shadow-slave",
         "sample_chapter_url": "https://novelbin.com/b/shadow-slave/chapter-1190-battle-of-the-black-skull-4",
         "fixed_chapter_index": 125,
