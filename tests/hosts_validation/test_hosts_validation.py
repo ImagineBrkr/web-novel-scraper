@@ -453,4 +453,3 @@ class TestHostsValidation:
         assert fixed_chapter_url == expected_fixed_chapter_url, (
             f"Chapter URL mismatch for {decoder.host} at index {test_data['fixed_chapter_index']}: got {fixed_chapter_url}, expected {expected_fixed_chapter_url}"
         )
-

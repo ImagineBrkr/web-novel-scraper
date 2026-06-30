@@ -19,6 +19,7 @@ def helper():
         time_between_retries=0,
         retries_number=3,
         cookies={"cookie1": "value1"},
+        time_between_requests=0,
     )
 
 
@@ -229,6 +230,7 @@ class TestContextManager:
             time_between_retries=0,
             retries_number=1,
             cookies={},
+            time_between_requests=0,
         ):
             pass
 
