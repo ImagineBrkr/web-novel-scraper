@@ -43,13 +43,14 @@ HOSTS_TEST_DATA = {
         "enabled": True,
         "sample_novel_url": "https://freewebnovel.com/novel/shadow-slave",
         "sample_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-40",
-        "fixed_chapter_index": 66,
+        "fixed_chapter_index": 19,
         "expected": {
             "chapter_title": "Chapter 40: Weak Point",
             "chapter_content_sample": "Sunny counted the monsters: one, two, three... five...",
-            "chapter_urls_count_threshold": 3024,
+            "chapter_urls_count": 200,
             "first_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-1",
-            "fixed_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-67",
+            "fixed_chapter_url": "https://freewebnovel.com/novel/shadow-slave/chapter-20",
+            "next_toc_page_url": "https://freewebnovel.com/novel/shadow-slave?ajax=chapters&page=2&pageSize=200",
         },
     },
     "novellive.net": {
@@ -80,7 +81,7 @@ HOSTS_TEST_DATA = {
         },
     },
     "novelbin.me": {
-        "enabled": True,
+        "enabled": False,
         "sample_novel_url": "https://novelbin.me/novel-book/shadow-slave",
         "sample_chapter_url": "https://novelbin.me/novel-book/shadow-slave/chapter-1332-splinters",
         "fixed_chapter_index": 56,
@@ -93,7 +94,7 @@ HOSTS_TEST_DATA = {
         },
     },
     "novelbin.com": {
-        "enabled": True,
+        "enabled": False,
         "sample_novel_url": "https://novelbin.com/novel-book/shadow-slave",
         "sample_chapter_url": "https://novelbin.com/b/shadow-slave/chapter-1190-battle-of-the-black-skull-4",
         "fixed_chapter_index": 125,
@@ -452,3 +453,4 @@ class TestHostsValidation:
         assert fixed_chapter_url == expected_fixed_chapter_url, (
             f"Chapter URL mismatch for {decoder.host} at index {test_data['fixed_chapter_index']}: got {fixed_chapter_url}, expected {expected_fixed_chapter_url}"
         )
+

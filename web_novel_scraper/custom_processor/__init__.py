@@ -12,6 +12,7 @@ from web_novel_scraper.custom_processor.sites import (
     kakuyomu,
     shuba,
     botitranslation,
+    freewebnovel,
 )
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "ProcessorRegistry",
     "shuba",
     "botitranslation",
+    "freewebnovel",
 ]
