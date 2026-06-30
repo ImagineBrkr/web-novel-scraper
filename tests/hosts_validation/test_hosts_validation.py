@@ -280,6 +280,19 @@ HOSTS_TEST_DATA = {
             "fixed_chapter_url": "https://api.mystorywave.com/story-wave-backend/api/v1/content/chapters/1654610",
         },
     },
+    "fucknovelpia.com": {
+        "enabled": True,
+        "sample_novel_url": "https://fucknovelpia.com/novel/the-main-heroines-are-trying-to-kill-me",
+        "sample_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0502",
+        "fixed_chapter_index": 182,
+        "expected": {
+            "chapter_title": 'Chapter 499',
+            "chapter_content_sample": "At those words, the corners of Frey’s lips curled into his usual arrogant smirk.",
+            "chapter_urls_count_threshold": 527,
+            "first_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0001",
+            "fixed_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0294",
+        },
+    },
 }
 
 
