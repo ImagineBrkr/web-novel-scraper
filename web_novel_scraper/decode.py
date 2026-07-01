@@ -1,5 +1,6 @@
 import json
 from typing import Optional
+import inspect
 
 from pathlib import Path
 
@@ -21,6 +22,9 @@ from bs4 import BeautifulSoup
 logger = logger_manager.create_logger(__name__)
 
 XOR_SEPARATOR = "XOR"
+
+# TODO: Total Refactor into a Decode Engine
+# TODO: Refactor logic for Custom Processors to be more flexible
 
 
 class Decoder:
@@ -91,10 +95,10 @@ class Decoder:
         """
         return self.decode_guide.get("add_host_to_chapter", False)
 
-    def get_chapter_urls(self, html: str) -> list[str]:
+    def get_chapter_urls(self, html: str, toc_main_url: str) -> list[str]:
         logger.debug("Obtaining chapter URLs...")
         try:
-            chapter_urls = self.decode_html(html, "index")
+            chapter_urls = self.decode_html(html, "index", toc_main_url=toc_main_url)
         except DecodeError:
             raise
         except Exception as e:
@@ -312,7 +316,9 @@ class Decoder:
             [line.strip() for line in str(soup).splitlines() if line.strip()]
         )
 
-    def decode_html(self, html: str, content_type: str) -> str | list[str] | None:
+    def decode_html(
+        self, html: str, content_type: str, toc_main_url: str | None = None
+    ) -> str | list[str] | None:
         logger.debug(f"Decoding HTML, Content Type: {content_type}...")
         if content_type not in self.decode_guide:
             msg = f"No decode rules found for {content_type} in guide {self.decode_guide_file}"
@@ -321,9 +327,20 @@ class Decoder:
 
         if ProcessorRegistry.has_processor(self.host, content_type):
             logger.debug(f"Using custom processor for {self.host}")
-            return ProcessorRegistry.get_processor(self.host, content_type).process(
-                html
+            processor = ProcessorRegistry.get_processor(self.host, content_type)
+            process_signature = inspect.signature(processor.process)
+            supports_toc_main_url = (
+                "toc_main_url" in process_signature.parameters
+                or any(
+                    param.kind == inspect.Parameter.VAR_KEYWORD
+                    for param in process_signature.parameters.values()
+                )
             )
+
+            if supports_toc_main_url:
+                return processor.process(html, toc_main_url=toc_main_url)
+
+            return processor.process(html)
 
         try:
             soup = BeautifulSoup(html, "html.parser")

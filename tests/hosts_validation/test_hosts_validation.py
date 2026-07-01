@@ -293,6 +293,19 @@ HOSTS_TEST_DATA = {
             "fixed_chapter_url": "https://fucknovelpia.com/chapter.php?hash=f612fa9780452e83511bdfeb8c90f40e5c1c4e45&ch=0183",
         },
     },
+    "novelarrow.com": {
+        "enabled": True,
+        "sample_novel_url": "https://novelarrow.com/novel/my-gene-evolves-infinitely",
+        "sample_chapter_url": "https://novelarrow.com/chapter/my-gene-evolves-infinitely/chapter-749-completing-the-origin-core",
+        "fixed_chapter_index": 265,
+        "expected": {
+            "chapter_title": "Chapter 749: Completing The Origin Core",
+            "chapter_content_sample": "Nu Xing looked at Lu Yuan and said with a smile.",
+            "chapter_urls_count_threshold": 780,
+            "first_chapter_url": "https://novelarrow.com/chapter/my-gene-evolves-infinitely/chapter-1-awakening-boundless-potential",
+            "fixed_chapter_url": "https://novelarrow.com/chapter/my-gene-evolves-infinitely/chapter-266-this-trump-card-is-enough-2",
+        },
+    },
 }
 
 
@@ -399,7 +412,7 @@ class TestHostsValidation:
         """
         test_data = HOSTS_TEST_DATA[decoder.host]
 
-        chapter_urls = decoder.get_chapter_urls(toc_html)
+        chapter_urls = decoder.get_chapter_urls(toc_html, test_data["sample_novel_url"])
 
         assert chapter_urls is not None
         if decoder.has_pagination():
@@ -442,7 +455,7 @@ class TestHostsValidation:
         """
         test_data = HOSTS_TEST_DATA[decoder.host]
 
-        chapter_urls = decoder.get_chapter_urls(toc_html)
+        chapter_urls = decoder.get_chapter_urls(toc_html, test_data["sample_novel_url"])
 
         assert chapter_urls is not None, f"No chapter URLs found for {decoder.host}"
         assert len(chapter_urls) > 0, f"Empty chapter URLs list for {decoder.host}"
@@ -460,7 +473,7 @@ class TestHostsValidation:
         """
         test_data = HOSTS_TEST_DATA[decoder.host]
 
-        chapter_urls = decoder.get_chapter_urls(toc_html)
+        chapter_urls = decoder.get_chapter_urls(toc_html, test_data["sample_novel_url"])
 
         fixed_chapter_url = chapter_urls[test_data["fixed_chapter_index"]]
         expected_fixed_chapter_url = test_data["expected"]["fixed_chapter_url"]
