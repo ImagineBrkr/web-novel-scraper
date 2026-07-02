@@ -906,7 +906,7 @@ class Novel:
 
         for toc_content in all_tocs:
             try:
-                urls = self.decoder.get_chapter_urls(toc_content)
+                urls = self.decoder.get_chapter_urls(toc_content, self.toc_main_url)
                 self.chapters_url_list.extend(urls)
             except DecodeError as e:
                 logger.error(

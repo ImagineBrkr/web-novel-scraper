@@ -15,6 +15,7 @@ The following websites are currently supported and present in the decode guide:
 * kakuyomu.jp
 * ncode.syosetu.com
 * nobadnovel.com
+* novelarrow.com
 * novelcool.com
 * novelingua.com
 * novellive.net

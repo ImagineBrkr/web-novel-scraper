@@ -13,6 +13,7 @@ from web_novel_scraper.custom_processor.sites import (
     shuba,
     botitranslation,
     freewebnovel,
+    novelarrow,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     "shuba",
     "botitranslation",
     "freewebnovel",
+    "novelarrow",
 ]
