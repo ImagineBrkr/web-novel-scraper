@@ -81,5 +81,11 @@
             "request_timeout": 50,
             "request_time_between_requests": 10
         }
+    },
+    "novelarrow.com": {
+        "request_config": {
+            "force_flaresolver": true,
+            "request_timeout": 50
+        }
     }
 }

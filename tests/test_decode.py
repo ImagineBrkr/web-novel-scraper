@@ -110,7 +110,7 @@ def test_get_chapter_urls(guide_file):
         '<li><a href="https://url2">Link2</a></li>'
         "</ul></div>"
     )
-    urls = decoder.get_chapter_urls(html)
+    urls = decoder.get_chapter_urls(html, toc_main_url="https://test.com/novel/test")
     assert urls == ["https://url1", "https://url2"]
 
 
