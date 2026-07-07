@@ -659,23 +659,10 @@
     "title_in_content": "YES",
     "toc_main_url_processor": true,
     "title": {
-      "element": null,
-      "id": null,
-      "class": null,
-      "selector": "article h2 span.hidden",
-      "attributes": null,
-      "array": false,
-      "extract": {
-        "type": "text"
-      }
+      "use_custom_processor": true
     },
     "content": {
-      "element": null,
-      "id": null,
-      "class": null,
-      "selector": "article p",
-      "attributes": null,
-      "array": true
+      "use_custom_processor": true
     },
     "index": {
       "use_custom_processor": true
