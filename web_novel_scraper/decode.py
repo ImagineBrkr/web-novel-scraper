@@ -6,7 +6,7 @@ from pathlib import Path
 
 from web_novel_scraper import logger_manager
 from web_novel_scraper.custom_processor.custom_processor import ProcessorRegistry
-
+from web_novel_scraper.config import get_active_scraper_config
 from web_novel_scraper.exceptions import (
     DecodeError,
     HTMLParseError,
@@ -32,8 +32,9 @@ class Decoder:
     decode_guide_file: Path
     decode_guide: json
 
-    def __init__(self, host: str, decode_guide_file: Path):
-        self.decode_guide_file = decode_guide_file
+    def __init__(self, host: str):
+        scraper_config = get_active_scraper_config()
+        self.decode_guide_file = scraper_config.config_options["decode_guide_file"]
         self.set_host(host)
 
     def set_host(self, host: str) -> None:

@@ -5,17 +5,21 @@ import tempfile
 import json
 from pathlib import Path
 from unittest.mock import patch
-from web_novel_scraper.config_manager import (
+from web_novel_scraper.config import (
     ScraperConfig,
     ENV_MAPPING,
     BoolField,
     CONFIG_SCHEMA,
     DEFAULT_CONFIG_OPTIONS,
+    get_active_scraper_config,
+    reset_active_scraper_config,
+    set_active_scraper_config,
 )
 
 
 from web_novel_scraper.exceptions import (
     ConfigKeyConflictError,
+    ConfigNotInitializedError,
     InvalidTypeConfigError,
     ParameterValueFormatError,
     InvalidParameterStructureError,
@@ -85,6 +89,37 @@ class TestScraperConfigInit:
         ):
             config = ScraperConfig()
             assert config.config_options["request_config"]["request_timeout"] == 40
+
+
+class TestActiveScraperConfig:
+    """Tests for module-level active ScraperConfig helpers"""
+
+    def test_get_active_scraper_config_without_initialization_raises(self):
+        reset_active_scraper_config()
+        with pytest.raises(ConfigNotInitializedError):
+            get_active_scraper_config()
+
+    def test_init_sets_active_scraper_config(self):
+        with patch.object(
+            ScraperConfig, "_load_config_options_from_file", return_value={}
+        ):
+            config = ScraperConfig()
+            assert get_active_scraper_config() is config
+
+    def test_set_active_scraper_config_overrides_current(self):
+        with patch.object(
+            ScraperConfig, "_load_config_options_from_file", return_value={}
+        ):
+            config_one = ScraperConfig()
+            config_two = ScraperConfig(
+                parameters=[{"request_config.request_timeout": 55}]
+            )
+
+        set_active_scraper_config(config_one)
+        assert get_active_scraper_config() is config_one
+
+        set_active_scraper_config(config_two)
+        assert get_active_scraper_config() is config_two
 
 
 class TestSetHost:
@@ -158,7 +193,7 @@ class TestLoadConfigOptionsFromFile:
             temp_path = f.name
 
         try:
-            with patch("web_novel_scraper.config_manager.load_config") as mock_load:
+            with patch("web_novel_scraper.config.load_config") as mock_load:
                 mock_load.return_value = {"request_config": {"request_timeout": "25"}}
                 config = ScraperConfig._load_config_options_from_file(temp_path)
                 assert config == {"request_config": {"request_timeout": "25"}}
@@ -167,7 +202,7 @@ class TestLoadConfigOptionsFromFile:
 
     def test_load_config_empty_file(self):
         """Test loading from empty config file"""
-        with patch("web_novel_scraper.config_manager.load_config") as mock_load:
+        with patch("web_novel_scraper.config.load_config") as mock_load:
             from web_novel_scraper.exceptions import EmptyConfigFileError
 
             mock_load.side_effect = EmptyConfigFileError("Empty config file")
@@ -176,14 +211,14 @@ class TestLoadConfigOptionsFromFile:
 
     def test_load_config_file_not_found(self):
         """Test loading when config file not found"""
-        with patch("web_novel_scraper.config_manager.load_config") as mock_load:
+        with patch("web_novel_scraper.config.load_config") as mock_load:
             mock_load.side_effect = ConfigFileNotFoundError("File not found")
             config = ScraperConfig._load_config_options_from_file("dummy_path")
             assert config == {}
 
     def test_load_config_error(self):
         """Test loading when error occurs"""
-        with patch("web_novel_scraper.config_manager.load_config") as mock_load:
+        with patch("web_novel_scraper.config.load_config") as mock_load:
             mock_load.side_effect = LoadConfigError("Error loading config")
             config = ScraperConfig._load_config_options_from_file("dummy_path")
             assert config == {}
@@ -194,7 +229,7 @@ class TestLoadHostConfigOptions:
 
     def test_load_host_config_successfully(self):
         """Test loading host config successfully"""
-        with patch("web_novel_scraper.config_manager.load_hosts_config") as mock_load:
+        with patch("web_novel_scraper.config.load_hosts_config") as mock_load:
             mock_load.return_value = {"request_config": {"request_timeout": "12"}}
             config = ScraperConfig._load_host_config_options("example.com")
             assert config == {"request_config": {"request_timeout": "12"}}
@@ -203,7 +238,7 @@ class TestLoadHostConfigOptions:
         """Test loading host config when host not in file"""
         from web_novel_scraper.exceptions import HostNotInHostConfigFileError
 
-        with patch("web_novel_scraper.config_manager.load_hosts_config") as mock_load:
+        with patch("web_novel_scraper.config.load_hosts_config") as mock_load:
             mock_load.side_effect = HostNotInHostConfigFileError("Host not found")
             config = ScraperConfig._load_host_config_options("unknown.com")
             assert config == {}
@@ -212,7 +247,7 @@ class TestLoadHostConfigOptions:
         """Test loading host config when error occurs"""
         from web_novel_scraper.exceptions import LoadHostConfigError
 
-        with patch("web_novel_scraper.config_manager.load_hosts_config") as mock_load:
+        with patch("web_novel_scraper.config.load_hosts_config") as mock_load:
             mock_load.side_effect = LoadHostConfigError("Error loading")
             config = ScraperConfig._load_host_config_options("example.com")
             assert config == {}

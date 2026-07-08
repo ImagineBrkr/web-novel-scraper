@@ -3,7 +3,7 @@ from datetime import datetime
 
 import click
 
-from web_novel_scraper.config_manager import ScraperConfig
+from web_novel_scraper.config import ScraperConfig, set_active_scraper_config
 from web_novel_scraper.novel_scraper import Novel
 from web_novel_scraper.models import Chapter
 from web_novel_scraper.export import NovelExporter
@@ -114,21 +114,20 @@ def load_scraper_config(ctx_opts):
         parameters.append({key: value})
 
     try:
-        return ScraperConfig(parameters=parameters)
+        scraper_config = ScraperConfig(parameters=parameters)
     except ParametersParseError as e:
         click.echo(f"Error with the Configuration Parameters: {str(e)}", err=True)
         raise SystemExit(1)
     except InvalidTypeConfigError as e:
         click.echo(f"Error: {str(e)}", err=True)
         raise SystemExit(1)
+    set_active_scraper_config(scraper_config)
 
 
 def obtain_novel(title, ctx_opts, allow_missing=False):
-    cfg = load_scraper_config(ctx_opts=ctx_opts)
+    load_scraper_config(ctx_opts=ctx_opts)
     try:
-        return Novel.load(
-            title, scraper_config=cfg, novel_base_dir=ctx_opts.get("novel_base_dir")
-        )
+        return Novel.load(title, novel_base_dir=ctx_opts.get("novel_base_dir"))
     except NovelNotFoundError:
         if allow_missing:
             return None
@@ -285,12 +284,11 @@ def create_novel(
         )
         novel.delete_toc()
 
-    config = load_scraper_config(ctx_opts=ctx.obj)
+    load_scraper_config(ctx_opts=ctx.obj)
 
     try:
         novel = Novel.new(
             title=title,
-            scraper_config=config,
             host=host,
             toc_main_url=toc_main_url,
             novel_base_dir=ctx.obj.get("novel_base_dir"),

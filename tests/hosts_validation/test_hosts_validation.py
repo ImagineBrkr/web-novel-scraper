@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from web_novel_scraper.decode import Decoder
-from web_novel_scraper.config_manager import ScraperConfig
+from web_novel_scraper.config import ScraperConfig
 from web_novel_scraper.request_helper import RequestHelper
 
 # Path to the decode_guide.json
@@ -296,14 +296,14 @@ HOSTS_TEST_DATA = {
     "novelarrow.com": {
         "enabled": True,
         "sample_novel_url": "https://novelarrow.com/novel/my-gene-evolves-infinitely",
-        "sample_chapter_url": "https://novelarrow.com/chapter/my-gene-evolves-infinitely/chapter-749-completing-the-origin-core",
+        "sample_chapter_url": "https://novelarrow.com/api-web/novels/my-gene-evolves-infinitely/chapters/chapter-749-completing-the-origin-core",
         "fixed_chapter_index": 265,
         "expected": {
             "chapter_title": "Chapter 749: Completing The Origin Core",
             "chapter_content_sample": "Nu Xing looked at Lu Yuan and said with a smile.",
             "chapter_urls_count_threshold": 780,
-            "first_chapter_url": "https://novelarrow.com/chapter/my-gene-evolves-infinitely/chapter-1-awakening-boundless-potential",
-            "fixed_chapter_url": "https://novelarrow.com/chapter/my-gene-evolves-infinitely/chapter-266-this-trump-card-is-enough-2",
+            "first_chapter_url": "https://novelarrow.com/api-web/novels/my-gene-evolves-infinitely/chapters/chapter-1-awakening-boundless-potential",
+            "fixed_chapter_url": "https://novelarrow.com/api-web/novels/my-gene-evolves-infinitely/chapters/chapter-266-this-trump-card-is-enough-2",
         },
     },
 }
