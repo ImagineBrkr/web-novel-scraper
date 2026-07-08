@@ -1,6 +1,11 @@
 import pytest
 import json
 
+from web_novel_scraper.config import (
+    ScraperConfig,
+    set_active_scraper_config,
+    reset_active_scraper_config,
+)
 from web_novel_scraper.decode import (
     Decoder,
     TitleInContentOption,
@@ -9,6 +14,13 @@ from web_novel_scraper.exceptions import (
     DecodeGuideError,
     ContentExtractionError,
 )
+
+
+@pytest.fixture(autouse=True)
+def clear_active_scraper_config():
+    reset_active_scraper_config()
+    yield
+    reset_active_scraper_config()
 
 
 @pytest.fixture
@@ -30,7 +42,7 @@ def guide_file(tmp_path):
     ]
     path = tmp_path / "decode_guide.json"
     path.write_text(json.dumps(guide))
-    return path
+    set_active_scraper_config(ScraperConfig([{"decode_guide_file": str(path)}]))
 
 
 @pytest.fixture
@@ -47,7 +59,7 @@ def guide_file_title_in_content(tmp_path):
     ]
     path = tmp_path / "decode_guide_title_in_content_option.json"
     path.write_text(json.dumps(guide))
-    return path
+    set_active_scraper_config(ScraperConfig([{"decode_guide_file": str(path)}]))
 
 
 @pytest.mark.parametrize(
@@ -63,9 +75,9 @@ def test_set_host_behavior(guide_file, host, expect_error):
     """
     if expect_error:
         with pytest.raises(DecodeGuideError):
-            Decoder(host=host, decode_guide_file=guide_file)
+            Decoder(host=host)
     else:
-        decoder = Decoder(host=host, decode_guide_file=guide_file)
+        decoder = Decoder(host=host)
         assert decoder.host == host
 
 
@@ -84,7 +96,7 @@ def test_title_in_content_variations(
     """
     Verify title_in_content returns the correct enum for each host configuration.
     """
-    decoder = Decoder(host=host, decode_guide_file=guide_file_title_in_content)
+    decoder = Decoder(host=host)
     assert decoder.title_in_content() == expected_option
 
 
@@ -92,9 +104,7 @@ def test_title_in_content_wrong_option(guide_file_title_in_content):
     """
     Verify title_in_content returns the correct enum for each host configuration.
     """
-    decoder = Decoder(
-        host="example_wrong.com", decode_guide_file=guide_file_title_in_content
-    )
+    decoder = Decoder(host="example_wrong.com")
     with pytest.raises(DecodeGuideError):
         decoder.title_in_content()
 
@@ -103,7 +113,7 @@ def test_get_chapter_urls(guide_file):
     """
     Test extraction of chapter URLs using get_chapter_urls.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     html = (
         '<div class="eplister"><ul>'
         '<li><a href="https://url1">Link1</a></li>'
@@ -118,7 +128,7 @@ def test_get_chapter_title(guide_file):
     """
     Test extraction of the chapter title using get_chapter_title.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     html = "<h2>My Chapter Title</h2>"
     title = decoder.get_chapter_title(html)
     assert title == "My Chapter Title"
@@ -128,7 +138,7 @@ def test_no_chapter_title(guide_file):
     """
     Test extraction of the chapter title using get_chapter_title when there is no title.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     html = "<h3>My Chapter Title</h3>"
     title = decoder.get_chapter_title(html)
     assert title is None
@@ -165,7 +175,7 @@ def test_get_chapter_content_variations(
     """
     Parametrized test for get_chapter_content covering NO, YES, and SEARCH options.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     content = decoder.get_chapter_content(html, title_option, "Chapter")
     assert content.startswith(expected_startswith)
     assert "This is the content" in content
@@ -175,7 +185,7 @@ def test_get_chapter_content_no_content_raises(guide_file):
     """
     Should raise ContentExtractionError when no content is found.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     with pytest.raises(ContentExtractionError):
         decoder.get_chapter_content(
             "<div>No epcontent here</div>", TitleInContentOption.NO, "Chapter"
@@ -186,7 +196,7 @@ def test_toc_main_url_process_returns_input_by_default(guide_file):
     """
     When no custom processor is configured, toc_main_url_process should return the input URL.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     test_url = "https://test.com/test"
     assert decoder.toc_main_url_process(test_url) == test_url
 
@@ -195,7 +205,7 @@ def test_has_pagination_default_false(guide_file):
     """
     Verify that has_pagination returns False when not set in the Decode Guide.
     """
-    decoder = Decoder(host="test.com", decode_guide_file=guide_file)
+    decoder = Decoder(host="test.com")
     assert decoder.has_pagination() is False
 
 

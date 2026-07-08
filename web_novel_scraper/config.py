@@ -14,6 +14,7 @@ from web_novel_scraper.io_helpers.config_io_helper import (
 )
 from web_novel_scraper.exceptions import (
     ConfigKeyConflictError,
+    ConfigNotInitializedError,
     InvalidTypeConfigError,
     LoadConfigError,
     LoadHostConfigError,
@@ -138,6 +139,7 @@ class ScraperConfig:
         config = ScraperConfig._validate_config(config)
 
         self.config_options = config
+        set_active_scraper_config(self)
 
     # Config specific Host in host_config.json File counts as the Default
     # Configuration passed by the user still takes priority
@@ -397,3 +399,26 @@ class ScraperConfig:
                 ) from e
 
         return result
+
+
+_ACTIVE_SCRAPER_CONFIG = None
+
+
+def set_active_scraper_config(config: ScraperConfig) -> ScraperConfig:
+    global _ACTIVE_SCRAPER_CONFIG
+    _ACTIVE_SCRAPER_CONFIG = config
+    return config
+
+
+def get_active_scraper_config() -> ScraperConfig:
+    if _ACTIVE_SCRAPER_CONFIG is None:
+        raise ConfigNotInitializedError(
+            "No active ScraperConfig found. Initialize if first with set_active_scraper_config()."
+        )
+    return _ACTIVE_SCRAPER_CONFIG
+
+
+def reset_active_scraper_config() -> None:
+    global _ACTIVE_SCRAPER_CONFIG
+    _ACTIVE_SCRAPER_CONFIG = None
+    logger.debug("Active ScraperConfig reset to None.")

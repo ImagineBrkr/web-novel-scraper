@@ -172,6 +172,10 @@ class ConfigError(ScraperError):
     pass
 
 
+class ConfigNotInitializedError(ConfigError):
+    pass
+
+
 class InvalidTypeConfigError(ConfigError):
     pass
 
