@@ -27,6 +27,7 @@ from web_novel_scraper.exceptions import (
     ParameterKeyFormatError,
 )
 
+# TODO v3: Change base_novels_dir to novels_root_dir in every config definition
 
 load_dotenv()
 

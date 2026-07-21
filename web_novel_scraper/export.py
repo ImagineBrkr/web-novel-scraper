@@ -9,9 +9,11 @@ from web_novel_scraper.exceptions import (
     InvalidChapterByBookFromChapterRangeError,
     InvalidEndChapterFromChapterRangeError,
     InvalidStartChapterFromChapterRangeError,
+    NovelDataError,
 )
 from web_novel_scraper.exporters.base_exporter import BaseExporter
 from web_novel_scraper.exporters.epub_exporter import EPUBExporter
+from web_novel_scraper.persistence.novel_repository import NovelRepository
 
 logger = create_logger(__name__)
 
@@ -24,6 +26,7 @@ class NovelExporter:
     @staticmethod
     def export_novel_to_format(
         novel: Novel,
+        novel_repository: NovelRepository,
         format: str,
         start_chapter: int = 1,
         end_chapter: int = None,
@@ -78,6 +81,7 @@ class NovelExporter:
             book_end = min(book_start + chapters_by_book - 1, end_chapter)
             NovelExporter._save_chapters_to_format(
                 novel=novel,
+                novel_repository=novel_repository,
                 exporter=EXPORTERS[format],
                 start_chapter=book_start,
                 end_chapter=book_end,
@@ -88,6 +92,7 @@ class NovelExporter:
     @staticmethod
     def _save_chapters_to_format(
         novel: Novel,
+        novel_repository: NovelRepository,
         exporter: BaseExporter,
         start_chapter: int,
         end_chapter: int = None,
@@ -102,6 +107,13 @@ class NovelExporter:
         for chapter in chapters:
             chapter = novel.scrap_chapter(chapter)
 
+        try:
+            novel_repository.save_novel(novel)
+        except NovelDataError as e:
+            logger.warning(
+                f"Could not save the novel data: {str(e)}. The export will continue."
+            )
+
         exporter = exporter()
         try:
             exporter.export_novel_to_book(
@@ -112,5 +124,3 @@ class NovelExporter:
             )
         except ExporterError as e:
             raise ExportError(f"Could not export the novel to a book: {str(e)}")
-
-        novel.save_novel()

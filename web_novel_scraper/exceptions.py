@@ -100,14 +100,14 @@ class NovelDataError(ScraperError):
     pass
 
 
+class InvalidNovelBaseDirError(NovelDataError):
+    """Exception raised for invalid novel base directory"""
+
+
 ## LOAD NOVEL DATA EXCEPTIONS
 
 
 class LoadNovelDataError(NovelDataError):
-    pass
-
-
-class InvalidNovelDataDirError(LoadNovelDataError):
     pass
 
 
@@ -285,12 +285,43 @@ class NovelBaseDirError(ScraperError):
     pass
 
 
-class InvalidNovelBaseDirError(NovelBaseDirError):
-    """Exception raised for invalid novel base directory"""
+class BaseNovelsDirError(ScraperError):
+    pass
 
 
-class InvalidMetaFileError(NovelBaseDirError):
+class InvalidBaseNovelsDirError(BaseNovelsDirError):
+    """Exception raised for invalid base novels directory"""
+
+
+class InvalidMetaFileError(BaseNovelsDirError):
     """Exception raised for invalid metadata file"""
+
+
+## NOVEL REGISTRY  EXCEPTIONS
+
+
+class NovelRegistryError(ScraperError):
+    pass
+
+
+class InvalidNovelDefinitionError(NovelRegistryError):
+    pass
+
+
+class InvalidNovelsRootDirError(NovelRegistryError):
+    pass
+
+
+class InvalidNovelRegistryFileError(NovelRegistryError):
+    pass
+
+
+class NovelNotFoundInNovelsRootDirError(NovelRegistryError):
+    pass
+
+
+class InvalidNovelDefinitionInRegistryFileError(NovelRegistryError):
+    pass
 
 
 ## EXPORT EXCEPTIONS

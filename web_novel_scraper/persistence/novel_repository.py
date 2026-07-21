@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from web_novel_scraper.logger_manager import create_logger
 from web_novel_scraper.io_helpers.utils import IOUtils
+from web_novel_scraper.novel_scraper import Novel
 from web_novel_scraper.exceptions import (
     IOUtilsError,
     ChapterFileNotFoundError,
@@ -29,7 +30,7 @@ NOVEL_COVER_FILENAME = "cover.jpg"
 logger = create_logger(__name__)
 
 
-class NovelDataHelper:
+class NovelRepository:
     """
     Helper Class with functions for handling novel-related file operations.
 
@@ -65,27 +66,31 @@ class NovelDataHelper:
             self.novel_json_file = self.novel_data_dir / NOVEL_JSON_FILENAME
             self.novel_cover_file = self.novel_data_dir / NOVEL_COVER_FILENAME
 
-            logger.debug(
-                f"Initializing data directories for Novel Base Dir {novel_base_dir}"
-            )
+        except IOUtilsError as e:
+            raise InvalidNovelBaseDirError(e) from e
 
+    def initialize_directories(self) -> None:
+        try:
             IOUtils.ensure_dir(self.novel_base_dir)
             IOUtils.ensure_dir(self.novel_data_dir)
             IOUtils.ensure_dir(self.novel_chapters_dir)
             IOUtils.ensure_dir(self.novel_toc_dir)
-
+            logger.debug(
+                f"Initialized directories for Novel Base Dir {self.novel_base_dir}"
+            )
         except IOUtilsError as e:
-            raise InvalidNovelBaseDirError(e) from e
+            raise InvalidNovelBaseDirError(
+                f"Failed to initialize directories for Novel Base Dir {self.novel_base_dir}: {e}"
+            ) from e
 
-    @staticmethod
-    def load_novel_data(novel_base_dir: Path | str) -> dict:
+    def load_novel_data(self) -> Novel:
         try:
-            novel_data_dir_path = IOUtils.get_path_in_dir(novel_base_dir, "data")
+            novel_data_dir_path = IOUtils.get_path_in_dir(self.novel_base_dir, "data")
             novel_data_file_path = IOUtils.get_path_in_dir(
                 novel_data_dir_path, "main.json"
             )
         except IOUtilsError as e:
-            raise InvalidNovelDataError(f"Invalid Novel Base Dir: {e}") from e
+            raise InvalidNovelBaseDirError(f"Invalid Novel Base Dir: {e}") from e
 
         logger.debug(f"Trying to load Novel Data from File {novel_data_file_path}")
 
@@ -105,10 +110,18 @@ class NovelDataHelper:
                 f"Could not load Novel Data File {novel_data_file_path}: {str(e)}"
             ) from e
 
-        return novel_data
+        try:
+            novel = Novel.from_dict(novel_data)
+        except KeyError as e:
+            logger.debug("Traceback: ", exc_info=True)
+            raise InvalidNovelDataError(
+                f"Invalid Novel Data on Novel Data File {novel_data_file_path}."
+            ) from e
 
-    def save_novel_data(self, novel_data: dict) -> None:
+        return novel
 
+    def save_novel_data(self, novel: Novel) -> None:
+        novel_data = Novel.to_dict(novel)
         if not isinstance(novel_data, dict):
             raise InvalidNovelDataError(
                 f"Novel data is in invalid format, expected dictionary, got {type(novel_data).__name__}"
@@ -139,7 +152,13 @@ class NovelDataHelper:
 
     def chapter_file_exists(self, chapter_file: str) -> bool:
         full_path = self.novel_chapters_dir / chapter_file
-        return full_path.exists()
+        try:
+            return IOUtils.file_exists(full_path)
+        except IOUtilsError as e:
+            logger.warning(
+                f"Error checking if chapter file exists: {full_path}: {str(e)}"
+            )
+            return False
 
     def load_chapter_html(self, chapter_file: str) -> str:
 

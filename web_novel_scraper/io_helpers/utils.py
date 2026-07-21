@@ -157,6 +157,15 @@ class IOUtils:
         return normalized_path.exists()
 
     @staticmethod
+    def file_exists(path: Path | str) -> bool:
+        """Validates if *path* is a valid file and exists."""
+        normalized_path = IOUtils._normalize_path(path)
+
+        if normalized_path.exists():
+            IOUtils._validate_is_file(normalized_path)
+        return normalized_path.exists()
+
+    @staticmethod
     def ensure_dir(path: Path | str) -> None:
         """Create directory and all parent directories if they don't exist."""
 

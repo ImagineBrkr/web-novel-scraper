@@ -3,7 +3,13 @@ from datetime import datetime
 
 import click
 
-from web_novel_scraper.config import ScraperConfig, set_active_scraper_config
+from web_novel_scraper.config import (
+    ScraperConfig,
+    set_active_scraper_config,
+    get_active_scraper_config,
+)
+from web_novel_scraper.decode import Decoder
+from web_novel_scraper.io_helpers.novel_data_helper import NovelDataHelper
 from web_novel_scraper.novel_scraper import Novel
 from web_novel_scraper.models import Chapter
 from web_novel_scraper.export import NovelExporter
@@ -14,13 +20,23 @@ from web_novel_scraper.exceptions import (
     ExportError,
     InvalidChapterByBookFromChapterRangeError,
     InvalidEndChapterFromChapterRangeError,
+    InvalidNovelBaseDirError,
+    InvalidNovelDataError,
+    InvalidNovelsRootDirError,
     InvalidStartChapterFromChapterRangeError,
     InvalidTypeConfigError,
+    LoadNovelDataError,
+    NovelDataError,
+    NovelDataNotFoundError,
+    NovelNotFoundInNovelsRootDirError,
+    NovelRegistryError,
+    SaveNovelDataError,
     ValidationError,
     ScraperError,
-    NovelNotFoundError,
     ParametersParseError,
 )
+from web_novel_scraper.persistence.novel_registry import NovelRegistry
+from web_novel_scraper.persistence.novel_repository import NovelRepository
 from importlib.metadata import version
 
 __version__ = version("web-novel-scraper")
@@ -43,7 +59,7 @@ def global_options(f):
         "--base-novels-dir",
         type=click.Path(),
         required=False,
-        help="Alternative base directory for all novels.",
+        help="Alternative Novel Registry Directory where all novels are stored.",
     )(f)
     f = click.option(
         "--decode-guide-file",
@@ -124,17 +140,92 @@ def load_scraper_config(ctx_opts):
     set_active_scraper_config(scraper_config)
 
 
-def obtain_novel(title, ctx_opts, allow_missing=False):
+def obtain_novel(
+    title, ctx_opts, exit_if_not_found=True
+) -> tuple[Novel, NovelRepository]:
     load_scraper_config(ctx_opts=ctx_opts)
+    scraper_config = get_active_scraper_config()
+    novel_base_dir = ctx_opts.get("novel_base_dir")
+    if not novel_base_dir:
+        try:
+            novel_registry = NovelRegistry(
+                novels_root_dir=scraper_config.config_options.get("base_novels_dir")
+            )
+        except InvalidNovelsRootDirError as e:
+            click.echo(f"Error: {str(e)}", err=True)
+            raise SystemExit(1)
+
+        try:
+            novel_base_dir = novel_registry.find_by_title(title)
+        except NovelNotFoundInNovelsRootDirError:
+            if exit_if_not_found:
+                click.echo(
+                    f"Novel with title '{title}' not found in novels root directory '{novel_registry.novels_root_dir}'.",
+                    err=True,
+                )
+                raise SystemExit(1)
+            else:
+                raise
+        except NovelRegistryError as e:
+            click.echo(f"Error: {str(e)}", err=True)
+            raise SystemExit(1)
+
     try:
-        return Novel.load(title, novel_base_dir=ctx_opts.get("novel_base_dir"))
-    except NovelNotFoundError:
-        if allow_missing:
-            return None
-        click.echo(f"Novel {title} not found.", err=True)
+        novel_repository = NovelRepository(novel_base_dir)
+    except InvalidNovelBaseDirError as e:
+        click.echo(
+            f"Invalid novel base directory: '{novel_base_dir}': {str(e)}.", err=True
+        )
         raise SystemExit(1)
-    except ScraperError as e:
-        click.echo(f"Error: {e}", err=True)
+
+    try:
+        novel = novel_repository.load_novel_data()
+    except NovelDataNotFoundError:
+        if exit_if_not_found:
+            click.echo(
+                f"Novel data for title '{title}' not found in directory '{novel_base_dir}'.",
+                err=True,
+            )
+            raise SystemExit(1)
+        raise
+    except (LoadNovelDataError, InvalidNovelBaseDirError) as e:
+        click.echo(f"Error loading novel data: {str(e)}", err=True)
+        raise SystemExit(1)
+
+    scraper_config.set_host(novel.host)
+    set_active_scraper_config(scraper_config)
+
+    # TODO 1 Remove when refactoring is complete
+    novel.novel_data_helper = NovelDataHelper(novel_base_dir=novel_base_dir)
+    novel.decoder = Decoder(novel.host)
+
+    return novel, novel_repository
+
+
+def allocate_novel_base_dir(title, ctx_opts) -> str:
+    scraper_config = get_active_scraper_config()
+    try:
+        novel_registry = NovelRegistry(
+            novels_root_dir=scraper_config.config_options.get("base_novels_dir")
+        )
+    except InvalidNovelsRootDirError as e:
+        click.echo(f"Error: {str(e)}", err=True)
+        raise SystemExit(1)
+
+    try:
+        novel_base_dir = novel_registry.allocate_from_title(title)
+    except InvalidNovelsRootDirError as e:
+        click.echo(f"Error: {str(e)}", err=True)
+        raise SystemExit(1)
+    return novel_base_dir
+
+
+def save_novel(novel: Novel, novel_repository: NovelRepository) -> None:
+    """Save the novel data to the specified base directory."""
+    try:
+        novel_repository.save_novel_data(novel)
+    except SaveNovelDataError as e:
+        click.echo(f"Error saving novel data: {str(e)}", err=True)
         raise SystemExit(1)
 
 
@@ -287,13 +378,9 @@ def create_novel(
     load_scraper_config(ctx_opts=ctx.obj)
 
     try:
-        novel = Novel.new(
-            title=title,
-            host=host,
-            toc_main_url=toc_main_url,
-            novel_base_dir=ctx.obj.get("novel_base_dir"),
-        )
-    except ScraperError as e:
+        novel = Novel(title=title, toc_main_url=toc_main_url, host=host)
+
+    except InvalidNovelDataError as e:
         click.echo(f"Error creating novel: {e}", err=True)
         raise SystemExit(1)
 
@@ -318,9 +405,13 @@ def create_novel(
         if not novel.set_cover_image(cover):
             click.echo("Error saving the novel cover image.", err=True)
 
+    novel_base_dir = allocate_novel_base_dir(title, ctx.obj)
+
     try:
-        novel.save_novel()
-    except ScraperError as e:
+        novel_repository = NovelRepository(novel_base_dir=novel_base_dir)
+        novel_repository.initialize_directories()
+        novel_repository.save_novel_data(novel)
+    except NovelDataError as e:
         click.echo(f"Error Saving Novel Data: {str(e)}", err=True)
         raise SystemExit(1)
 
@@ -332,7 +423,7 @@ def create_novel(
 @title_option
 def show_novel_info(ctx, title):
     """Show information about a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(novel)
 
 
@@ -346,7 +437,7 @@ def show_novel_info(ctx, title):
 @metadata_description_option
 def set_metadata(ctx, title, author, start_date, end_date, language, description):
     """Set metadata for a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     novel.set_metadata(
         author=author,
         start_date=start_date,
@@ -354,7 +445,8 @@ def set_metadata(ctx, title, author, start_date, end_date, language, description
         language=language,
         description=description,
     )
-    novel.save_novel()
+    save_novel(novel, novel_repository)
+
     click.echo("Novel metadata saved successfully.")
     click.echo(novel.metadata)
 
@@ -364,7 +456,7 @@ def set_metadata(ctx, title, author, start_date, end_date, language, description
 @title_option
 def show_metadata(ctx, title):
     """Show metadata of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(novel.metadata)
 
 
@@ -374,11 +466,11 @@ def show_metadata(ctx, title):
 @click.option("--tag", "tags", type=str, help="Tag to be added", multiple=True)
 def add_tags(ctx, title, tags):
     """Add tags to a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     for tag in tags:
         if not novel.add_tag(tag):
             click.echo(f"Tag {tag} already exists", err=True)
-    novel.save_novel()
+    save_novel(novel, novel_repository)
     click.echo(f"Tags: {', '.join(novel.metadata.tags)}")
 
 
@@ -388,11 +480,11 @@ def add_tags(ctx, title, tags):
 @click.option("--tag", "tags", type=str, help="Tag to be removed.", multiple=True)
 def remove_tags(ctx, title, tags):
     """Remove tags from a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     for tag in tags:
         if not novel.remove_tag(tag):
             click.echo(f"Tag {tag} does not exist.", err=True)
-    novel.save_novel()
+    save_novel(novel, novel_repository)
     click.echo(f"Tags: {', '.join(novel.metadata.tags)}")
 
 
@@ -401,7 +493,7 @@ def remove_tags(ctx, title, tags):
 @title_option
 def show_tags(ctx, title):
     """Show tags of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(f"Tags: {', '.join(novel.metadata.tags)}")
 
 
@@ -413,8 +505,9 @@ def show_tags(ctx, title):
 )
 def set_cover_image(ctx, title, cover_image):
     """Set the cover image for a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     novel.set_cover_image(cover_image)
+    save_novel(novel, novel_repository)
     click.echo("Cover image saved successfully.")
 
 
@@ -441,14 +534,14 @@ def set_scraper_behavior(
     ctx, title, title_in_content, auto_add_host, force_flaresolver, hard_clean
 ):
     """Set scraper behavior for a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     novel.set_scraper_behavior(
         title_in_content=title_in_content,
         auto_add_host=auto_add_host,
         force_flaresolver=force_flaresolver,
         hard_clean=hard_clean,
     )
-    novel.save_novel()
+    save_novel(novel, novel_repository)
     click.echo("New scraper behavior added successfully.")
 
 
@@ -457,7 +550,7 @@ def set_scraper_behavior(
 @title_option
 def show_scraper_behavior(ctx, title):
     """Show scraper behavior of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(novel.scraper_behavior)
 
 
@@ -467,9 +560,9 @@ def show_scraper_behavior(ctx, title):
 @host_option
 def set_host(ctx, title, host):
     """Set the host for a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     novel.set_host(host)
-    novel.save_novel()
+    save_novel(novel, novel_repository)
     click.echo("New host set successfully.")
 
 
@@ -487,9 +580,9 @@ def set_host(ctx, title, host):
 )
 def set_toc_main_url(ctx, title, toc_main_url):
     """Set the main URL for the TOC of a novel, will delete all chapter information from previous TOC."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     novel.set_toc_main_url(toc_main_url)
-    novel.save_novel()
+    save_novel(novel, novel_repository)
 
 
 @cli.command()
@@ -505,7 +598,7 @@ def set_toc_main_url(ctx, title, toc_main_url):
 )
 def sync_toc(ctx, title, reload_files):
     """Sync the TOC of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     try:
         novel.sync_toc(reload_files=reload_files)
     except ScraperError as e:
@@ -515,7 +608,7 @@ def sync_toc(ctx, title, reload_files):
         "Table of Contents synced with files, to see the new TOC use the command show-toc."
     )
 
-    novel.save_novel()
+    save_novel(novel, novel_repository)
 
 
 @cli.command()
@@ -523,7 +616,7 @@ def sync_toc(ctx, title, reload_files):
 @title_option
 def show_toc(ctx, title):
     """Show the TOC of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(novel.show_toc())
 
 
@@ -548,7 +641,7 @@ def show_toc(ctx, title):
 )
 def scrap_chapter(ctx, title, chapter_url, chapter_num, update_html):
     """Scrap a chapter of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     try:
         if chapter_num is not None:
             chapter_num = chapter_num - 1
@@ -596,7 +689,7 @@ def scrap_chapter(ctx, title, chapter_url, chapter_num, update_html):
 )
 def request_all_chapters(ctx, title, sync_toc, update_html, clean_chapters):
     """Request all chapters of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     if sync_toc:
         try:
             novel.sync_toc()
@@ -604,7 +697,7 @@ def request_all_chapters(ctx, title, sync_toc, update_html, clean_chapters):
             click.echo(f"Error: {str(e)}", err=True)
             raise SystemExit(1)
     novel.request_all_chapters(reload_files=update_html, clean_chapters=clean_chapters)
-    novel.save_novel()
+    save_novel(novel, novel_repository)
     click.echo("All chapters requested and saved.")
 
 
@@ -613,7 +706,7 @@ def request_all_chapters(ctx, title, sync_toc, update_html, clean_chapters):
 @title_option
 def show_chapters(ctx, title):
     """Show chapters of a novel."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(novel.show_chapters())
 
 
@@ -647,7 +740,7 @@ def save_novel_to_epub(
 ):
     """Save the novel to EPUB format."""
 
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     if sync_toc:
         try:
             novel.sync_toc()
@@ -657,6 +750,7 @@ def save_novel_to_epub(
     try:
         NovelExporter.export_novel_to_format(
             novel=novel,
+            novel_repository=novel_repository,
             format="epub",
             start_chapter=start_chapter,
             end_chapter=end_chapter,
@@ -671,7 +765,6 @@ def save_novel_to_epub(
     except ExportError as e:
         click.echo(f"Error: {str(e)}", err=True)
         raise SystemExit(1)
-
     click.echo("All books saved.")
 
 
@@ -703,9 +796,9 @@ def save_novel_to_epub(
 def save_novel_to_html(
     ctx, title, sync_toc, start_chapter, end_chapter, chapters_by_book
 ):
-    """Save the novel to EPUB format."""
+    """Save the novel to HTML format."""
 
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     if sync_toc:
         try:
             novel.sync_toc()
@@ -715,6 +808,7 @@ def save_novel_to_html(
     try:
         NovelExporter.export_novel_to_format(
             novel=novel,
+            novel_repository=novel_repository,
             format="html",
             start_chapter=start_chapter,
             end_chapter=end_chapter,
@@ -761,9 +855,9 @@ def save_novel_to_html(
 def save_novel_to_txt(
     ctx, title, sync_toc, start_chapter, end_chapter, chapters_by_book
 ):
-    """Save the novel to EPUB format."""
+    """Save the novel to TXT format."""
 
-    novel = obtain_novel(title, ctx.obj)
+    novel, novel_repository = obtain_novel(title, ctx.obj)
     if sync_toc:
         try:
             novel.sync_toc()
@@ -773,6 +867,7 @@ def save_novel_to_txt(
     try:
         NovelExporter.export_novel_to_format(
             novel=novel,
+            novel_repository=novel_repository,
             format="txt",
             start_chapter=start_chapter,
             end_chapter=end_chapter,
@@ -826,7 +921,7 @@ def save_novel_to_txt(
 #             err=True,
 #         )
 #         return
-#     novel = obtain_novel(title, ctx.obj)
+#     novel, novel_repository = obtain_novel(title, ctx.obj)
 #     novel.clean_files(
 #         clean_chapters=clean_chapters, clean_toc=clean_toc, hard_clean=hard_clean
 #     )
@@ -837,7 +932,7 @@ def save_novel_to_txt(
 @title_option
 def show_novel_dir(ctx, title):
     """Show the directory where the novel is saved."""
-    novel = obtain_novel(title, ctx.obj)
+    novel, _ = obtain_novel(title, ctx.obj)
     click.echo(novel.show_novel_dir())
 
 

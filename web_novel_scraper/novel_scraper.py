@@ -2,17 +2,14 @@ from dataclasses import dataclass, field, replace
 
 from dataclasses_json import dataclass_json, Undefined, config
 from typing import Optional
-from pathlib import Path
 
 from web_novel_scraper import logger_manager
-from web_novel_scraper.io_helpers.novel_base_dir_helper import NovelBaseDirHelper
 from web_novel_scraper.io_helpers.novel_data_helper import NovelDataHelper
 from web_novel_scraper.decode import Decoder
 from web_novel_scraper import utils
 from web_novel_scraper.request_helper import RequestHelper
 from web_novel_scraper.config import (
     get_active_scraper_config,
-    set_active_scraper_config,
 )
 from web_novel_scraper.models import ScraperBehavior, Metadata, Chapter
 from web_novel_scraper.utils import (
@@ -20,15 +17,12 @@ from web_novel_scraper.utils import (
     TitleInContentOption,
 )
 from web_novel_scraper.exceptions import (
+    InvalidNovelDataError,
     RequestError,
     ScraperError,
     ValidationError,
     DecodeError,
     DecodeGuideError,
-    NovelBaseDirError,
-    LoadNovelDataError,
-    NovelDataNotFoundError,
-    NovelNotFoundError,
     NovelDataError,
     ChapterFileNotFoundError,
     ChapterFileIsEmptyError,
@@ -75,17 +69,14 @@ class Novel:
     )
 
     def __post_init__(self):
-        """
-        Validates the novel instance after initialization.
-
-        Raises:
-            ValidationError: If the title is empty or toc_main_url is not provided.
-        """
-
         if not self.title:
-            raise ValidationError("title can't be empty")
+            raise InvalidNovelDataError("title can't be empty")
         if not self.toc_main_url:
-            raise ValidationError('You must provide a "toc_main_url"')
+            raise InvalidNovelDataError('You must provide a "toc_main_url"')
+
+        if self.host is None:
+            host = utils.obtain_host(self.toc_main_url)
+            self.host = host
 
     def __str__(self):
         """
@@ -107,125 +98,7 @@ class Novel:
         attributes_str = "\n".join(attributes)
         return f"Novel Info: \n{attributes_str}"
 
-    @classmethod
-    def load(
-        cls,
-        title: str,
-        novel_base_dir: Path = None,
-    ) -> "Novel":
-
-        scraper_config = get_active_scraper_config()
-
-        if novel_base_dir is None:
-            try:
-                novel_base_dir = NovelBaseDirHelper.get_novel_base_dir_from_meta(
-                    title=title,
-                    base_novels_dir=scraper_config.config_options["base_novels_dir"],
-                )
-            except NovelBaseDirError as e:
-                logger.debug("Traceback:", exc_info=True)
-                raise ScraperError(e) from e
-
-            if novel_base_dir is None:
-                raise NovelNotFoundError(
-                    f"Novel with Title {title} not found on base_novels_dir {scraper_config.config_options['base_novels_dir']}"
-                )
-
-        try:
-            novel_data = NovelDataHelper.load_novel_data(novel_base_dir)
-
-        except NovelDataNotFoundError:
-            logger.debug(f"Novel Data File not found on {novel_base_dir}")
-            raise NovelNotFoundError(f"Novel data not found on {novel_base_dir}")
-
-        except LoadNovelDataError as e:
-            logger.debug("Traceback:", exc_info=True)
-            raise ScraperError(e) from e
-
-        try:
-            novel = cls.from_dict(novel_data)
-        except KeyError as e:
-            logger.debug("Traceback: ", exc_info=True)
-            raise ScraperError(
-                f"Invalid Novel Data on Novel Data File {novel_base_dir}."
-            ) from e
-
-        scraper_config.set_host(host=novel.host)
-        set_active_scraper_config(scraper_config)
-
-        novel.novel_data_helper = NovelDataHelper(novel_base_dir=novel_base_dir)
-
-        try:
-            novel.decoder = Decoder(novel.host)
-
-        except DecodeGuideError as e:
-            logger.debug("Traceback: ", exc_info=True)
-            raise ScraperError(e) from e
-
-        return novel
-
-    @classmethod
-    def new(
-        cls,
-        title: str,
-        toc_main_url: str,
-        host: str = None,
-        novel_base_dir: str = None,
-    ) -> "Novel":
-
-        scraper_config = get_active_scraper_config()
-
-        novel = cls(title=title, host=host, toc_main_url=toc_main_url)
-
-        # If toc_main_url is provided and the host isn't, extract host from URL
-        if toc_main_url and not host:
-            host = utils.obtain_host(toc_main_url)
-            novel.host = host
-        scraper_config.set_host(host=novel.host)
-        set_active_scraper_config(scraper_config)
-        try:
-            Decoder(host=novel.host)
-        except DecodeGuideError as e:
-            logger.debug("Traceback:", exc_info=True)
-            raise ScraperError(e) from e
-
-        if novel_base_dir is None:
-            try:
-                novel_base_dir = NovelBaseDirHelper.get_novel_base_dir_from_meta(
-                    title=title,
-                    base_novels_dir=scraper_config.config_options["base_novels_dir"],
-                )
-            except NovelBaseDirError as e:
-                logger.debug("Traceback:", exc_info=True)
-                raise ScraperError(e) from e
-
-        if novel_base_dir is None:
-            novel_base_dir = NovelBaseDirHelper.generate_novel_base_dir(
-                novel.title, scraper_config.config_options["base_novels_dir"]
-            )
-            NovelBaseDirHelper.save_novel_dir_to_meta(
-                novel.title,
-                novel_base_dir,
-                scraper_config.config_options["base_novels_dir"],
-            )
-
-        try:
-            novel.novel_data_helper = NovelDataHelper(novel_base_dir=novel_base_dir)
-        except NovelBaseDirError as e:
-            logger.debug("Traceback:", exc_info=True)
-            raise ScraperError(e) from e
-
-        return novel
-
     # NOVEL PARAMETERS MANAGEMENT
-
-    def save_novel(self) -> None:
-
-        try:
-            self.novel_data_helper.save_novel_data(self.to_dict())
-        except NovelDataError as e:
-            logger.error("Traceback", exc_info=e)
-            raise ScraperError(e) from e
 
     def set_scraper_behavior(self, **kwargs) -> None:
         """
@@ -653,12 +526,6 @@ class Novel:
 
                     if clean_chapters:
                         self._clean_chapter(self.chapters[i].chapter_html_filename)
-                    try:
-                        self.save_novel()
-                    except NovelDataError as e:
-                        logger.warning(
-                            f"Error when trying to Save Novel Data: {str(e)}. Requests will continue anyway."
-                        )
                 else:
                     logger.debug(
                         f"Chapter {i + 1} of {total_chapters} already requested, skipping..."
@@ -983,9 +850,6 @@ class Novel:
                 self.chapters[
                     chapter_idx
                 ].chapter_html_filename = chapter.chapter_html_filename
-
-        if save_in_file:
-            self.save_novel()
 
     def _find_chapter_index_by_url(self, chapter_url: str) -> Optional[int]:
         """
