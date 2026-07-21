@@ -1,7 +1,11 @@
 import pytest
 from pathlib import Path
 from web_novel_scraper.decode import Decoder
-from web_novel_scraper.config import ScraperConfig
+from web_novel_scraper.config import (
+    ScraperConfig,
+    get_active_scraper_config,
+    set_active_scraper_config,
+)
 from web_novel_scraper.request_helper import RequestHelper
 
 # Path to the decode_guide.json
@@ -318,15 +322,21 @@ def host(request):
 
 
 @pytest.fixture(scope="class")
-def decoder(host):
-    """Create a Decoder instance with the decode_guide for the specified host"""
-    return Decoder(host=host, decode_guide_file=DECODE_GUIDE_PATH)
+def config(host):
+    config = ScraperConfig()
+    config.set_host(host)
+    set_active_scraper_config(config)
 
 
 @pytest.fixture(scope="class")
-def request_helper(host):
-    config = ScraperConfig()
-    config.set_host(host)
+def decoder(host, config):
+    """Create a Decoder instance with the decode_guide for the specified host"""
+    return Decoder(host=host)
+
+
+@pytest.fixture(scope="class")
+def request_helper(host, config):
+    config = get_active_scraper_config()
 
     request_config = config.config_options["request_config"]
     request_cookies = request_config.get("request_cookies", {})
